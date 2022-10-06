@@ -1,5 +1,5 @@
 import { Flex, IconButton, Image } from "@chakra-ui/react";
-import { InfoOutlineIcon } from "@chakra-ui/icons";
+import { BellIcon } from "@chakra-ui/icons";
 
 import Logo from "assets/logo.png";
 
@@ -22,7 +22,7 @@ const Header = () => {
 
       <IconButton
         aria-label="Open Notification"
-        icon={<InfoOutlineIcon />}
+        icon={<BellIcon />}
         variant="ghost"
       />
     </Flex>

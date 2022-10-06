@@ -7,8 +7,11 @@ import {
   DrawerContent,
   DrawerCloseButton,
   useDisclosure,
+  Stack,
 } from "@chakra-ui/react";
 import { HamburgerIcon } from "@chakra-ui/icons";
+
+import SideNavItem from "components/SideNavItem";
 
 const SideNav = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -28,9 +31,17 @@ const SideNav = () => {
           <DrawerCloseButton />
           <DrawerHeader borderBottomWidth="1px">Basic Drawer</DrawerHeader>
           <DrawerBody>
-            <p>Some contents...</p>
-            <p>Some contents...</p>
-            <p>Some contents...</p>
+            <Stack>
+              <SideNavItem to="/" onClick={onClose}>
+                Home
+              </SideNavItem>
+              <SideNavItem to="/overview" onClick={onClose}>
+                Overview
+              </SideNavItem>
+              <SideNavItem to="/wardrobe" onClick={onClose}>
+                My Wardrobe
+              </SideNavItem>
+            </Stack>
           </DrawerBody>
         </DrawerContent>
       </Drawer>
