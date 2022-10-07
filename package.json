@@ -3,9 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@chakra-ui/icons": "^2.0.11",
     "@chakra-ui/react": "^2.3.4",
     "@emotion/react": "^11.10.4",
     "@emotion/styled": "^11.10.4",
+    "@fontsource/advent-pro": "^4.5.9",
+    "@fontsource/roboto": "^4.5.8",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
@@ -32,7 +35,8 @@
     "workbox-range-requests": "^6.5.4",
     "workbox-routing": "^6.5.4",
     "workbox-strategies": "^6.5.4",
-    "workbox-streams": "^6.5.4"
+    "workbox-streams": "^6.5.4",
+    "wouter": "^2.8.0-alpha.2"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -41,9 +45,10 @@
     "eject": "react-scripts eject",
     "lint-staged": "lint-staged",
     "prepare": "husky install",
-    "format": "prettier --write \"src/**/*.{ts,tsx,scss}\"",
+    "format": "prettier --write \"src/**/*.{ts,,tsx,scss}\"",
     "lint": "eslint \"src/**/*.{ts,tsx}\" --fix --cache --quiet",
-    "deploy": "firebase deploy --only hosting"
+    "deploy": "firebase deploy --only hosting",
+    "update": "yarn build && yarn deploy"
   },
   "eslintConfig": {
     "extends": [
