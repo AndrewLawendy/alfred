@@ -6,6 +6,7 @@ import {
   Stack,
   Image,
   Box,
+  Divider,
 } from "@chakra-ui/react";
 
 import Weather from "components/Weather";
@@ -56,28 +57,26 @@ const Home = () => {
       </Heading>
 
       <Stack sx={{ mb: 24 }}>
-        {Object.values(outfit).map(({ title, description, imageUrl }) => (
-          <Flex
-            key={imageUrl}
-            sx={{
-              overflow: "hidden",
-              border: "2px solid",
-              borderColor: "gray.200",
-              borderRadius: "xl",
-            }}
-          >
-            <Image src={imageUrl} w="33.330%" objectFit="cover" />
-            <Box
-              w="66.66%"
-              sx={{ p: 2, borderLeft: "2px solid", borderColor: "gray.200" }}
-            >
-              <Heading as="h3" size="md">
-                {title}
-              </Heading>
-              <Text>{description}</Text>
-            </Box>
-          </Flex>
-        ))}
+        {Object.values(outfit).map(
+          ({ title, description, imageUrl }, index, arr) => {
+            const isNotLast = index < arr.length - 1;
+
+            return (
+              <>
+                <Flex key={imageUrl}>
+                  <Image src={imageUrl} w="33.330%" objectFit="cover" />
+                  <Box w="66.66%" sx={{ p: 2 }}>
+                    <Heading as="h3" size="md">
+                      {title}
+                    </Heading>
+                    <Text>{description}</Text>
+                  </Box>
+                </Flex>
+                {isNotLast && <Divider />}
+              </>
+            );
+          }
+        )}
       </Stack>
 
       <Button
