@@ -16,7 +16,7 @@ const SideNavItem = ({ to, ...rest }: SideNavItemProps) => {
       sx={{
         fontSize: "xl",
         fontWeight: "semibold",
-        fontFamily: "heading",
+        fontFamily: "advent",
         color: isActive ? "teal.500" : "gray.600",
         backgroundColor: isActive ? "gray.100" : undefined,
         px: 3,

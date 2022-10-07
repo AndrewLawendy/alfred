@@ -1,16 +1,20 @@
 import {
+  useDisclosure,
   IconButton,
   Drawer,
   DrawerHeader,
   DrawerOverlay,
   DrawerContent,
   DrawerCloseButton,
-  useDisclosure,
   Stack,
+  Image,
+  Text,
 } from "@chakra-ui/react";
 import { HamburgerIcon } from "@chakra-ui/icons";
 
 import SideNavItem from "components/SideNavItem";
+
+import Logo from "assets/logo.png";
 
 const SideNav = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -28,7 +32,25 @@ const SideNav = () => {
         <DrawerOverlay />
         <DrawerContent>
           <DrawerCloseButton />
-          <DrawerHeader borderBottomWidth="1px">Basic Drawer</DrawerHeader>
+          <DrawerHeader
+            borderBottomWidth="1px"
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 3,
+            }}
+          >
+            <Image alt="Logo" src={Logo} sx={{ height: 6 }} />
+            <Text
+              sx={{
+                fontFamily: "advent",
+                fontSize: "2xl",
+                lineHeight: 6,
+              }}
+            >
+              Alfred
+            </Text>
+          </DrawerHeader>
           <Stack sx={{ py: 2, px: 3 }}>
             <SideNavItem to="/" onClick={onClose}>
               Home

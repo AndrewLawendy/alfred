@@ -1,6 +1,39 @@
-import { Heading, Button, Flex } from "@chakra-ui/react";
+import {
+  Heading,
+  Text,
+  Button,
+  Flex,
+  Stack,
+  Image,
+  Box,
+} from "@chakra-ui/react";
 
 import Weather from "components/Weather";
+
+const outfit = {
+  shirt: {
+    title: "Green shirt",
+    description: "My favorite shirt",
+    imageUrl: "https://i.imgur.com/pzunjFG.jpeg",
+  },
+  belt: {
+    title: "Dark Brown Belt",
+    description: "",
+    imageUrl:
+      "https://assets-247moms.sfo2.cdn.digitaloceanspaces.com/2013/10/chestnut-belt-300x225.jpg",
+  },
+  pants: {
+    title: "Jeans",
+    description: "My day to day pants",
+    imageUrl: "https://i.ebayimg.com/images/g/HXYAAOSws3ph~sh6/s-l500.jpg",
+  },
+  shoes: {
+    title: "Safety Boots",
+    description: "",
+    imageUrl:
+      "https://www.skechers.com/dw/image/v2/BDCN_PRD/on/demandware.static/-/Library-Sites-SkechersSharedLibrary/default/dwb414fd65/images/grid/SKX52942_ShopByStyleGridUpdate_Men_750x664_Lace_Up_Oxfords.jpg",
+  },
+};
 
 const Home = () => {
   return (
@@ -13,14 +46,39 @@ const Home = () => {
           mb: 4,
         }}
       >
-        <Heading>Hi, Michael</Heading>
+        <Heading sx={{ fontFamily: "advent" }}>Hi, Michael</Heading>
 
         <Weather />
       </Flex>
 
-      <Heading as="h4" size="md" sx={{ fontFamily: "font.body", mb: 4 }}>
+      <Heading as="h4" size="md" sx={{ mb: 4 }}>
         Your outfit for today
       </Heading>
+
+      <Stack sx={{ mb: 24 }}>
+        {Object.values(outfit).map(({ title, description, imageUrl }) => (
+          <Flex
+            key={imageUrl}
+            sx={{
+              overflow: "hidden",
+              border: "2px solid",
+              borderColor: "gray.200",
+              borderRadius: "xl",
+            }}
+          >
+            <Image src={imageUrl} w="33.330%" objectFit="cover" />
+            <Box
+              w="66.66%"
+              sx={{ p: 2, borderLeft: "2px solid", borderColor: "gray.200" }}
+            >
+              <Heading as="h3" size="md">
+                {title}
+              </Heading>
+              <Text>{description}</Text>
+            </Box>
+          </Flex>
+        ))}
+      </Stack>
 
       <Button
         size="lg"
