@@ -1,3 +1,4 @@
+import { Link } from "wouter";
 import { Flex, IconButton, Image } from "@chakra-ui/react";
 import { BellIcon } from "@chakra-ui/icons";
 
@@ -14,11 +15,17 @@ const Header = () => {
         p: 2,
         justifyContent: "space-between",
         alignItems: "center",
+        boxShadow: "0px 1px var(--chakra-colors-chakra-border-color)",
+        position: "sticky",
+        top: 0,
+        backgroundColor: "white",
       }}
     >
       <SideNav />
 
-      <Image src={Logo} sx={{ maxH: 9 }} />
+      <Link to="/">
+        <Image src={Logo} sx={{ maxH: 9 }} />
+      </Link>
 
       <IconButton
         aria-label="Open Notification"

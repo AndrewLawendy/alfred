@@ -1,7 +1,6 @@
 import {
   IconButton,
   Drawer,
-  DrawerBody,
   DrawerHeader,
   DrawerOverlay,
   DrawerContent,
@@ -30,19 +29,17 @@ const SideNav = () => {
         <DrawerContent>
           <DrawerCloseButton />
           <DrawerHeader borderBottomWidth="1px">Basic Drawer</DrawerHeader>
-          <DrawerBody>
-            <Stack>
-              <SideNavItem to="/" onClick={onClose}>
-                Home
-              </SideNavItem>
-              <SideNavItem to="/overview" onClick={onClose}>
-                Overview
-              </SideNavItem>
-              <SideNavItem to="/wardrobe" onClick={onClose}>
-                My Wardrobe
-              </SideNavItem>
-            </Stack>
-          </DrawerBody>
+          <Stack sx={{ py: 2, px: 3 }}>
+            <SideNavItem to="/" onClick={onClose}>
+              Home
+            </SideNavItem>
+            <SideNavItem to="/overview" onClick={onClose}>
+              Overview
+            </SideNavItem>
+            <SideNavItem to="/wardrobe" onClick={onClose}>
+              My Wardrobe
+            </SideNavItem>
+          </Stack>
         </DrawerContent>
       </Drawer>
     </>

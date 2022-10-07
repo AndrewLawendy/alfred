@@ -7,9 +7,14 @@ import Wardrobe from "pages/Wardrobe";
 
 import Header from "components/Header";
 
+import theme from "utils/theme";
+
+import "@fontsource/advent-pro";
+import "@fontsource/roboto";
+
 function App() {
   return (
-    <ChakraProvider>
+    <ChakraProvider theme={theme}>
       <Header />
       <Box sx={{ p: 2 }} as="main">
         <Route path="/" component={Home} />

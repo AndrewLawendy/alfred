@@ -13,7 +13,22 @@ const SideNavItem = ({ to, ...rest }: SideNavItemProps) => {
       {...rest}
       as={Link}
       to={to}
-      color={isActive ? "teal.500" : undefined}
+      sx={{
+        fontSize: "xl",
+        fontWeight: "semibold",
+        fontFamily: "heading",
+        color: isActive ? "teal.500" : "gray.600",
+        backgroundColor: isActive ? "gray.100" : undefined,
+        px: 3,
+        py: 1,
+        borderRadius: "md",
+        transition: "background-color .2s",
+
+        "&:hover": {
+          textDecoration: "none",
+          backgroundColor: "gray.50",
+        },
+      }}
     />
   );
 };
