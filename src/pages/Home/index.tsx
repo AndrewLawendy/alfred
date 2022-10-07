@@ -1,9 +1,26 @@
-import { Heading, Button } from "@chakra-ui/react";
+import { Heading, Button, Flex } from "@chakra-ui/react";
+
+import Weather from "components/Weather";
 
 const Home = () => {
   return (
     <>
-      <Heading>Home</Heading>
+      <Flex
+        sx={{
+          justifyContent: "space-between",
+          alignItems: "center",
+          height: 12,
+          mb: 4,
+        }}
+      >
+        <Heading>Hi, Michael</Heading>
+
+        <Weather />
+      </Flex>
+
+      <Heading as="h4" size="md" sx={{ fontFamily: "font.body", mb: 4 }}>
+        Your outfit for today
+      </Heading>
 
       <Button
         size="lg"
