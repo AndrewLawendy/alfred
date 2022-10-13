@@ -56,7 +56,7 @@ const Home = () => {
         Your outfit for today
       </Heading>
 
-      <Stack sx={{ mb: 24 }}>
+      <Stack sx={{ mb: 20 }}>
         {Object.values(outfit).map(
           ({ title, description, imageUrl }, index, arr) => {
             const isNotLast = index < arr.length - 1;
@@ -86,7 +86,7 @@ const Home = () => {
           color: "white",
           borderRadius: "3xl",
           position: "fixed",
-          bottom: 6,
+          bottom: 16,
           left: "50%",
           transform: "translate3d(-50%, 0, 0)",
         }}
