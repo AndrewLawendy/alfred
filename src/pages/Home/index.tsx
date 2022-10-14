@@ -1,15 +1,7 @@
-import {
-  Heading,
-  Text,
-  Button,
-  Flex,
-  Stack,
-  Image,
-  Box,
-  Divider,
-} from "@chakra-ui/react";
+import { Heading, Button, Flex, Grid } from "@chakra-ui/react";
 
 import Weather from "components/Weather";
+import OutfitItem from "components/OutfitItem";
 
 const outfit = {
   shirt: {
@@ -19,7 +11,8 @@ const outfit = {
   },
   belt: {
     title: "Dark Brown Belt",
-    description: "",
+    description:
+      "Nisi commodo id ea proident ea sunt eu magna esse dolor. Excepteur ex sit nostrud pariatur laboris occaecat velit dolore anim excepteur non incididunt nostrud minim.",
     imageUrl:
       "https://assets-247moms.sfo2.cdn.digitaloceanspaces.com/2013/10/chestnut-belt-300x225.jpg",
   },
@@ -30,7 +23,8 @@ const outfit = {
   },
   shoes: {
     title: "Safety Boots",
-    description: "",
+    description:
+      "Elit dolore exercitation consectetur aute occaecat elit occaecat occaecat velit consectetur laborum occaecat in laborum.",
     imageUrl:
       "https://www.skechers.com/dw/image/v2/BDCN_PRD/on/demandware.static/-/Library-Sites-SkechersSharedLibrary/default/dwb414fd65/images/grid/SKX52942_ShopByStyleGridUpdate_Men_750x664_Lace_Up_Oxfords.jpg",
   },
@@ -52,32 +46,16 @@ const Home = () => {
         <Weather />
       </Flex>
 
-      <Heading as="h4" size="md" sx={{ mb: 4 }}>
-        Your outfit for today
-      </Heading>
-
-      <Stack sx={{ mb: 20 }}>
-        {Object.values(outfit).map(
-          ({ title, description, imageUrl }, index, arr) => {
-            const isNotLast = index < arr.length - 1;
-
-            return (
-              <>
-                <Flex key={imageUrl}>
-                  <Image src={imageUrl} w="33.330%" objectFit="cover" />
-                  <Box w="66.66%" sx={{ p: 2 }}>
-                    <Heading as="h3" size="md">
-                      {title}
-                    </Heading>
-                    <Text>{description}</Text>
-                  </Box>
-                </Flex>
-                {isNotLast && <Divider />}
-              </>
-            );
-          }
-        )}
-      </Stack>
+      <Grid templateColumns="repeat(2, 1fr)" gap={2} sx={{ mb: 20 }}>
+        {Object.values(outfit).map(({ title, description, imageUrl }) => (
+          <OutfitItem
+            key={imageUrl}
+            title={title}
+            description={description}
+            imageUrl={imageUrl}
+          />
+        ))}
+      </Grid>
 
       <Button
         size="lg"
