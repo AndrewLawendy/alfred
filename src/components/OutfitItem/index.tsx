@@ -1,20 +1,28 @@
-import { Box, Image, Heading, Text, Skeleton } from "@chakra-ui/react";
+import {
+  Box,
+  Image,
+  Heading,
+  Text,
+  Skeleton,
+  SkeletonProps,
+} from "@chakra-ui/react";
 
-type OutfitItemProps = {
-  title: string;
-  description: string;
+interface OutfitItemProps extends SkeletonProps {
   imageUrl: string;
-  isLoaded: boolean;
-};
+  title?: string;
+  description?: string;
+  isLoaded?: boolean;
+}
 
 const OutfitItem = ({
   title,
   description,
   imageUrl,
-  isLoaded,
+  isLoaded = true,
+  ...props
 }: OutfitItemProps) => {
   return (
-    <Skeleton isLoaded={isLoaded}>
+    <Skeleton isLoaded={isLoaded} {...props}>
       <Box
         sx={{
           p: 1,
@@ -29,12 +37,16 @@ const OutfitItem = ({
           sx={{ width: "100%", height: 162, objectFit: "cover" }}
         />
       </Box>
-      <Heading as="h5" size="sm" sx={{ py: 1 }}>
-        {title}
-      </Heading>
-      <Text fontSize="xs" noOfLines={2}>
-        {description}
-      </Text>
+      {title && (
+        <Heading as="h5" size="sm" sx={{ py: 1 }}>
+          {title}
+        </Heading>
+      )}
+      {description && (
+        <Text fontSize="xs" noOfLines={2}>
+          {description}
+        </Text>
+      )}
     </Skeleton>
   );
 };

@@ -8,11 +8,18 @@ const theme = extendTheme({
         flexDirection: "column",
         minHeight: "100vh",
       },
+      body: {
+        backgroundColor: "gray.50",
+      },
     },
   },
   fonts: {
     body: `"Roboto", sans-serif`,
     advent: `"Advent Pro", sans-serif`,
+  },
+  shadows: {
+    material: "0 2px 4px var(--chakra-colors-gray-300)",
+    "reverse-material": "0 -2px 4px var(--chakra-colors-gray-300)",
   },
 });
 

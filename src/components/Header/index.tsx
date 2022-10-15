@@ -20,7 +20,7 @@ const Header = () => {
         p: 2,
         justifyContent: "space-between",
         alignItems: "center",
-        boxShadow: "0px 1px var(--chakra-colors-chakra-border-color)",
+        boxShadow: "material",
         position: "sticky",
         top: 0,
         backgroundColor: "white",

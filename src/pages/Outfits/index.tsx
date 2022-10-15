@@ -1,21 +1,16 @@
-import { Fragment, useState } from "react";
-import AddOutfit from "./AddOutfit";
-
-import { Divider, Grid, Stack } from "@chakra-ui/react";
+import { useState } from "react";
+import { Grid } from "@chakra-ui/react";
+import { Photo } from "pexels";
 
 import OutfitItem from "components/OutfitItem";
 
-export interface Outfit {
-  shirt: Item;
-  belt: Item;
-  pants: Item;
-  shoes: Item;
-}
+import AddOutfit from "./AddOutfit";
 
-export interface Item {
-  title: string;
-  description: string;
-  imageUrl: string;
+export interface Outfit {
+  shirt: Photo;
+  belt: Photo;
+  pants: Photo;
+  shoes: Photo;
 }
 
 const Outfits = () => {
@@ -26,29 +21,22 @@ const Outfits = () => {
   };
 
   return (
-    <Stack>
-      {outfits.map((outfit, index, arr) => {
-        const isNotLast = index < arr.length - 1;
-
+    <Grid templateColumns="repeat(2, 1fr)" gap={4}>
+      {outfits.map((outfit, index) => {
         return (
-          <Fragment key={`outfit-${index}`}>
-            <Grid templateColumns="repeat(4, 1fr)" gap={2}>
-              {Object.values(outfit).map(({ title, description, imageUrl }) => (
-                <OutfitItem
-                  isLoaded={true}
-                  key={imageUrl}
-                  title={title}
-                  description={description}
-                  imageUrl={imageUrl}
-                />
-              ))}
-            </Grid>
-            {isNotLast && <Divider />}
-          </Fragment>
+          <Grid
+            key={`outfit-${index}`}
+            templateColumns="repeat(2, 1fr)"
+            sx={{ backgroundColor: "white" }}
+          >
+            {Object.values(outfit).map(({ id, src }: Photo) => (
+              <OutfitItem key={id} imageUrl={src.small} />
+            ))}
+          </Grid>
         );
       })}
       <AddOutfit onSubmit={onSubmit} />
-    </Stack>
+    </Grid>
   );
 };
 
