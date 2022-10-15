@@ -24,6 +24,7 @@ const Weather = () => {
         <Text sx={{ fontSize: "sm" }}>
           {Math.trunc(data.main.temp_min)}°/{Math.trunc(data.main.temp_max)}°
         </Text>
+        <Text fontSize="xs">{weather.main}</Text>
       </Box>
     </Flex>
   );
