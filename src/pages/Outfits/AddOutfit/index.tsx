@@ -155,7 +155,7 @@ const AddOutfit = ({ onSubmit }: AddOutfitProps) => {
             <Box
               ref={closetContainerRef}
               sx={{
-                height: 489,
+                height: 389,
 
                 ".chakra-modal__content-container": {
                   position: "static",
@@ -202,7 +202,7 @@ const AddOutfit = ({ onSubmit }: AddOutfitProps) => {
                 <DrawerBody
                   sx={{
                     p: 0,
-                    maxHeight: closetExpanded ? "calc(100vh - 128px)" : 400,
+                    maxHeight: closetExpanded ? "calc(100vh - 128px)" : 300,
                     transition: "max-height 0.3s",
                   }}
                 >
