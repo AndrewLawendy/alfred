@@ -42,7 +42,15 @@ type AddOutfitProps = {
   currentOutfit?: Outfit;
 };
 
-type OutfitKeys = keyof Outfit;
+type OutfitKeys = keyof Omit<Outfit, "id">;
+
+const fields: OutfitKeys[] = ["shirt", "belt", "pants", "shoes"];
+const fieldsNameMap: { [key in OutfitKeys]: string } = {
+  shirt: "Shirts",
+  belt: "Belts",
+  pants: "Pants",
+  shoes: "Shoes",
+};
 
 const OutfitDetails = ({
   isOpen,
@@ -70,8 +78,9 @@ const OutfitDetails = ({
     : isEdit
     ? "Edit your outfit"
     : "Add new outfit";
-  const fields: OutfitKeys[] = ["shirt", "belt", "pants", "shoes"];
-  const invalidFields = fields.filter((item) => outfit[item] === undefined);
+  const invalidFields = fields
+    .filter((field) => outfit[field] === undefined)
+    .map((field) => fieldsNameMap[field]);
 
   const reset = () => {
     setOutfit({});
