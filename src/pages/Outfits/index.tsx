@@ -8,6 +8,7 @@ import {
   Icon,
   useDisclosure,
 } from "@chakra-ui/react";
+import { Reorder } from "framer-motion";
 import { MdAdd } from "react-icons/md";
 import { Photo } from "pexels";
 
@@ -42,44 +43,57 @@ const Outfits = () => {
   };
 
   return (
-    <Stack gap={3}>
-      {outfits.map((outfit, index) => {
-        return (
-          <Box
-            key={`outfit-${index}`}
-            onClick={() => {
-              setCurrentOutfit(outfit);
-              onOpen();
-            }}
-          >
-            <Box
-              sx={{
-                p: 2,
-                backgroundColor: "white",
-                borderTopRadius: 6,
-                borderTop: "1px solid",
-                borderX: "1px solid",
-                borderColor: "gray.100",
-              }}
-            >
-              <Heading as="h6" size="sm">
-                #{index + 1}
-              </Heading>
-            </Box>
-            {Object.values(outfit).length > 0 && (
-              <Grid
-                templateColumns="repeat(4, 1fr)"
-                sx={{ backgroundColor: "white" }}
+    <>
+      <Reorder.Group
+        as="div"
+        axis="y"
+        values={outfits}
+        onReorder={(items) => {
+          setOutfits(items);
+        }}
+      >
+        <Stack gap={3}>
+          {outfits.map((outfit, index) => {
+            return (
+              <Reorder.Item
+                as="div"
+                key={outfit.id}
+                value={outfit}
+                onClick={() => {
+                  setCurrentOutfit(outfit);
+                  onOpen();
+                }}
               >
-                <OutfitItem imageUrl={outfit.shirt?.src.small || ""} />
-                <OutfitItem imageUrl={outfit.belt?.src.small || ""} />
-                <OutfitItem imageUrl={outfit.pants?.src.small || ""} />
-                <OutfitItem imageUrl={outfit.shoes?.src.small || ""} />
-              </Grid>
-            )}
-          </Box>
-        );
-      })}
+                <Box
+                  sx={{
+                    p: 2,
+                    backgroundColor: "white",
+                    borderTopRadius: 6,
+                    borderTop: "1px solid",
+                    borderX: "1px solid",
+                    borderColor: "gray.100",
+                  }}
+                >
+                  <Heading as="h6" size="sm">
+                    #{index + 1}
+                  </Heading>
+                </Box>
+                {Object.values(outfit).length > 0 && (
+                  <Grid
+                    templateColumns="repeat(4, 1fr)"
+                    sx={{ backgroundColor: "white" }}
+                  >
+                    <OutfitItem imageUrl={outfit.shirt?.src.small || ""} />
+                    <OutfitItem imageUrl={outfit.belt?.src.small || ""} />
+                    <OutfitItem imageUrl={outfit.pants?.src.small || ""} />
+                    <OutfitItem imageUrl={outfit.shoes?.src.small || ""} />
+                  </Grid>
+                )}
+              </Reorder.Item>
+            );
+          })}
+        </Stack>
+      </Reorder.Group>
 
       <IconButton
         onClick={onOpen}
@@ -113,7 +127,7 @@ const Outfits = () => {
         onSubmit={onSubmit}
         currentOutfit={currentOutfit}
       />
-    </Stack>
+    </>
   );
 };
 
