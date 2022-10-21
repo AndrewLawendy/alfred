@@ -63,7 +63,7 @@ const Outfits = () => {
       <DragDropContext onDragEnd={onDragEnd}>
         <Droppable droppableId="outfits">
           {(provided) => (
-            <Stack gap={3} {...provided.droppableProps} ref={provided.innerRef}>
+            <Stack {...provided.droppableProps} ref={provided.innerRef}>
               {outfits.map((outfit, index) => {
                 return (
                   <Draggable
