@@ -8,7 +8,13 @@ import {
   Icon,
   useDisclosure,
 } from "@chakra-ui/react";
-import { Reorder } from "framer-motion";
+
+import {
+  DragDropContext,
+  Droppable,
+  Draggable,
+  DropResult,
+} from "react-beautiful-dnd";
 import { MdAdd } from "react-icons/md";
 import { Photo } from "pexels";
 
@@ -42,58 +48,82 @@ const Outfits = () => {
     }
   };
 
+  const onDragEnd = (result: DropResult) => {
+    const { destination, source } = result;
+    if (!destination) return;
+
+    const [droppedItem] = outfits.splice(source.index, 1);
+    outfits.splice(destination.index, 0, droppedItem);
+
+    setOutfits([...outfits]);
+  };
+
   return (
     <>
-      <Reorder.Group
-        as="div"
-        axis="y"
-        values={outfits}
-        onReorder={(items) => {
-          setOutfits(items);
-        }}
-      >
-        <Stack gap={3}>
-          {outfits.map((outfit, index) => {
-            return (
-              <Reorder.Item
-                as="div"
-                key={outfit.id}
-                value={outfit}
-                onClick={() => {
-                  setCurrentOutfit(outfit);
-                  onOpen();
-                }}
-              >
-                <Box
-                  sx={{
-                    p: 2,
-                    backgroundColor: "white",
-                    borderTopRadius: 6,
-                    borderTop: "1px solid",
-                    borderX: "1px solid",
-                    borderColor: "gray.100",
-                  }}
-                >
-                  <Heading as="h6" size="sm">
-                    #{index + 1}
-                  </Heading>
-                </Box>
-                {Object.values(outfit).length > 0 && (
-                  <Grid
-                    templateColumns="repeat(4, 1fr)"
-                    sx={{ backgroundColor: "white" }}
+      <DragDropContext onDragEnd={onDragEnd}>
+        <Droppable droppableId="outfits">
+          {(provided) => (
+            <Stack gap={3} {...provided.droppableProps} ref={provided.innerRef}>
+              {outfits.map((outfit, index) => {
+                return (
+                  <Draggable
+                    key={outfit.id}
+                    draggableId={outfit.id}
+                    index={index}
                   >
-                    <OutfitItem imageUrl={outfit.shirt?.src.small || ""} />
-                    <OutfitItem imageUrl={outfit.belt?.src.small || ""} />
-                    <OutfitItem imageUrl={outfit.pants?.src.small || ""} />
-                    <OutfitItem imageUrl={outfit.shoes?.src.small || ""} />
-                  </Grid>
-                )}
-              </Reorder.Item>
-            );
-          })}
-        </Stack>
-      </Reorder.Group>
+                    {(provided) => (
+                      <Box
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        onClick={() => {
+                          setCurrentOutfit(outfit);
+                          onOpen();
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            p: 2,
+                            backgroundColor: "white",
+                            borderTopRadius: 6,
+                            borderTop: "1px solid",
+                            borderX: "1px solid",
+                            borderColor: "gray.100",
+                          }}
+                        >
+                          <Heading as="h6" size="sm">
+                            #{index + 1}
+                          </Heading>
+                        </Box>
+                        {Object.values(outfit).length > 0 && (
+                          <Grid
+                            templateColumns="repeat(4, 1fr)"
+                            sx={{ backgroundColor: "white" }}
+                          >
+                            <OutfitItem
+                              imageUrl={outfit.shirt?.src.small || ""}
+                            />
+                            <OutfitItem
+                              imageUrl={outfit.belt?.src.small || ""}
+                            />
+                            <OutfitItem
+                              imageUrl={outfit.pants?.src.small || ""}
+                            />
+                            <OutfitItem
+                              imageUrl={outfit.shoes?.src.small || ""}
+                            />
+                          </Grid>
+                        )}
+                      </Box>
+                    )}
+                  </Draggable>
+                );
+              })}
+              {provided.placeholder}
+            </Stack>
+          )}
+        </Droppable>
+      </DragDropContext>
 
       <IconButton
         onClick={onOpen}
