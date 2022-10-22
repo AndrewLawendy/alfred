@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 
-const useFetch = <T extends Record<string, unknown>>(
-  request: () => Promise<T>
-) => {
+const useFetch = <T>(request: () => Promise<T>) => {
   const [data, setData] = useState<T>();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState();

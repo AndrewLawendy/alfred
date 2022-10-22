@@ -1,10 +1,15 @@
 import { Link } from "wouter";
-import { Flex, IconButton, Image } from "@chakra-ui/react";
-import { BellIcon } from "@chakra-ui/icons";
+import {
+  Flex,
+  IconButton,
+  Image,
+  Text,
+  Link as ChakraLink,
+  Icon,
+} from "@chakra-ui/react";
+import { IoMdNotifications } from "react-icons/io";
 
 import Logo from "assets/logo.png";
-
-import SideNav from "components/SideNav";
 
 const Header = () => {
   return (
@@ -15,21 +20,32 @@ const Header = () => {
         p: 2,
         justifyContent: "space-between",
         alignItems: "center",
-        boxShadow: "0px 1px var(--chakra-colors-chakra-border-color)",
+        boxShadow: "material",
         position: "sticky",
         top: 0,
         backgroundColor: "white",
       }}
     >
-      <SideNav />
-
-      <Link to="/">
+      <ChakraLink
+        as={Link}
+        to="/"
+        sx={{ display: "flex", alignItems: "center", gap: 3 }}
+      >
         <Image src={Logo} sx={{ maxH: 9 }} />
-      </Link>
+        <Text
+          sx={{
+            fontFamily: "advent",
+            fontSize: "2xl",
+            lineHeight: 6,
+          }}
+        >
+          Alfred
+        </Text>
+      </ChakraLink>
 
       <IconButton
         aria-label="Open Notification"
-        icon={<BellIcon />}
+        icon={<Icon as={IoMdNotifications} w={6} h={6} />}
         variant="ghost"
       />
     </Flex>
