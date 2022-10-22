@@ -145,6 +145,7 @@ const Outfits = () => {
           />
         }
         sx={{
+          boxShadow: "material",
           position: "fixed",
           bottom: 16,
           right: 3,
