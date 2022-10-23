@@ -49,7 +49,16 @@ const Wardrobe = () => {
                       colorScheme="whiteAlpha"
                       aria-label={label}
                       sx={{ borderRadius: "full", boxShadow: "material" }}
-                      icon={<Icon as={icon} color="blackAlpha.800" />}
+                      icon={
+                        <Icon
+                          as={icon}
+                          color="blackAlpha.800"
+                          sx={{
+                            width: 5,
+                            height: 5,
+                          }}
+                        />
+                      }
                     />
                   </motion.div>
                 );
