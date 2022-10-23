@@ -75,7 +75,7 @@ const Outfits = () => {
                     draggableId={outfit.id}
                     index={index}
                   >
-                    {(provided) => (
+                    {(provided, snapshot) => (
                       <Box
                         ref={provided.innerRef}
                         {...provided.draggableProps}
@@ -87,37 +87,50 @@ const Outfits = () => {
                       >
                         <Box
                           sx={{
-                            p: 2,
-                            backgroundColor: "white",
                             borderTopRadius: 6,
-                            borderTop: "1px solid",
-                            borderX: "1px solid",
-                            borderColor: "gray.100",
+                            transition: "all 0.15s",
+                            transform: snapshot.isDragging
+                              ? "scale(1.01)"
+                              : undefined,
+                            boxShadow: snapshot.isDragging
+                              ? "material"
+                              : undefined,
                           }}
                         >
-                          <Heading as="h6" size="sm">
-                            #{index + 1}
-                          </Heading>
-                        </Box>
-                        {Object.values(outfit).length > 0 && (
-                          <Grid
-                            templateColumns="repeat(4, 1fr)"
-                            sx={{ backgroundColor: "white" }}
+                          <Box
+                            sx={{
+                              p: 2,
+                              backgroundColor: "white",
+                              borderTopRadius: 6,
+                              borderTop: "1px solid",
+                              borderX: "1px solid",
+                              borderColor: "gray.100",
+                            }}
                           >
-                            <OutfitItem
-                              imageUrl={outfit.shirt?.src.small || ""}
-                            />
-                            <OutfitItem
-                              imageUrl={outfit.belt?.src.small || ""}
-                            />
-                            <OutfitItem
-                              imageUrl={outfit.pants?.src.small || ""}
-                            />
-                            <OutfitItem
-                              imageUrl={outfit.shoes?.src.small || ""}
-                            />
-                          </Grid>
-                        )}
+                            <Heading as="h6" size="sm">
+                              #{index + 1}
+                            </Heading>
+                          </Box>
+                          {Object.values(outfit).length > 0 && (
+                            <Grid
+                              templateColumns="repeat(4, 1fr)"
+                              sx={{ backgroundColor: "white" }}
+                            >
+                              <OutfitItem
+                                imageUrl={outfit.shirt?.src.small || ""}
+                              />
+                              <OutfitItem
+                                imageUrl={outfit.belt?.src.small || ""}
+                              />
+                              <OutfitItem
+                                imageUrl={outfit.pants?.src.small || ""}
+                              />
+                              <OutfitItem
+                                imageUrl={outfit.shoes?.src.small || ""}
+                              />
+                            </Grid>
+                          )}
+                        </Box>
                       </Box>
                     )}
                   </Draggable>
