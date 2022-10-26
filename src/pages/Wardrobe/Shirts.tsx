@@ -15,6 +15,7 @@ import { MdCheck, MdArrowBack, MdEdit } from "react-icons/md";
 
 import OutfitItem from "components/OutfitItem";
 import FormInput from "components/FormInput";
+import PhotoInput from "components/PhotoInput";
 
 import usePexels from "resources/usePexels";
 import useRequiredForm from "hooks/useRequiredForm";
@@ -32,9 +33,18 @@ const Shirts = ({
 }: ShirtsProps) => {
   const [mode, setMode] = useState<"submit" | "view">("view");
   const { data: shirts } = usePexels("shirt", 7);
-  const { values, errors, onChange, onBlur, destroyForm } = useRequiredForm({
+  const {
+    values,
+    errors,
+    onChange,
+    onBlur,
+    setFieldValue,
+    setFieldTouched,
+    destroyForm,
+  } = useRequiredForm({
     title: "",
     description: "",
+    imgSrc: "",
   });
 
   const isOpen = activeModalIndex === modalIndex;
@@ -145,7 +155,20 @@ const Shirts = ({
           </DrawerHeader>
 
           <DrawerBody>
-            <Stack spacing={4}>
+            <Stack spacing={4} sx={{ py: 4 }}>
+              <PhotoInput
+                name="imgSrc"
+                initialImgSrc={values.imgSrc}
+                error={errors.imgSrc}
+                onChange={(file) => {
+                  const imgSrc = URL.createObjectURL(file);
+                  setFieldValue("imgSrc", imgSrc);
+                }}
+                onBlur={() => {
+                  setFieldTouched("imgSrc");
+                }}
+              />
+
               <FormInput
                 label="Title"
                 name="title"
