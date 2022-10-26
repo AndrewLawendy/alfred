@@ -1,9 +1,19 @@
-import { useState, useRef } from "react";
-import { IconButton, Icon, Box, Stack } from "@chakra-ui/react";
-import { motion, AnimatePresence } from "framer-motion";
-import { MdAdd } from "react-icons/md";
+import { useState } from "react";
+import {
+  Heading,
+  Accordion,
+  AccordionItem,
+  AccordionButton,
+  AccordionPanel,
+  AccordionIcon,
+  ExpandedIndex,
+} from "@chakra-ui/react";
+
 import { RiShirtFill } from "react-icons/ri";
 import { GiBelt, GiTrousers, GiRunningShoe } from "react-icons/gi";
+
+import AddItemsBtn from "./AddItemsBtn";
+import Shirts from "./Shirts";
 
 const addOptions = [
   { label: "Add Shirt", icon: RiShirtFill },
@@ -13,92 +23,43 @@ const addOptions = [
 ];
 
 const Wardrobe = () => {
-  const triggerButtonRef = useRef<HTMLButtonElement>(null);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [activeItem, setActiveItem] = useState<ExpandedIndex>(0);
+  const [activeModalIndex, setActiveModalIndex] = useState<number>();
+
+  const pickActiveDrawer = (index: number) => {
+    if (index === activeItem) {
+      setActiveItem([]);
+    } else {
+      setActiveItem(index);
+    }
+  };
 
   return (
     <>
-      <Box sx={{ position: "fixed", bottom: 16, right: 3 }}>
-        <AnimatePresence mode="wait">
-          {menuOpen && (
-            <Stack sx={{ alignItems: "center", pb: 2 }}>
-              {addOptions.map(({ label, icon }, index, arr) => {
-                const delay = (arr.length - index) * 0.05;
-                const exitDelay = index * 0.05;
+      <Accordion index={activeItem}>
+        <AccordionItem>
+          <AccordionButton onClick={() => pickActiveDrawer(0)}>
+            <Heading as="h5" size="md" flex="1" textAlign="left">
+              Shirts
+            </Heading>
+            <AccordionIcon />
+          </AccordionButton>
 
-                return (
-                  <motion.div
-                    key={label}
-                    animate={{
-                      transform: "scale(1)",
-                      transition: {
-                        type: "spring",
-                        duration: 0.35,
-                        delay,
-                      },
-                    }}
-                    exit={{
-                      transform: "scale(0)",
-                      transition: {
-                        duration: 0.1,
-                        delay: exitDelay,
-                      },
-                    }}
-                  >
-                    <IconButton
-                      colorScheme="whiteAlpha"
-                      aria-label={label}
-                      sx={{ borderRadius: "full", boxShadow: "material" }}
-                      icon={
-                        <Icon
-                          as={icon}
-                          color="blackAlpha.800"
-                          sx={{
-                            width: 5,
-                            height: 5,
-                          }}
-                        />
-                      }
-                    />
-                  </motion.div>
-                );
-              })}
-            </Stack>
-          )}
-        </AnimatePresence>
-
-        <IconButton
-          ref={triggerButtonRef}
-          aria-label="Add Wardrobe Item"
-          size="lg"
-          colorScheme="teal"
-          onBlur={() => setMenuOpen(false)}
-          onClick={() => {
-            if (menuOpen) {
-              setMenuOpen(false);
-            } else {
-              setMenuOpen(true);
-              triggerButtonRef.current?.focus();
-            }
-          }}
-          icon={
-            <Icon
-              as={MdAdd}
-              color="white"
-              sx={{
-                width: 7,
-                height: 7,
-              }}
+          <AccordionPanel>
+            <Shirts
+              modalIndex={0}
+              activeModalIndex={activeModalIndex}
+              setActiveModalIndex={setActiveModalIndex}
             />
-          }
-          sx={{
-            boxShadow: "material",
-            borderRadius: "full",
-            transform: menuOpen ? "rotate(-45deg)" : undefined,
-            transition: "transform 0.2s",
-          }}
-        />
-      </Box>
+          </AccordionPanel>
+        </AccordionItem>
+      </Accordion>
+
+      <AddItemsBtn
+        sx={{ position: "fixed", bottom: 16, right: 3 }}
+        addOptions={addOptions}
+        setActiveModalIndex={setActiveModalIndex}
+      />
     </>
   );
 };
