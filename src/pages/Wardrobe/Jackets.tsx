@@ -19,22 +19,22 @@ import PhotoInput from "components/PhotoInput";
 
 import useRequiredForm from "hooks/useRequiredForm";
 
-import { Shirt } from "utils/types";
+import { Jacket } from "utils/types";
 
-type ShirtsProps = {
+type JacketsProps = {
   modalIndex: number;
   activeModalIndex: number | undefined;
   setActiveModalIndex: (index?: number) => void;
 };
 
-const Shirts = ({
+const Jackets = ({
   modalIndex,
   activeModalIndex,
   setActiveModalIndex,
-}: ShirtsProps) => {
+}: JacketsProps) => {
   const [mode, setMode] = useState<"submit" | "view">("view");
-  const [shirts, setShirts] = useState<Shirt[]>([]);
-  const [currentShirt, setCurrentShirt] = useState<Shirt>();
+  const [jackets, setJackets] = useState<Jacket[]>([]);
+  const [currentJacket, setCurrentJacket] = useState<Jacket>();
   const {
     values,
     errors,
@@ -49,17 +49,18 @@ const Shirts = ({
     title: "",
     description: "",
     imageUrl: "",
+    maxTemperature: "",
   });
 
   const isOpen = activeModalIndex === modalIndex;
-  const isView = mode === "view" && currentShirt !== undefined;
-  const isEdit = mode === "submit" && currentShirt !== undefined;
+  const isView = mode === "view" && currentJacket !== undefined;
+  const isEdit = mode === "submit" && currentJacket !== undefined;
 
   const heading = isView
-    ? "View your shirt"
+    ? "View your jacket"
     : isEdit
-    ? "Edit your shirt"
-    : "Add new shirt";
+    ? "Edit your jacket"
+    : "Add new jacket";
 
   const onClose = () => {
     setActiveModalIndex();
@@ -67,28 +68,30 @@ const Shirts = ({
 
   const reset = () => {
     destroyForm();
-    setCurrentShirt(undefined);
+    setCurrentJacket(undefined);
   };
 
   const onSubmit = () => {
     handleSubmit((values) => {
-      if (currentShirt) {
-        const currentShirtIndex = shirts.findIndex(
-          ({ id }) => id === currentShirt.id
+      if (currentJacket) {
+        const currentJacketIndex = jackets.findIndex(
+          ({ id }) => id === currentJacket.id
         );
-        shirts.splice(currentShirtIndex, 1, {
-          ...currentShirt,
+        jackets.splice(currentJacketIndex, 1, {
+          ...currentJacket,
           ...values,
+          maxTemperature: Number(values.maxTemperature),
         });
 
-        setShirts([...shirts]);
+        setJackets([...jackets]);
       } else {
-        setShirts([
-          ...shirts,
+        setJackets([
+          ...jackets,
           {
-            type: "shirt",
+            type: "jacket",
             id: Math.random().toString(36).slice(2),
             ...values,
+            maxTemperature: Number(values.maxTemperature),
           },
         ]);
       }
@@ -97,28 +100,33 @@ const Shirts = ({
   };
 
   useEffect(() => {
-    if (currentShirt) {
+    if (currentJacket) {
       setMode("view");
     } else {
       setMode("submit");
     }
-  }, [currentShirt]);
+  }, [currentJacket]);
 
-  if (!shirts) return null;
+  if (!jackets) return null;
 
   return (
     <>
       <Grid templateColumns="repeat(3, 1fr)" gap={2}>
-        {shirts.map((shirt) => (
+        {jackets.map((jacket) => (
           <OutfitItem
-            key={shirt.id}
-            title={shirt.title}
-            description={shirt.description}
-            imageUrl={shirt.imageUrl}
+            key={jacket.id}
+            title={jacket.title}
+            description={jacket.description}
+            imageUrl={jacket.imageUrl}
             onClick={() => {
-              const { title, description, imageUrl } = shirt;
-              setFormValues({ title, description, imageUrl });
-              setCurrentShirt(shirt);
+              const { title, description, imageUrl, maxTemperature } = jacket;
+              setFormValues({
+                title,
+                description,
+                imageUrl,
+                maxTemperature: String(maxTemperature),
+              });
+              setCurrentJacket(jacket);
               setActiveModalIndex(modalIndex);
             }}
           />
@@ -229,6 +237,17 @@ const Shirts = ({
                 onBlur={onBlur}
                 isReadOnly={mode === "view"}
               />
+
+              <FormInput
+                label="Maximum Temperature in Celsius"
+                name="maxTemperature"
+                value={values.maxTemperature}
+                error={errors.maxTemperature}
+                onChange={onChange}
+                onBlur={onBlur}
+                type="number"
+                isReadOnly={mode === "view"}
+              />
             </Stack>
           </DrawerBody>
         </DrawerContent>
@@ -237,4 +256,4 @@ const Shirts = ({
   );
 };
 
-export default Shirts;
+export default Jackets;

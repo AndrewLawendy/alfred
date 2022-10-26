@@ -19,22 +19,22 @@ import PhotoInput from "components/PhotoInput";
 
 import useRequiredForm from "hooks/useRequiredForm";
 
-import { Shirt } from "utils/types";
+import { ShoePair } from "utils/types";
 
-type ShirtsProps = {
+type ShoesProps = {
   modalIndex: number;
   activeModalIndex: number | undefined;
   setActiveModalIndex: (index?: number) => void;
 };
 
-const Shirts = ({
+const Shoes = ({
   modalIndex,
   activeModalIndex,
   setActiveModalIndex,
-}: ShirtsProps) => {
+}: ShoesProps) => {
   const [mode, setMode] = useState<"submit" | "view">("view");
-  const [shirts, setShirts] = useState<Shirt[]>([]);
-  const [currentShirt, setCurrentShirt] = useState<Shirt>();
+  const [shoes, setShoes] = useState<ShoePair[]>([]);
+  const [currentShoePair, setCurrentShoePair] = useState<ShoePair>();
   const {
     values,
     errors,
@@ -52,14 +52,14 @@ const Shirts = ({
   });
 
   const isOpen = activeModalIndex === modalIndex;
-  const isView = mode === "view" && currentShirt !== undefined;
-  const isEdit = mode === "submit" && currentShirt !== undefined;
+  const isView = mode === "view" && currentShoePair !== undefined;
+  const isEdit = mode === "submit" && currentShoePair !== undefined;
 
   const heading = isView
-    ? "View your shirt"
+    ? "View your shoes"
     : isEdit
-    ? "Edit your shirt"
-    : "Add new shirt";
+    ? "Edit your shoes"
+    : "Add new shoes";
 
   const onClose = () => {
     setActiveModalIndex();
@@ -67,26 +67,26 @@ const Shirts = ({
 
   const reset = () => {
     destroyForm();
-    setCurrentShirt(undefined);
+    setCurrentShoePair(undefined);
   };
 
   const onSubmit = () => {
     handleSubmit((values) => {
-      if (currentShirt) {
-        const currentShirtIndex = shirts.findIndex(
-          ({ id }) => id === currentShirt.id
+      if (currentShoePair) {
+        const currentShoePairIndex = shoes.findIndex(
+          ({ id }) => id === currentShoePair.id
         );
-        shirts.splice(currentShirtIndex, 1, {
-          ...currentShirt,
+        shoes.splice(currentShoePairIndex, 1, {
+          ...currentShoePair,
           ...values,
         });
 
-        setShirts([...shirts]);
+        setShoes([...shoes]);
       } else {
-        setShirts([
-          ...shirts,
+        setShoes([
+          ...shoes,
           {
-            type: "shirt",
+            type: "shoes",
             id: Math.random().toString(36).slice(2),
             ...values,
           },
@@ -97,28 +97,32 @@ const Shirts = ({
   };
 
   useEffect(() => {
-    if (currentShirt) {
+    if (currentShoePair) {
       setMode("view");
     } else {
       setMode("submit");
     }
-  }, [currentShirt]);
+  }, [currentShoePair]);
 
-  if (!shirts) return null;
+  if (!shoes) return null;
 
   return (
     <>
-      <Grid templateColumns="repeat(3, 1fr)" gap={2}>
-        {shirts.map((shirt) => (
+      <Grid
+        templateColumns="repeat(3, 1fr)"
+        gap={2}
+        sx={{ backgroundColor: "white" }}
+      >
+        {shoes.map((shoePair) => (
           <OutfitItem
-            key={shirt.id}
-            title={shirt.title}
-            description={shirt.description}
-            imageUrl={shirt.imageUrl}
+            key={shoePair.id}
+            title={shoePair.title}
+            description={shoePair.description}
+            imageUrl={shoePair.imageUrl}
             onClick={() => {
-              const { title, description, imageUrl } = shirt;
+              const { title, description, imageUrl } = shoePair;
               setFormValues({ title, description, imageUrl });
-              setCurrentShirt(shirt);
+              setCurrentShoePair(shoePair);
               setActiveModalIndex(modalIndex);
             }}
           />
@@ -237,4 +241,4 @@ const Shirts = ({
   );
 };
 
-export default Shirts;
+export default Shoes;
