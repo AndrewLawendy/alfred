@@ -10,6 +10,10 @@ import {
   DrawerOverlay,
   DrawerContent,
   Stack,
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  AlertDescription,
 } from "@chakra-ui/react";
 import { MdCheck, MdArrowBack, MdEdit } from "react-icons/md";
 
@@ -108,22 +112,40 @@ const Belts = ({
 
   return (
     <>
-      <Grid templateColumns="repeat(3, 1fr)" gap={2}>
-        {belts.map((belt) => (
-          <OutfitItem
-            key={belt.id}
-            title={belt.title}
-            description={belt.description}
-            imageUrl={belt.imageUrl}
-            onClick={() => {
-              const { title, description, imageUrl } = belt;
-              setFormValues({ title, description, imageUrl });
-              setCurrentBelt(belt);
-              setActiveModalIndex(modalIndex);
-            }}
-          />
-        ))}
-      </Grid>
+      {belts.length > 0 ? (
+        <Grid templateColumns="repeat(3, 1fr)" gap={2}>
+          {belts.map((belt) => (
+            <OutfitItem
+              key={belt.id}
+              title={belt.title}
+              description={belt.description}
+              imageUrl={belt.imageUrl}
+              onClick={() => {
+                const { title, description, imageUrl } = belt;
+                setFormValues({ title, description, imageUrl });
+                setCurrentBelt(belt);
+                setActiveModalIndex(modalIndex);
+              }}
+            />
+          ))}
+        </Grid>
+      ) : (
+        <Alert
+          status="warning"
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+          textAlign="center"
+        >
+          <AlertIcon boxSize="30px" mr={0} />
+          <AlertTitle mt={4} mb={1} fontSize="lg">
+            No Belts
+          </AlertTitle>
+          <AlertDescription maxWidth="sm">
+            Click on Add and choose Belts to add
+          </AlertDescription>
+        </Alert>
+      )}
 
       <Drawer
         isOpen={isOpen}

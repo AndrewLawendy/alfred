@@ -10,6 +10,10 @@ import {
   DrawerOverlay,
   DrawerContent,
   Stack,
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  AlertDescription,
 } from "@chakra-ui/react";
 import { MdCheck, MdArrowBack, MdEdit } from "react-icons/md";
 
@@ -108,22 +112,40 @@ const Shirts = ({
 
   return (
     <>
-      <Grid templateColumns="repeat(3, 1fr)" gap={2}>
-        {shirts.map((shirt) => (
-          <OutfitItem
-            key={shirt.id}
-            title={shirt.title}
-            description={shirt.description}
-            imageUrl={shirt.imageUrl}
-            onClick={() => {
-              const { title, description, imageUrl } = shirt;
-              setFormValues({ title, description, imageUrl });
-              setCurrentShirt(shirt);
-              setActiveModalIndex(modalIndex);
-            }}
-          />
-        ))}
-      </Grid>
+      {shirts.length > 0 ? (
+        <Grid templateColumns="repeat(3, 1fr)" gap={2}>
+          {shirts.map((shirt) => (
+            <OutfitItem
+              key={shirt.id}
+              title={shirt.title}
+              description={shirt.description}
+              imageUrl={shirt.imageUrl}
+              onClick={() => {
+                const { title, description, imageUrl } = shirt;
+                setFormValues({ title, description, imageUrl });
+                setCurrentShirt(shirt);
+                setActiveModalIndex(modalIndex);
+              }}
+            />
+          ))}
+        </Grid>
+      ) : (
+        <Alert
+          status="warning"
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+          textAlign="center"
+        >
+          <AlertIcon boxSize="30px" mr={0} />
+          <AlertTitle mt={4} mb={1} fontSize="lg">
+            No Shirts
+          </AlertTitle>
+          <AlertDescription maxWidth="sm">
+            Click on Add and choose Shirts to add
+          </AlertDescription>
+        </Alert>
+      )}
 
       <Drawer
         isOpen={isOpen}

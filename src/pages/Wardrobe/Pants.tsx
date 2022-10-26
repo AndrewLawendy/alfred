@@ -10,6 +10,10 @@ import {
   DrawerOverlay,
   DrawerContent,
   Stack,
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  AlertDescription,
 } from "@chakra-ui/react";
 import { MdCheck, MdArrowBack, MdEdit } from "react-icons/md";
 
@@ -108,22 +112,40 @@ const Pants = ({
 
   return (
     <>
-      <Grid templateColumns="repeat(3, 1fr)" gap={2}>
-        {pants.map((pantsPair) => (
-          <OutfitItem
-            key={pantsPair.id}
-            title={pantsPair.title}
-            description={pantsPair.description}
-            imageUrl={pantsPair.imageUrl}
-            onClick={() => {
-              const { title, description, imageUrl } = pantsPair;
-              setFormValues({ title, description, imageUrl });
-              setCurrentPantsPair(pantsPair);
-              setActiveModalIndex(modalIndex);
-            }}
-          />
-        ))}
-      </Grid>
+      {pants.length > 0 ? (
+        <Grid templateColumns="repeat(3, 1fr)" gap={2}>
+          {pants.map((pantsPair) => (
+            <OutfitItem
+              key={pantsPair.id}
+              title={pantsPair.title}
+              description={pantsPair.description}
+              imageUrl={pantsPair.imageUrl}
+              onClick={() => {
+                const { title, description, imageUrl } = pantsPair;
+                setFormValues({ title, description, imageUrl });
+                setCurrentPantsPair(pantsPair);
+                setActiveModalIndex(modalIndex);
+              }}
+            />
+          ))}
+        </Grid>
+      ) : (
+        <Alert
+          status="warning"
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+          textAlign="center"
+        >
+          <AlertIcon boxSize="30px" mr={0} />
+          <AlertTitle mt={4} mb={1} fontSize="lg">
+            No Pants
+          </AlertTitle>
+          <AlertDescription maxWidth="sm">
+            Click on Add and choose Pants to add
+          </AlertDescription>
+        </Alert>
+      )}
 
       <Drawer
         isOpen={isOpen}

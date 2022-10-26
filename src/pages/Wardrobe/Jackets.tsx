@@ -10,6 +10,10 @@ import {
   DrawerOverlay,
   DrawerContent,
   Stack,
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  AlertDescription,
 } from "@chakra-ui/react";
 import { MdCheck, MdArrowBack, MdEdit } from "react-icons/md";
 
@@ -111,27 +115,45 @@ const Jackets = ({
 
   return (
     <>
-      <Grid templateColumns="repeat(3, 1fr)" gap={2}>
-        {jackets.map((jacket) => (
-          <OutfitItem
-            key={jacket.id}
-            title={jacket.title}
-            description={jacket.description}
-            imageUrl={jacket.imageUrl}
-            onClick={() => {
-              const { title, description, imageUrl, maxTemperature } = jacket;
-              setFormValues({
-                title,
-                description,
-                imageUrl,
-                maxTemperature: String(maxTemperature),
-              });
-              setCurrentJacket(jacket);
-              setActiveModalIndex(modalIndex);
-            }}
-          />
-        ))}
-      </Grid>
+      {jackets.length > 0 ? (
+        <Grid templateColumns="repeat(3, 1fr)" gap={2}>
+          {jackets.map((jacket) => (
+            <OutfitItem
+              key={jacket.id}
+              title={jacket.title}
+              description={jacket.description}
+              imageUrl={jacket.imageUrl}
+              onClick={() => {
+                const { title, description, imageUrl, maxTemperature } = jacket;
+                setFormValues({
+                  title,
+                  description,
+                  imageUrl,
+                  maxTemperature: String(maxTemperature),
+                });
+                setCurrentJacket(jacket);
+                setActiveModalIndex(modalIndex);
+              }}
+            />
+          ))}
+        </Grid>
+      ) : (
+        <Alert
+          status="warning"
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+          textAlign="center"
+        >
+          <AlertIcon boxSize="30px" mr={0} />
+          <AlertTitle mt={4} mb={1} fontSize="lg">
+            No Jackets
+          </AlertTitle>
+          <AlertDescription maxWidth="sm">
+            Click on Add and choose Jackets to add
+          </AlertDescription>
+        </Alert>
+      )}
 
       <Drawer
         isOpen={isOpen}

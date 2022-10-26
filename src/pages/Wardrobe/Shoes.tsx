@@ -10,6 +10,10 @@ import {
   DrawerOverlay,
   DrawerContent,
   Stack,
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  AlertDescription,
 } from "@chakra-ui/react";
 import { MdCheck, MdArrowBack, MdEdit } from "react-icons/md";
 
@@ -108,26 +112,44 @@ const Shoes = ({
 
   return (
     <>
-      <Grid
-        templateColumns="repeat(3, 1fr)"
-        gap={2}
-        sx={{ backgroundColor: "white" }}
-      >
-        {shoes.map((shoePair) => (
-          <OutfitItem
-            key={shoePair.id}
-            title={shoePair.title}
-            description={shoePair.description}
-            imageUrl={shoePair.imageUrl}
-            onClick={() => {
-              const { title, description, imageUrl } = shoePair;
-              setFormValues({ title, description, imageUrl });
-              setCurrentShoePair(shoePair);
-              setActiveModalIndex(modalIndex);
-            }}
-          />
-        ))}
-      </Grid>
+      {shoes.length > 0 ? (
+        <Grid
+          templateColumns="repeat(3, 1fr)"
+          gap={2}
+          sx={{ backgroundColor: "white" }}
+        >
+          {shoes.map((shoePair) => (
+            <OutfitItem
+              key={shoePair.id}
+              title={shoePair.title}
+              description={shoePair.description}
+              imageUrl={shoePair.imageUrl}
+              onClick={() => {
+                const { title, description, imageUrl } = shoePair;
+                setFormValues({ title, description, imageUrl });
+                setCurrentShoePair(shoePair);
+                setActiveModalIndex(modalIndex);
+              }}
+            />
+          ))}
+        </Grid>
+      ) : (
+        <Alert
+          status="warning"
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+          textAlign="center"
+        >
+          <AlertIcon boxSize="30px" mr={0} />
+          <AlertTitle mt={4} mb={1} fontSize="lg">
+            No Shoes
+          </AlertTitle>
+          <AlertDescription maxWidth="sm">
+            Click on Add and choose Shoes to add
+          </AlertDescription>
+        </Alert>
+      )}
 
       <Drawer
         isOpen={isOpen}

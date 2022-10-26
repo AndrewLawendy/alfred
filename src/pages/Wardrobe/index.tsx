@@ -46,9 +46,12 @@ const Wardrobe = () => {
 
   return (
     <>
-      <Accordion index={activeItem}>
+      <Accordion index={activeItem} sx={{ backgroundColor: "white" }}>
         <AccordionItem>
-          <AccordionButton onClick={() => pickActiveDrawer(0)}>
+          <AccordionButton
+            onClick={() => pickActiveDrawer(0)}
+            sx={{ boxShadow: activeItem === 0 ? "material" : undefined }}
+          >
             <Heading as="h5" size="md" flex="1" textAlign="left">
               Shirts
             </Heading>
@@ -65,7 +68,10 @@ const Wardrobe = () => {
         </AccordionItem>
 
         <AccordionItem>
-          <AccordionButton onClick={() => pickActiveDrawer(1)}>
+          <AccordionButton
+            onClick={() => pickActiveDrawer(1)}
+            sx={{ boxShadow: activeItem === 1 ? "material" : undefined }}
+          >
             <Heading as="h5" size="md" flex="1" textAlign="left">
               Jackets
             </Heading>
@@ -82,7 +88,10 @@ const Wardrobe = () => {
         </AccordionItem>
 
         <AccordionItem>
-          <AccordionButton onClick={() => pickActiveDrawer(2)}>
+          <AccordionButton
+            onClick={() => pickActiveDrawer(2)}
+            sx={{ boxShadow: activeItem === 2 ? "material" : undefined }}
+          >
             <Heading as="h5" size="md" flex="1" textAlign="left">
               Belts
             </Heading>
@@ -99,7 +108,10 @@ const Wardrobe = () => {
         </AccordionItem>
 
         <AccordionItem>
-          <AccordionButton onClick={() => pickActiveDrawer(3)}>
+          <AccordionButton
+            onClick={() => pickActiveDrawer(3)}
+            sx={{ boxShadow: activeItem === 3 ? "material" : undefined }}
+          >
             <Heading as="h5" size="md" flex="1" textAlign="left">
               Pants
             </Heading>
@@ -116,7 +128,10 @@ const Wardrobe = () => {
         </AccordionItem>
 
         <AccordionItem>
-          <AccordionButton onClick={() => pickActiveDrawer(4)}>
+          <AccordionButton
+            onClick={() => pickActiveDrawer(4)}
+            sx={{ boxShadow: activeItem === 4 ? "material" : undefined }}
+          >
             <Heading as="h5" size="md" flex="1" textAlign="left">
               Shoes
             </Heading>
