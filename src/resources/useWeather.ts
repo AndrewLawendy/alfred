@@ -1,4 +1,4 @@
-import useFetch from "hooks.ts/useFetch";
+import useFetch from "hooks/useFetch";
 
 export type WeatherResponse = {
   coord: Coord;

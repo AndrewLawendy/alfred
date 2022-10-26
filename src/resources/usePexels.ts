@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { createClient, PhotosWithTotalResults } from "pexels";
 
-import useFetch from "hooks.ts/useFetch";
+import useFetch from "hooks/useFetch";
 
 const client = createClient(process.env.REACT_APP_PEXELS_API_ID as string);
 
