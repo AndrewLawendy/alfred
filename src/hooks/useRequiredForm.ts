@@ -1,20 +1,16 @@
 import { useState, useEffect, ChangeEvent, FocusEvent } from "react";
 
-export type Values = {
-  [key: string]: string;
-};
-
 export type Errors = {
   [key: string]: string | null;
 };
 
-type Touched = { [key: string]: boolean };
-
-const useRequiredForm = (initialFormValue: Values) => {
+const useRequiredForm = <T extends Record<string, unknown>>(
+  initialFormValue: T
+) => {
   const [initialValues, setInitialValues] = useState(initialFormValue);
   const [values, setValues] = useState(initialFormValue);
   const [errors, setErrors] = useState<Errors>({});
-  const [touched, setTouched] = useState<Touched>({});
+  const [touched, setTouched] = useState<Partial<Record<keyof T, unknown>>>({});
   const [isValid, setValid] = useState(false);
 
   useEffect(() => {
@@ -31,7 +27,7 @@ const useRequiredForm = (initialFormValue: Values) => {
     setFieldTouched(name);
   }
 
-  function reInitializeForm(values: Values) {
+  function reInitializeForm(values: T) {
     setInitialValues(values);
   }
 
@@ -41,22 +37,22 @@ const useRequiredForm = (initialFormValue: Values) => {
     setErrors({});
   }
 
-  function handleSubmit(cb: (values: Values) => void) {
+  function handleSubmit(cb: (values: T) => void) {
     touchForm();
 
     const isFormValid = validateForm();
     if (isFormValid) cb(values);
   }
 
-  function setFieldValue(name: string, value: string) {
+  function setFieldValue(name: keyof T, value: unknown) {
     setValues({ ...values, [name]: value });
   }
 
-  function setFormValues(values: Values) {
+  function setFormValues(values: T) {
     setValues(values);
   }
 
-  function setFieldTouched(name: string) {
+  function setFieldTouched(name: keyof T) {
     if (!touched[name]) {
       setTouched({ ...touched, [name]: true });
     }
