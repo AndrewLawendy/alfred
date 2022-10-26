@@ -1,6 +1,7 @@
 export interface Shirt {
   type: "shirt";
+  id: string;
   title: string;
   description: string;
-  imgSrc: string;
+  imageUrl: string;
 }

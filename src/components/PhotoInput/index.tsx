@@ -22,19 +22,19 @@ import { GrGallery } from "react-icons/gr";
 interface PhotoInputProps extends Omit<InputProps, "onChange"> {
   onChange: (file: File) => void;
   onBlur?: () => void;
-  initialImgSrc?: string;
+  initialImageUrl?: string;
   error?: string | null;
 }
 
 const PhotoInput = ({
-  initialImgSrc = "",
+  initialImageUrl = "",
   onChange,
   onBlur,
   error,
   ...props
 }: PhotoInputProps) => {
   const photoDrawerRef = useRef(null);
-  const [imgSrc, setImgSrc] = useState<string>(initialImgSrc);
+  const [imgSrc, setImgSrc] = useState<string>(initialImageUrl);
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

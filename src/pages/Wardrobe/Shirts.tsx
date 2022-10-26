@@ -17,8 +17,9 @@ import OutfitItem from "components/OutfitItem";
 import FormInput from "components/FormInput";
 import PhotoInput from "components/PhotoInput";
 
-import usePexels from "resources/usePexels";
 import useRequiredForm from "hooks/useRequiredForm";
+
+import { Shirt } from "utils/types";
 
 type ShirtsProps = {
   modalIndex: number;
@@ -32,19 +33,20 @@ const Shirts = ({
   setActiveModalIndex,
 }: ShirtsProps) => {
   const [mode, setMode] = useState<"submit" | "view">("view");
-  const { data: shirts } = usePexels("shirt", 7);
+  const [shirts, setShirts] = useState<Shirt[]>([]);
   const {
     values,
     errors,
     onChange,
     onBlur,
+    handleSubmit,
     setFieldValue,
     setFieldTouched,
     destroyForm,
   } = useRequiredForm({
     title: "",
     description: "",
-    imgSrc: "",
+    imageUrl: "",
   });
 
   const isOpen = activeModalIndex === modalIndex;
@@ -62,7 +64,21 @@ const Shirts = ({
     setActiveModalIndex();
   };
 
-  const submit = () => false;
+  const submit = () => {
+    handleSubmit(({ title, description, imageUrl }) => {
+      onClose();
+      setShirts([
+        ...shirts,
+        {
+          type: "shirt",
+          title,
+          description,
+          imageUrl,
+          id: Math.random().toString(36).slice(2),
+        },
+      ]);
+    });
+  };
 
   const reset = () => {
     destroyForm();
@@ -73,13 +89,12 @@ const Shirts = ({
   return (
     <>
       <Grid templateColumns="repeat(3, 1fr)" gap={2}>
-        {shirts.photos.map((shirt) => (
+        {shirts.map((shirt) => (
           <OutfitItem
             key={shirt.id}
-            title={shirt.photographer}
-            description={shirt.alt || ""}
-            imageUrl={shirt.src.small}
-            cursor="pointer"
+            title={shirt.title}
+            description={shirt.description}
+            imageUrl={shirt.imageUrl}
           />
         ))}
       </Grid>
@@ -157,15 +172,15 @@ const Shirts = ({
           <DrawerBody>
             <Stack spacing={4} sx={{ py: 4 }}>
               <PhotoInput
-                name="imgSrc"
-                initialImgSrc={values.imgSrc}
-                error={errors.imgSrc}
+                name="imageUrl"
+                initialImageUrl={values.imageUrl}
+                error={errors.imageUrl}
                 onChange={(file) => {
-                  const imgSrc = URL.createObjectURL(file);
-                  setFieldValue("imgSrc", imgSrc);
+                  const imageUrl = URL.createObjectURL(file);
+                  setFieldValue("imageUrl", imageUrl);
                 }}
                 onBlur={() => {
-                  setFieldTouched("imgSrc");
+                  setFieldTouched("imageUrl");
                 }}
               />
 
