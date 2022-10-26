@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Grid,
   IconButton,
@@ -34,6 +34,7 @@ const Shirts = ({
 }: ShirtsProps) => {
   const [mode, setMode] = useState<"submit" | "view">("view");
   const [shirts, setShirts] = useState<Shirt[]>([]);
+  const [currentShirt, setCurrentShirt] = useState<Shirt>();
   const {
     values,
     errors,
@@ -42,6 +43,7 @@ const Shirts = ({
     handleSubmit,
     setFieldValue,
     setFieldTouched,
+    setFormValues,
     destroyForm,
   } = useRequiredForm({
     title: "",
@@ -50,10 +52,9 @@ const Shirts = ({
   });
 
   const isOpen = activeModalIndex === modalIndex;
-  const currentOutfit = undefined;
-  const isView = mode === "view" && currentOutfit !== undefined;
-  const isEdit = mode === "submit" && currentOutfit !== undefined;
-  //   const isAdd = mode === "submit" && currentOutfit === undefined;
+  const isView = mode === "view" && currentShirt !== undefined;
+  const isEdit = mode === "submit" && currentShirt !== undefined;
+  // const isAdd = mode === "submit" && currentShirt === undefined;
   const heading = isView
     ? "View your shirt"
     : isEdit
@@ -64,25 +65,48 @@ const Shirts = ({
     setActiveModalIndex();
   };
 
-  const submit = () => {
+  const reset = () => {
+    destroyForm();
+    setCurrentShirt(undefined);
+  };
+
+  const onSubmit = () => {
     handleSubmit(({ title, description, imageUrl }) => {
-      onClose();
-      setShirts([
-        ...shirts,
-        {
-          type: "shirt",
+      if (currentShirt) {
+        const currentShirtIndex = shirts.findIndex(
+          ({ id }) => id === currentShirt.id
+        );
+        shirts.splice(currentShirtIndex, 1, {
+          ...currentShirt,
           title,
           description,
           imageUrl,
-          id: Math.random().toString(36).slice(2),
-        },
-      ]);
+        });
+
+        setShirts([...shirts]);
+      } else {
+        setShirts([
+          ...shirts,
+          {
+            type: "shirt",
+            title,
+            description,
+            imageUrl,
+            id: Math.random().toString(36).slice(2),
+          },
+        ]);
+      }
+      onClose();
     });
   };
 
-  const reset = () => {
-    destroyForm();
-  };
+  useEffect(() => {
+    if (currentShirt) {
+      setMode("view");
+    } else {
+      setMode("submit");
+    }
+  }, [currentShirt]);
 
   if (!shirts) return null;
 
@@ -95,6 +119,12 @@ const Shirts = ({
             title={shirt.title}
             description={shirt.description}
             imageUrl={shirt.imageUrl}
+            onClick={() => {
+              const { title, description, imageUrl } = shirt;
+              setFormValues({ title, description, imageUrl });
+              setCurrentShirt(shirt);
+              setActiveModalIndex(modalIndex);
+            }}
           />
         ))}
       </Grid>
@@ -153,7 +183,7 @@ const Shirts = ({
             ) : (
               <IconButton
                 colorScheme="teal"
-                onClick={submit}
+                onClick={onSubmit}
                 aria-label="Submit New Outfit"
                 size="sm"
                 icon={
@@ -182,6 +212,7 @@ const Shirts = ({
                 onBlur={() => {
                   setFieldTouched("imageUrl");
                 }}
+                disabled={mode === "view"}
               />
 
               <FormInput
@@ -191,6 +222,7 @@ const Shirts = ({
                 error={errors.title}
                 onChange={onChange}
                 onBlur={onBlur}
+                isReadOnly={mode === "view"}
               />
               <FormInput
                 label="Description"
@@ -199,6 +231,7 @@ const Shirts = ({
                 error={errors.description}
                 onChange={onChange}
                 onBlur={onBlur}
+                isReadOnly={mode === "view"}
               />
             </Stack>
           </DrawerBody>

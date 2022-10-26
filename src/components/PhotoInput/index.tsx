@@ -22,6 +22,7 @@ import { GrGallery } from "react-icons/gr";
 interface PhotoInputProps extends Omit<InputProps, "onChange"> {
   onChange: (file: File) => void;
   onBlur?: () => void;
+  disabled?: boolean;
   initialImageUrl?: string;
   error?: string | null;
 }
@@ -30,6 +31,7 @@ const PhotoInput = ({
   initialImageUrl = "",
   onChange,
   onBlur,
+  disabled,
   error,
   ...props
 }: PhotoInputProps) => {
@@ -53,6 +55,7 @@ const PhotoInput = ({
         <Box
           as="button"
           onClick={onOpen}
+          disabled={disabled}
           sx={{
             width: "80vw",
             height: "80vw",
@@ -132,6 +135,7 @@ const PhotoInput = ({
                     <Text>Take a photo</Text>
                   </FormLabel>
                 </GridItem>
+
                 <GridItem sx={{ height: "40vw" }}>
                   <Input
                     {...props}

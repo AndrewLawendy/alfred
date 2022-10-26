@@ -52,6 +52,10 @@ const useRequiredForm = (initialFormValue: Values) => {
     setValues({ ...values, [name]: value });
   }
 
+  function setFormValues(values: Values) {
+    setValues(values);
+  }
+
   function setFieldTouched(name: string) {
     if (!touched[name]) {
       setTouched({ ...touched, [name]: true });
@@ -91,6 +95,7 @@ const useRequiredForm = (initialFormValue: Values) => {
     onBlur,
     setFieldValue,
     setFieldTouched,
+    setFormValues,
     destroyForm,
     reInitializeForm,
     isValid,
