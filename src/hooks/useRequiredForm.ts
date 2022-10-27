@@ -37,11 +37,13 @@ const useRequiredForm = <T extends Record<string, unknown>>(
     setErrors({});
   }
 
-  function handleSubmit(cb: (values: T) => void) {
-    touchForm();
+  function handleSubmit() {
+    return new Promise<T>((resolve) => {
+      touchForm();
 
-    const isFormValid = validateForm();
-    if (isFormValid) cb(values);
+      const isFormValid = validateForm();
+      if (isFormValid) resolve(values);
+    });
   }
 
   function setFieldValue(name: keyof T, value: unknown) {
