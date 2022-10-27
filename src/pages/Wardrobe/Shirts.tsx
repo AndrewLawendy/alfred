@@ -75,7 +75,7 @@ const Shirts = ({
   };
 
   const onSubmit = () => {
-    handleSubmit((values) => {
+    handleSubmit().then((values) => {
       if (currentShirt) {
         const currentShirtIndex = shirts.findIndex(
           ({ id }) => id === currentShirt.id

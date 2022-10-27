@@ -75,7 +75,7 @@ const Shoes = ({
   };
 
   const onSubmit = () => {
-    handleSubmit((values) => {
+    handleSubmit().then((values) => {
       if (currentShoePair) {
         const currentShoePairIndex = shoes.findIndex(
           ({ id }) => id === currentShoePair.id

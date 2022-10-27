@@ -76,7 +76,7 @@ const Jackets = ({
   };
 
   const onSubmit = () => {
-    handleSubmit((values) => {
+    handleSubmit().then((values) => {
       if (currentJacket) {
         const currentJacketIndex = jackets.findIndex(
           ({ id }) => id === currentJacket.id

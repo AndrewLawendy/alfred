@@ -75,7 +75,7 @@ const Belts = ({
   };
 
   const onSubmit = () => {
-    handleSubmit((values) => {
+    handleSubmit().then((values) => {
       if (currentBelt) {
         const currentBeltIndex = belts.findIndex(
           ({ id }) => id === currentBelt.id
