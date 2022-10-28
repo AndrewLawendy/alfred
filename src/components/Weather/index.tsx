@@ -7,7 +7,7 @@ const Weather = () => {
   const [weather] = data?.weather || [];
 
   if (isLoading || !data) {
-    return <Spinner color="teal.400" />;
+    return <Spinner speed="0.65s" emptyColor="gray.200" color="teal.500" />;
   }
 
   return (

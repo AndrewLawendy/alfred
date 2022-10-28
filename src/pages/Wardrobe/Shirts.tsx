@@ -20,8 +20,10 @@ import { MdCheck, MdArrowBack, MdEdit } from "react-icons/md";
 import OutfitItem from "components/OutfitItem";
 import FormInput from "components/FormInput";
 import PhotoInput from "components/PhotoInput";
+import Loading from "components/Loading";
 
 import useRequiredForm from "hooks/useRequiredForm";
+import useData from "resources/useData";
 
 import { Shirt } from "utils/types";
 
@@ -36,9 +38,10 @@ const Shirts = ({
   activeModalIndex,
   setActiveModalIndex,
 }: ShirtsProps) => {
+  const [shirts, isShirtLoading] = useData<Shirt>("shirts");
   const [mode, setMode] = useState<"submit" | "view">("view");
-  const [shirts, setShirts] = useState<Shirt[]>([]);
   const [currentShirt, setCurrentShirt] = useState<Shirt>();
+
   const {
     values,
     errors,
@@ -77,24 +80,23 @@ const Shirts = ({
   const onSubmit = () => {
     handleSubmit().then((values) => {
       if (currentShirt) {
-        const currentShirtIndex = shirts.findIndex(
-          ({ id }) => id === currentShirt.id
-        );
-        shirts.splice(currentShirtIndex, 1, {
+        const currentShirtIndex =
+          shirts?.findIndex(({ id }) => id === currentShirt.id) || -1;
+        shirts?.splice(currentShirtIndex, 1, {
           ...currentShirt,
           ...values,
         });
 
-        setShirts([...shirts]);
+        // setShirts([...shirts]);
       } else {
-        setShirts([
-          ...shirts,
-          {
-            type: "shirt",
-            id: Math.random().toString(36).slice(2),
-            ...values,
-          },
-        ]);
+        // setShirts([
+        //   ...shirts,
+        //   {
+        //     type: "shirt",
+        //     id: Math.random().toString(36).slice(2),
+        //     ...values,
+        //   },
+        // ]);
       }
       onClose();
     });
@@ -108,7 +110,9 @@ const Shirts = ({
     }
   }, [currentShirt]);
 
-  if (!shirts) return null;
+  if (isShirtLoading || !shirts) {
+    return <Loading message="Loading your shirts, please wait" />;
+  }
 
   return (
     <>

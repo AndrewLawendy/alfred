@@ -1,40 +1,40 @@
-export interface Shirt {
+export type Shirt = {
   type: "shirt";
   id: string;
   title: string;
   description: string;
   imageUrl: string;
-}
+};
 
-export interface Belt {
+export type Belt = {
   type: "belt";
   id: string;
   title: string;
   description: string;
   imageUrl: string;
-}
+};
 
-export interface PantsPair {
+export type PantsPair = {
   type: "pants";
   id: string;
   title: string;
   description: string;
   imageUrl: string;
-}
+};
 
-export interface ShoePair {
+export type ShoePair = {
   type: "shoes";
   id: string;
   title: string;
   description: string;
   imageUrl: string;
-}
+};
 
-export interface Jacket {
+export type Jacket = {
   type: "jacket";
   id: string;
   title: string;
   description: string;
   imageUrl: string;
   maxTemperature: number;
-}
+};
