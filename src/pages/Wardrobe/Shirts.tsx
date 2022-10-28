@@ -25,6 +25,8 @@ import Loading from "components/Loading";
 import useRequiredForm from "hooks/useRequiredForm";
 import useData from "resources/useData";
 import useAddDocument from "resources/useAddDocument";
+import useUpload from "resources/useUpload";
+import geFileURL from "utils/geFileURL";
 
 import { Shirt } from "utils/types";
 
@@ -42,7 +44,9 @@ const Shirts = ({
   const [shirts, isShirtLoading] = useData<Shirt>("shirts");
   const [mode, setMode] = useState<"submit" | "view">("view");
   const [currentShirt, setCurrentShirt] = useState<Shirt>();
+  const [currentFile, setCurrentFile] = useState<File>();
   const [addShirt] = useAddDocument<Shirt>("shirts");
+  const [upload] = useUpload();
 
   const {
     values,
@@ -91,10 +95,18 @@ const Shirts = ({
 
         // setShirts([...shirts]);
       } else {
-        addShirt({
-          type: "shirt",
-          ...values,
-        });
+        if (currentFile) {
+          const { title, description } = values;
+          upload(currentFile).then(async (response) => {
+            const imageUrl = await geFileURL(response?.metadata.name || "");
+            addShirt({
+              type: "shirt",
+              title,
+              description,
+              imageUrl,
+            });
+          });
+        }
       }
       onClose();
     });
@@ -228,6 +240,7 @@ const Shirts = ({
                 onChange={(file) => {
                   const imageUrl = URL.createObjectURL(file);
                   setFieldValue("imageUrl", imageUrl);
+                  setCurrentFile(file);
                 }}
                 onBlur={() => {
                   setFieldTouched("imageUrl");
