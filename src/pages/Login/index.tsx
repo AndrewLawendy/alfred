@@ -14,13 +14,14 @@ import {
   Icon,
   Spinner,
 } from "@chakra-ui/react";
-import { FaFacebookSquare, FaGoogle } from "react-icons/fa";
+import { FaFacebookSquare } from "react-icons/fa";
 import { motion } from "framer-motion";
 
 import useAuth from "hooks/useAuth";
 import { auth } from "utils/firebase";
 
 import Logo from "assets/logo.png";
+import { GoogleLogo } from "components/Icons";
 
 const googleAuthProvider = new GoogleAuthProvider();
 const facebookAuthProvider = new FacebookAuthProvider();
@@ -90,7 +91,7 @@ const Login = () => {
         </motion.div>
         <motion.div variants={item}>
           <Button
-            sx={{ width: "100%" }}
+            sx={{ width: "100%", boxShadow: "material" }}
             size="lg"
             colorScheme="facebook"
             onClick={() => signInWithRedirect(auth, facebookAuthProvider)}
@@ -101,11 +102,12 @@ const Login = () => {
         </motion.div>
         <motion.div variants={item}>
           <Button
-            sx={{ width: "100%", mt: 4 }}
+            sx={{ width: "100%", mt: 4, boxShadow: "material" }}
             size="lg"
-            colorScheme="red"
+            colorScheme="white"
+            variant="outline"
             onClick={() => signInWithRedirect(auth, googleAuthProvider)}
-            leftIcon={<Icon as={FaGoogle} />}
+            leftIcon={<Icon as={GoogleLogo} />}
           >
             Continue with Google
           </Button>
