@@ -14,6 +14,7 @@ import {
   AlertIcon,
   AlertTitle,
   AlertDescription,
+  Progress,
 } from "@chakra-ui/react";
 import { MdCheck, MdArrowBack, MdEdit } from "react-icons/md";
 
@@ -46,7 +47,7 @@ const Shirts = ({
   const [currentShirt, setCurrentShirt] = useState<Shirt>();
   const [currentFile, setCurrentFile] = useState<File>();
   const [addShirt] = useAddDocument<Shirt>("shirts");
-  const [upload] = useUpload();
+  const [uploadShirt, isShirtUploading, uploadSnapshot] = useUpload();
 
   const {
     values,
@@ -97,18 +98,19 @@ const Shirts = ({
       } else {
         if (currentFile) {
           const { title, description } = values;
-          upload(currentFile).then(async (response) => {
+          uploadShirt(currentFile).then(async (response) => {
             const imageUrl = await geFileURL(response?.metadata.name || "");
-            addShirt({
+            await addShirt({
               type: "shirt",
               title,
               description,
               imageUrl,
             });
+
+            onClose();
           });
         }
       }
-      onClose();
     });
   };
 
@@ -218,6 +220,7 @@ const Shirts = ({
                 onClick={onSubmit}
                 aria-label="Submit New Outfit"
                 size="sm"
+                isLoading={isShirtUploading}
                 icon={
                   <Icon
                     as={MdCheck}
@@ -233,20 +236,34 @@ const Shirts = ({
 
           <DrawerBody>
             <Stack spacing={4} sx={{ py: 4 }}>
-              <PhotoInput
-                name="imageUrl"
-                initialImageUrl={values.imageUrl}
-                error={errors.imageUrl}
-                onChange={(file) => {
-                  const imageUrl = URL.createObjectURL(file);
-                  setFieldValue("imageUrl", imageUrl);
-                  setCurrentFile(file);
-                }}
-                onBlur={() => {
-                  setFieldTouched("imageUrl");
-                }}
-                disabled={mode === "view"}
-              />
+              <div>
+                <PhotoInput
+                  name="imageUrl"
+                  initialImageUrl={values.imageUrl}
+                  error={errors.imageUrl}
+                  onChange={(file) => {
+                    const imageUrl = URL.createObjectURL(file);
+                    setFieldValue("imageUrl", imageUrl);
+                    setCurrentFile(file);
+                  }}
+                  onBlur={() => {
+                    setFieldTouched("imageUrl");
+                  }}
+                  disabled={isShirtUploading || mode === "view"}
+                />
+                {uploadSnapshot && (
+                  <Progress
+                    sx={{ mt: 3 }}
+                    colorScheme="teal"
+                    hasStripe
+                    value={
+                      (uploadSnapshot.bytesTransferred /
+                        uploadSnapshot.totalBytes) *
+                      100
+                    }
+                  />
+                )}
+              </div>
 
               <FormInput
                 label="Title"
@@ -255,7 +272,7 @@ const Shirts = ({
                 error={errors.title}
                 onChange={onChange}
                 onBlur={onBlur}
-                isReadOnly={mode === "view"}
+                isReadOnly={isShirtUploading || mode === "view"}
               />
               <FormInput
                 label="Description"
@@ -264,7 +281,7 @@ const Shirts = ({
                 error={errors.description}
                 onChange={onChange}
                 onBlur={onBlur}
-                isReadOnly={mode === "view"}
+                isReadOnly={isShirtUploading || mode === "view"}
               />
             </Stack>
           </DrawerBody>

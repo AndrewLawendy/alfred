@@ -17,7 +17,7 @@ const useUpload = (): [
 ] => {
   const [uploadFile, ...rest] = useUploadFile();
   const upload = (file: File) => {
-    const storageRef = ref(storage, `${file.name}-${Date.now()}`);
+    const storageRef = ref(storage, `${Date.now()}-${file.name}`);
     return uploadFile(storageRef, file, {
       contentType: "image/jpeg",
     });
