@@ -24,6 +24,7 @@ import Loading from "components/Loading";
 
 import useRequiredForm from "hooks/useRequiredForm";
 import useData from "resources/useData";
+import useAddDocument from "resources/useAddDocument";
 
 import { Shirt } from "utils/types";
 
@@ -41,6 +42,7 @@ const Shirts = ({
   const [shirts, isShirtLoading] = useData<Shirt>("shirts");
   const [mode, setMode] = useState<"submit" | "view">("view");
   const [currentShirt, setCurrentShirt] = useState<Shirt>();
+  const [addShirt] = useAddDocument<Shirt>("shirts");
 
   const {
     values,
@@ -89,14 +91,10 @@ const Shirts = ({
 
         // setShirts([...shirts]);
       } else {
-        // setShirts([
-        //   ...shirts,
-        //   {
-        //     type: "shirt",
-        //     id: Math.random().toString(36).slice(2),
-        //     ...values,
-        //   },
-        // ]);
+        addShirt({
+          type: "shirt",
+          ...values,
+        });
       }
       onClose();
     });

@@ -10,7 +10,7 @@ import { useCollectionData } from "react-firebase-hooks/firestore";
 import useAuth from "hooks/useAuth";
 import { db } from "utils/firebase";
 
-const useData = <T extends Record<string, unknown>>(
+const useData = <T>(
   collectionName: string,
   ...queryConstraints: QueryConstraint[]
 ) => {
