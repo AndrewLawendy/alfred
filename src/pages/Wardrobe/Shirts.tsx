@@ -230,6 +230,7 @@ const Shirts = ({
               >
                 {(onOpen) => (
                   <IconButton
+                    isLoading={isLoading}
                     onClick={onOpen}
                     aria-label="Delete shirt"
                     size="sm"
