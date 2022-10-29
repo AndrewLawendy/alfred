@@ -1,7 +1,7 @@
 import { Box, Flex } from "@chakra-ui/react";
 import { MdHome } from "react-icons/md";
 import { GiClothes } from "react-icons/gi";
-import { FaTshirt } from "react-icons/fa";
+import { FaTshirt, FaUser } from "react-icons/fa";
 
 import BottomNavItem from "components/BottomNavItem";
 
@@ -22,6 +22,7 @@ const BottomNav = () => {
         <BottomNavItem to="/" label="Home" icon={MdHome} />
         <BottomNavItem to="/outfits" label="Outfits" icon={FaTshirt} />
         <BottomNavItem to="/wardrobe" label="Wardrobe" icon={GiClothes} />
+        <BottomNavItem to="/account" label="Account" icon={FaUser} />
       </Flex>
     </Box>
   );

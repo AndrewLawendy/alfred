@@ -3,9 +3,12 @@ import { Heading, Button, Flex, Grid } from "@chakra-ui/react";
 import Weather from "components/Weather";
 import OutfitItem from "components/OutfitItem";
 
+import useAuth from "hooks/useAuth";
+
 import usePexels from "resources/usePexels";
 
 const Home = () => {
+  const [user] = useAuth();
   const { data: shirtData, isLoading: isShirtLoading } = usePexels("shirt", 1);
   const { data: beltData, isLoading: isBeltLoading } = usePexels("belt", 1);
   const { data: pantsData, isLoading: isPantsLoading } = usePexels("pants", 1);
@@ -25,6 +28,8 @@ const Home = () => {
   const [pants] = pantsData?.photos || [];
   const [shoes] = shoesData?.photos || [];
 
+  if (!user) return null;
+
   return (
     <>
       <Flex
@@ -35,7 +40,9 @@ const Home = () => {
           mb: 4,
         }}
       >
-        <Heading sx={{ fontFamily: "advent" }}>Hi, Michael</Heading>
+        <Heading sx={{ fontFamily: "advent" }} noOfLines={1}>
+          Hi, {user.displayName}
+        </Heading>
 
         <Weather />
       </Flex>

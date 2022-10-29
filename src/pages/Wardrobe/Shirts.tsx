@@ -14,14 +14,25 @@ import {
   AlertIcon,
   AlertTitle,
   AlertDescription,
+  Progress,
 } from "@chakra-ui/react";
-import { MdCheck, MdArrowBack, MdEdit } from "react-icons/md";
+import { MdCheck, MdArrowBack, MdEdit, MdDeleteForever } from "react-icons/md";
 
 import OutfitItem from "components/OutfitItem";
 import FormInput from "components/FormInput";
 import PhotoInput from "components/PhotoInput";
+import Loading from "components/Loading";
+import Confirm from "components/Confirm";
 
 import useRequiredForm from "hooks/useRequiredForm";
+import useData from "resources/useData";
+import useAddDocument from "resources/useAddDocument";
+import useUploadImage from "resources/useUploadImage";
+import useDeleteImage from "resources/useDeleteImage";
+import useUpdateDocument from "resources/useUpdateDocument";
+import useDeleteDocument from "resources/useDeleteDocument";
+import geFileURL from "utils/geFileURL";
+import resizeImage from "utils/resizeImage";
 
 import { Shirt } from "utils/types";
 
@@ -37,8 +48,16 @@ const Shirts = ({
   setActiveModalIndex,
 }: ShirtsProps) => {
   const [mode, setMode] = useState<"submit" | "view">("view");
-  const [shirts, setShirts] = useState<Shirt[]>([]);
   const [currentShirt, setCurrentShirt] = useState<Shirt>();
+  const [currentFile, setCurrentFile] = useState<File>();
+  const [shirts, isShirtLoading] = useData<Shirt>("shirts");
+  const [addShirt, isAddShirtLoading] = useAddDocument<Shirt>("shirts");
+  const [deleteShirt, isDeletingShirt] = useDeleteDocument("shirts");
+  const [updateShirt, isUpdateShirtLoading] = useUpdateDocument("shirts");
+  const [uploadShirtImage, isShirtImageUploading, uploadSnapshot] =
+    useUploadImage();
+  const [deleteShirtImage, isDeleteShirtImageLoading] = useDeleteImage();
+
   const {
     values,
     errors,
@@ -58,6 +77,12 @@ const Shirts = ({
   const isOpen = activeModalIndex === modalIndex;
   const isView = mode === "view" && currentShirt !== undefined;
   const isEdit = mode === "submit" && currentShirt !== undefined;
+  const isLoading =
+    isAddShirtLoading ||
+    isShirtImageUploading ||
+    isDeleteShirtImageLoading ||
+    isDeletingShirt ||
+    isUpdateShirtLoading;
 
   const heading = isView
     ? "View your shirt"
@@ -77,26 +102,40 @@ const Shirts = ({
   const onSubmit = () => {
     handleSubmit().then((values) => {
       if (currentShirt) {
-        const currentShirtIndex = shirts.findIndex(
-          ({ id }) => id === currentShirt.id
-        );
-        shirts.splice(currentShirtIndex, 1, {
-          ...currentShirt,
-          ...values,
-        });
-
-        setShirts([...shirts]);
+        const isSameImage = currentShirt.imageUrl === values.imageUrl;
+        if (isSameImage) {
+          updateShirt(currentShirt.id, { ...values }).then(onClose);
+        } else if (currentFile) {
+          uploadShirtImage(currentFile, currentShirt.imageUrl).then(
+            async (response) => {
+              const imageUrl = await geFileURL(response?.metadata.name || "");
+              updateShirt(currentShirt.id, {
+                ...values,
+                imageUrl,
+              }).then(onClose);
+            }
+          );
+        }
       } else {
-        setShirts([
-          ...shirts,
-          {
-            type: "shirt",
-            id: Math.random().toString(36).slice(2),
-            ...values,
-          },
-        ]);
+        if (currentFile) {
+          uploadShirtImage(currentFile).then(async (response) => {
+            const imageUrl = await geFileURL(response?.metadata.name || "");
+            await addShirt({
+              ...values,
+              type: "shirt",
+              imageUrl,
+            });
+
+            onClose();
+          });
+        }
       }
-      onClose();
+    });
+  };
+
+  const onDelete = () => {
+    deleteShirtImage(currentShirt?.imageUrl || "").then(() => {
+      deleteShirt((currentShirt as Shirt).id).then(onClose);
     });
   };
 
@@ -108,7 +147,9 @@ const Shirts = ({
     }
   }, [currentShirt]);
 
-  if (!shirts) return null;
+  if (isShirtLoading || !shirts) {
+    return <Loading message="Loading your shirts, please wait" />;
+  }
 
   return (
     <>
@@ -181,11 +222,31 @@ const Shirts = ({
               }
             />
             <Text sx={{ flexGrow: 1 }}>{heading}</Text>
+            {currentShirt && (
+              <Confirm
+                message={`Are you sure you want to delete ${currentShirt.title}?`}
+                onConfirm={onDelete}
+                okText="Delete"
+                okType="red"
+              >
+                {({ onOpen }) => (
+                  <IconButton
+                    isLoading={isLoading}
+                    onClick={onOpen}
+                    aria-label="Delete shirt"
+                    size="sm"
+                    colorScheme="red"
+                    icon={<Icon w={5} h={5} as={MdDeleteForever} />}
+                  />
+                )}
+              </Confirm>
+            )}
+
             {isView ? (
               <IconButton
                 colorScheme="whiteAlpha"
                 onClick={() => setMode("submit")}
-                aria-label="Edit outfit"
+                aria-label="Edit shirt"
                 size="sm"
                 icon={
                   <Icon
@@ -202,8 +263,9 @@ const Shirts = ({
               <IconButton
                 colorScheme="teal"
                 onClick={onSubmit}
-                aria-label="Submit New Outfit"
+                aria-label="Submit new shirt"
                 size="sm"
+                isLoading={isLoading}
                 icon={
                   <Icon
                     as={MdCheck}
@@ -219,19 +281,34 @@ const Shirts = ({
 
           <DrawerBody>
             <Stack spacing={4} sx={{ py: 4 }}>
-              <PhotoInput
-                name="imageUrl"
-                initialImageUrl={values.imageUrl}
-                error={errors.imageUrl}
-                onChange={(file) => {
-                  const imageUrl = URL.createObjectURL(file);
-                  setFieldValue("imageUrl", imageUrl);
-                }}
-                onBlur={() => {
-                  setFieldTouched("imageUrl");
-                }}
-                disabled={mode === "view"}
-              />
+              <div>
+                <PhotoInput
+                  name="imageUrl"
+                  initialImageUrl={values.imageUrl}
+                  error={errors.imageUrl}
+                  onChange={(file) => {
+                    const imageUrl = URL.createObjectURL(file);
+                    setFieldValue("imageUrl", imageUrl);
+                    resizeImage(file).then(setCurrentFile);
+                  }}
+                  onBlur={() => {
+                    setFieldTouched("imageUrl");
+                  }}
+                  disabled={isLoading || mode === "view"}
+                />
+                {uploadSnapshot && (
+                  <Progress
+                    sx={{ mt: 3 }}
+                    colorScheme="teal"
+                    hasStripe
+                    value={
+                      (uploadSnapshot.bytesTransferred /
+                        uploadSnapshot.totalBytes) *
+                      100
+                    }
+                  />
+                )}
+              </div>
 
               <FormInput
                 label="Title"
@@ -240,7 +317,7 @@ const Shirts = ({
                 error={errors.title}
                 onChange={onChange}
                 onBlur={onBlur}
-                isReadOnly={mode === "view"}
+                isReadOnly={isLoading || mode === "view"}
               />
               <FormInput
                 label="Description"
@@ -249,7 +326,7 @@ const Shirts = ({
                 error={errors.description}
                 onChange={onChange}
                 onBlur={onBlur}
-                isReadOnly={mode === "view"}
+                isReadOnly={isLoading || mode === "view"}
               />
             </Stack>
           </DrawerBody>

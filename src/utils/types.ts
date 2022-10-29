@@ -1,4 +1,12 @@
-export interface Shirt {
+import { Timestamp } from "firebase/firestore";
+
+export interface Common {
+  id: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface Shirt extends Common {
   type: "shirt";
   id: string;
   title: string;
