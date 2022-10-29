@@ -10,8 +10,12 @@ import {
   ThemingProps,
 } from "@chakra-ui/react";
 
+type ChildrenProps = {
+  onOpen: () => void;
+};
+
 type ConfirmProps = {
-  children: (onOpen: () => void) => React.ReactNode;
+  children: (props: ChildrenProps) => React.ReactNode;
   message: string;
   okText?: string;
   cancelText?: string;
@@ -34,7 +38,7 @@ const Confirm = ({
 
   return (
     <>
-      {children(onOpen)}
+      {children({ onOpen })}
       <div ref={confirmDrawerRef} />
       <Drawer
         isOpen={isOpen}

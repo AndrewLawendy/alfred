@@ -32,6 +32,7 @@ import useDeleteImage from "resources/useDeleteImage";
 import useUpdateDocument from "resources/useUpdateDocument";
 import useDeleteDocument from "resources/useDeleteDocument";
 import geFileURL from "utils/geFileURL";
+import resizeImage from "utils/resizeImage";
 
 import { Shirt } from "utils/types";
 
@@ -228,7 +229,7 @@ const Shirts = ({
                 okText="Delete"
                 okType="red"
               >
-                {(onOpen) => (
+                {({ onOpen }) => (
                   <IconButton
                     isLoading={isLoading}
                     onClick={onOpen}
@@ -288,7 +289,13 @@ const Shirts = ({
                   onChange={(file) => {
                     const imageUrl = URL.createObjectURL(file);
                     setFieldValue("imageUrl", imageUrl);
-                    setCurrentFile(file);
+                    resizeImage(file).then((blob) => {
+                      setCurrentFile(
+                        new File([blob], file.name, {
+                          lastModified: Date.now(),
+                        })
+                      );
+                    });
                   }}
                   onBlur={() => {
                     setFieldTouched("imageUrl");
