@@ -22,12 +22,14 @@ import OutfitItem from "components/OutfitItem";
 import FormInput from "components/FormInput";
 import PhotoInput from "components/PhotoInput";
 import Loading from "components/Loading";
+import Confirm from "components/Confirm";
 
 import useRequiredForm from "hooks/useRequiredForm";
 import useData from "resources/useData";
 import useAddDocument from "resources/useAddDocument";
 import useUploadImage from "resources/useUploadImage";
 import useDeleteImage from "resources/useDeleteImage";
+import useDeleteDocument from "resources/useDeleteDocument";
 import geFileURL from "utils/geFileURL";
 
 import { Shirt } from "utils/types";
@@ -43,11 +45,12 @@ const Shirts = ({
   activeModalIndex,
   setActiveModalIndex,
 }: ShirtsProps) => {
-  const [shirts, isShirtLoading] = useData<Shirt>("shirts");
   const [mode, setMode] = useState<"submit" | "view">("view");
   const [currentShirt, setCurrentShirt] = useState<Shirt>();
   const [currentFile, setCurrentFile] = useState<File>();
+  const [shirts, isShirtLoading] = useData<Shirt>("shirts");
   const [addShirt, isAddShirtLoading] = useAddDocument<Shirt>("shirts");
+  const [deleteShirt, isDeletingShirt] = useDeleteDocument("shirts");
   const [uploadShirt, isShirtUploading, uploadSnapshot] = useUploadImage();
   const [deleteShirtImage, isDeleteShirtImageLoading] = useDeleteImage();
 
@@ -71,7 +74,10 @@ const Shirts = ({
   const isView = mode === "view" && currentShirt !== undefined;
   const isEdit = mode === "submit" && currentShirt !== undefined;
   const isLoading =
-    isAddShirtLoading || isShirtUploading || isDeleteShirtImageLoading;
+    isAddShirtLoading ||
+    isShirtUploading ||
+    isDeleteShirtImageLoading ||
+    isDeletingShirt;
 
   const heading = isView
     ? "View your shirt"
@@ -119,7 +125,9 @@ const Shirts = ({
   };
 
   const onDelete = () => {
-    deleteShirtImage(currentShirt?.imageUrl || "").then(() => onClose());
+    deleteShirtImage(currentShirt?.imageUrl || "").then(() => {
+      deleteShirt((currentShirt as Shirt).id).then(onClose);
+    });
   };
 
   useEffect(() => {
@@ -206,13 +214,22 @@ const Shirts = ({
             />
             <Text sx={{ flexGrow: 1 }}>{heading}</Text>
             {currentShirt && (
-              <IconButton
-                onClick={onDelete}
-                aria-label="Delete shirt"
-                size="sm"
-                colorScheme="red"
-                icon={<Icon w={5} h={5} as={MdDeleteForever} />}
-              />
+              <Confirm
+                message={`Are you sure you want to delete ${currentShirt.title}?`}
+                onConfirm={onDelete}
+                okText="Delete"
+                okType="red"
+              >
+                {(onOpen) => (
+                  <IconButton
+                    onClick={onOpen}
+                    aria-label="Delete shirt"
+                    size="sm"
+                    colorScheme="red"
+                    icon={<Icon w={5} h={5} as={MdDeleteForever} />}
+                  />
+                )}
+              </Confirm>
             )}
 
             {isView ? (
