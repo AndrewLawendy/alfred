@@ -289,13 +289,7 @@ const Shirts = ({
                   onChange={(file) => {
                     const imageUrl = URL.createObjectURL(file);
                     setFieldValue("imageUrl", imageUrl);
-                    resizeImage(file).then((blob) => {
-                      setCurrentFile(
-                        new File([blob], file.name, {
-                          lastModified: Date.now(),
-                        })
-                      );
-                    });
+                    resizeImage(file).then(setCurrentFile);
                   }}
                   onBlur={() => {
                     setFieldTouched("imageUrl");
