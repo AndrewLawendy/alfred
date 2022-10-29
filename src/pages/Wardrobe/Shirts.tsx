@@ -29,6 +29,7 @@ import useData from "resources/useData";
 import useAddDocument from "resources/useAddDocument";
 import useUploadImage from "resources/useUploadImage";
 import useDeleteImage from "resources/useDeleteImage";
+import useUpdateDocument from "resources/useUpdateDocument";
 import useDeleteDocument from "resources/useDeleteDocument";
 import geFileURL from "utils/geFileURL";
 
@@ -51,7 +52,9 @@ const Shirts = ({
   const [shirts, isShirtLoading] = useData<Shirt>("shirts");
   const [addShirt, isAddShirtLoading] = useAddDocument<Shirt>("shirts");
   const [deleteShirt, isDeletingShirt] = useDeleteDocument("shirts");
-  const [uploadShirt, isShirtUploading, uploadSnapshot] = useUploadImage();
+  const [updateShirt, isUpdateShirtLoading] = useUpdateDocument("shirts");
+  const [uploadShirtImage, isShirtImageUploading, uploadSnapshot] =
+    useUploadImage();
   const [deleteShirtImage, isDeleteShirtImageLoading] = useDeleteImage();
 
   const {
@@ -75,9 +78,10 @@ const Shirts = ({
   const isEdit = mode === "submit" && currentShirt !== undefined;
   const isLoading =
     isAddShirtLoading ||
-    isShirtUploading ||
+    isShirtImageUploading ||
     isDeleteShirtImageLoading ||
-    isDeletingShirt;
+    isDeletingShirt ||
+    isUpdateShirtLoading;
 
   const heading = isView
     ? "View your shirt"
@@ -97,23 +101,27 @@ const Shirts = ({
   const onSubmit = () => {
     handleSubmit().then((values) => {
       if (currentShirt) {
-        const currentShirtIndex =
-          shirts?.findIndex(({ id }) => id === currentShirt.id) || -1;
-        shirts?.splice(currentShirtIndex, 1, {
-          ...currentShirt,
-          ...values,
-        });
-
-        // setShirts([...shirts]);
+        const isSameImage = currentShirt.imageUrl === values.imageUrl;
+        if (isSameImage) {
+          updateShirt(currentShirt.id, { ...values }).then(onClose);
+        } else if (currentFile) {
+          uploadShirtImage(currentFile, currentShirt.imageUrl).then(
+            async (response) => {
+              const imageUrl = await geFileURL(response?.metadata.name || "");
+              updateShirt(currentShirt.id, {
+                ...values,
+                imageUrl,
+              }).then(onClose);
+            }
+          );
+        }
       } else {
         if (currentFile) {
-          const { title, description } = values;
-          uploadShirt(currentFile).then(async (response) => {
+          uploadShirtImage(currentFile).then(async (response) => {
             const imageUrl = await geFileURL(response?.metadata.name || "");
             await addShirt({
+              ...values,
               type: "shirt",
-              title,
-              description,
               imageUrl,
             });
 
