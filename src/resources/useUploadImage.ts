@@ -9,21 +9,21 @@ import { useUploadFile } from "react-firebase-hooks/storage";
 
 import { storage } from "utils/firebase";
 
-const useUpload = (): [
+const useUploadImage = (): [
   (file: File) => Promise<UploadResult | undefined>,
   boolean,
   UploadTaskSnapshot | undefined,
   StorageError | undefined
 ] => {
   const [uploadFile, ...rest] = useUploadFile();
-  const upload = (file: File) => {
+  const uploadImage = (file: File) => {
     const storageRef = ref(storage, `${Date.now()}-${file.name}`);
     return uploadFile(storageRef, file, {
       contentType: "image/jpeg",
     });
   };
 
-  return [upload, ...rest];
+  return [uploadImage, ...rest];
 };
 
-export default useUpload;
+export default useUploadImage;

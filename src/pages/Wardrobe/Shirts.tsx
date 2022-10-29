@@ -16,7 +16,7 @@ import {
   AlertDescription,
   Progress,
 } from "@chakra-ui/react";
-import { MdCheck, MdArrowBack, MdEdit } from "react-icons/md";
+import { MdCheck, MdArrowBack, MdEdit, MdDeleteForever } from "react-icons/md";
 
 import OutfitItem from "components/OutfitItem";
 import FormInput from "components/FormInput";
@@ -26,7 +26,8 @@ import Loading from "components/Loading";
 import useRequiredForm from "hooks/useRequiredForm";
 import useData from "resources/useData";
 import useAddDocument from "resources/useAddDocument";
-import useUpload from "resources/useUpload";
+import useUploadImage from "resources/useUploadImage";
+import useDeleteImage from "resources/useDeleteImage";
 import geFileURL from "utils/geFileURL";
 
 import { Shirt } from "utils/types";
@@ -46,8 +47,9 @@ const Shirts = ({
   const [mode, setMode] = useState<"submit" | "view">("view");
   const [currentShirt, setCurrentShirt] = useState<Shirt>();
   const [currentFile, setCurrentFile] = useState<File>();
-  const [addShirt] = useAddDocument<Shirt>("shirts");
-  const [uploadShirt, isShirtUploading, uploadSnapshot] = useUpload();
+  const [addShirt, isAddShirtLoading] = useAddDocument<Shirt>("shirts");
+  const [uploadShirt, isShirtUploading, uploadSnapshot] = useUploadImage();
+  const [deleteShirtImage, isDeleteShirtImageLoading] = useDeleteImage();
 
   const {
     values,
@@ -68,6 +70,8 @@ const Shirts = ({
   const isOpen = activeModalIndex === modalIndex;
   const isView = mode === "view" && currentShirt !== undefined;
   const isEdit = mode === "submit" && currentShirt !== undefined;
+  const isLoading =
+    isAddShirtLoading || isShirtUploading || isDeleteShirtImageLoading;
 
   const heading = isView
     ? "View your shirt"
@@ -112,6 +116,10 @@ const Shirts = ({
         }
       }
     });
+  };
+
+  const onDelete = () => {
+    deleteShirtImage(currentShirt?.imageUrl || "").then(() => onClose());
   };
 
   useEffect(() => {
@@ -197,11 +205,21 @@ const Shirts = ({
               }
             />
             <Text sx={{ flexGrow: 1 }}>{heading}</Text>
+            {currentShirt && (
+              <IconButton
+                onClick={onDelete}
+                aria-label="Delete shirt"
+                size="sm"
+                colorScheme="red"
+                icon={<Icon w={5} h={5} as={MdDeleteForever} />}
+              />
+            )}
+
             {isView ? (
               <IconButton
                 colorScheme="whiteAlpha"
                 onClick={() => setMode("submit")}
-                aria-label="Edit outfit"
+                aria-label="Edit shirt"
                 size="sm"
                 icon={
                   <Icon
@@ -218,9 +236,9 @@ const Shirts = ({
               <IconButton
                 colorScheme="teal"
                 onClick={onSubmit}
-                aria-label="Submit New Outfit"
+                aria-label="Submit new shirt"
                 size="sm"
-                isLoading={isShirtUploading}
+                isLoading={isLoading}
                 icon={
                   <Icon
                     as={MdCheck}
@@ -249,7 +267,7 @@ const Shirts = ({
                   onBlur={() => {
                     setFieldTouched("imageUrl");
                   }}
-                  disabled={isShirtUploading || mode === "view"}
+                  disabled={isLoading || mode === "view"}
                 />
                 {uploadSnapshot && (
                   <Progress
@@ -272,7 +290,7 @@ const Shirts = ({
                 error={errors.title}
                 onChange={onChange}
                 onBlur={onBlur}
-                isReadOnly={isShirtUploading || mode === "view"}
+                isReadOnly={isLoading || mode === "view"}
               />
               <FormInput
                 label="Description"
@@ -281,7 +299,7 @@ const Shirts = ({
                 error={errors.description}
                 onChange={onChange}
                 onBlur={onBlur}
-                isReadOnly={isShirtUploading || mode === "view"}
+                isReadOnly={isLoading || mode === "view"}
               />
             </Stack>
           </DrawerBody>
