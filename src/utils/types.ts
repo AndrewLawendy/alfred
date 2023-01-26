@@ -4,43 +4,39 @@ export interface Common {
   id: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
+  user: string;
 }
 
 export interface Shirt extends Common {
   type: "shirt";
-  id: string;
   title: string;
   description: string;
   imageUrl: string;
 }
 
-export interface Belt {
+export interface Belt extends Common {
   type: "belt";
-  id: string;
   title: string;
   description: string;
   imageUrl: string;
 }
 
-export interface PantsPair {
+export interface PantsPair extends Common {
   type: "pants";
-  id: string;
   title: string;
   description: string;
   imageUrl: string;
 }
 
-export interface ShoePair {
+export interface ShoePair extends Common {
   type: "shoes";
-  id: string;
   title: string;
   description: string;
   imageUrl: string;
 }
 
-export interface Jacket {
+export interface Jacket extends Common {
   type: "jacket";
-  id: string;
   title: string;
   description: string;
   imageUrl: string;

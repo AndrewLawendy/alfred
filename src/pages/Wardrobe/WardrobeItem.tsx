@@ -18,6 +18,7 @@ import {
   Progress,
 } from "@chakra-ui/react";
 import { MdCheck, MdArrowBack, MdEdit, MdDeleteForever } from "react-icons/md";
+import omit from "lodash.omit";
 
 import OutfitItem from "components/OutfitItem";
 import FormInput from "components/FormInput";
@@ -181,8 +182,9 @@ const WardrobeItem = ({
               description={item.description}
               imageUrl={item.imageUrl}
               onClick={() => {
-                const { title, description, imageUrl } = item;
-                setFormValues({ title, description, imageUrl });
+                setFormValues(
+                  omit(item, ["id", "user", "createdAt", "updatedAt", "type"])
+                );
                 setCurrentItem(item);
                 setActiveModalIndex(modalIndex);
               }}
