@@ -4,9 +4,25 @@ export type Errors = {
   [key: string]: string | null;
 };
 
+export type RequiredFromReturn<T extends Record<string, unknown>> = {
+  values: T;
+  errors: Errors;
+  onChange: ({
+    target: { name, value },
+  }: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  onBlur: ({ target: { name } }: FocusEvent<HTMLInputElement>) => void;
+  setFieldValue: (name: keyof T, value: unknown) => void;
+  setFieldTouched: (name: keyof T) => void;
+  setFormValues: (values: T) => void;
+  destroyForm: () => void;
+  reInitializeForm: (values: T) => void;
+  isValid: boolean;
+  handleSubmit: () => Promise<T>;
+};
+
 const useRequiredForm = <T extends Record<string, unknown>>(
   initialFormValue: T
-) => {
+): RequiredFromReturn<T> => {
   const [initialValues, setInitialValues] = useState(initialFormValue);
   const [values, setValues] = useState(initialFormValue);
   const [errors, setErrors] = useState<Errors>({});

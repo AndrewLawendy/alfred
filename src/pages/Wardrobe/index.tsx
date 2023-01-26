@@ -18,11 +18,8 @@ import {
 } from "react-icons/gi";
 
 import AddItemsBtn from "./AddItemsBtn";
-import Shirts from "./Shirts";
-import Jackets from "./Jackets";
-import Belts from "./Belts";
-import Pants from "./Pants";
-import Shoes from "./Shoes";
+import WardrobeItem from "./WardrobeItem";
+import JacketsForm from "./JacketsForm";
 
 const addOptions = [
   { label: "Add Shirt", icon: RiShirtFill },
@@ -59,7 +56,8 @@ const Wardrobe = () => {
           </AccordionButton>
 
           <AccordionPanel>
-            <Shirts
+            <WardrobeItem
+              type="shirt"
               modalIndex={0}
               activeModalIndex={activeModalIndex}
               setActiveModalIndex={setActiveModalIndex}
@@ -79,11 +77,15 @@ const Wardrobe = () => {
           </AccordionButton>
 
           <AccordionPanel>
-            <Jackets
+            <WardrobeItem
+              type="jacket"
               modalIndex={1}
               activeModalIndex={activeModalIndex}
               setActiveModalIndex={setActiveModalIndex}
-            />
+              formData={{ maxTemperature: "" }}
+            >
+              {(props) => <JacketsForm {...props} />}
+            </WardrobeItem>
           </AccordionPanel>
         </AccordionItem>
 
@@ -99,7 +101,8 @@ const Wardrobe = () => {
           </AccordionButton>
 
           <AccordionPanel>
-            <Belts
+            <WardrobeItem
+              type="belt"
               modalIndex={2}
               activeModalIndex={activeModalIndex}
               setActiveModalIndex={setActiveModalIndex}
@@ -119,7 +122,8 @@ const Wardrobe = () => {
           </AccordionButton>
 
           <AccordionPanel>
-            <Pants
+            <WardrobeItem
+              type="pants"
               modalIndex={3}
               activeModalIndex={activeModalIndex}
               setActiveModalIndex={setActiveModalIndex}
@@ -139,7 +143,8 @@ const Wardrobe = () => {
           </AccordionButton>
 
           <AccordionPanel>
-            <Shoes
+            <WardrobeItem
+              type="shoes"
               modalIndex={4}
               activeModalIndex={activeModalIndex}
               setActiveModalIndex={setActiveModalIndex}

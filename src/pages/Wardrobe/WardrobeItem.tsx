@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { where } from "firebase/firestore";
 import {
   Grid,
   IconButton,
@@ -24,7 +25,7 @@ import PhotoInput from "components/PhotoInput";
 import Loading from "components/Loading";
 import Confirm from "components/Confirm";
 
-import useRequiredForm from "hooks/useRequiredForm";
+import useRequiredForm, { RequiredFromReturn } from "hooks/useRequiredForm";
 import useData from "resources/useData";
 import useAddDocument from "resources/useAddDocument";
 import useUploadImage from "resources/useUploadImage";
@@ -34,30 +35,52 @@ import useDeleteDocument from "resources/useDeleteDocument";
 import geFileURL from "utils/geFileURL";
 import resizeImage from "utils/resizeImage";
 
-import { Shirt } from "utils/types";
+import { Item } from "utils/types";
 
-type ShirtsProps = {
+const formBase = { title: "", description: "", imageUrl: "" };
+
+type InitialForm = {
+  [formName: string]: string;
+} & typeof formBase;
+
+export interface ChildrenProps extends RequiredFromReturn<InitialForm> {
+  mode: "submit" | "view";
+}
+
+interface WardrobeItemPros extends Pick<Item, "type"> {
   modalIndex: number;
   activeModalIndex: number | undefined;
   setActiveModalIndex: (index?: number) => void;
-};
+  formData?: { [formName: string]: string };
+  children?: (props: ChildrenProps) => JSX.Element;
+}
 
-const Shirts = ({
+const WardrobeItem = ({
+  type,
   modalIndex,
   activeModalIndex,
   setActiveModalIndex,
-}: ShirtsProps) => {
+  formData,
+  children,
+}: WardrobeItemPros) => {
   const [mode, setMode] = useState<"submit" | "view">("view");
-  const [currentShirt, setCurrentShirt] = useState<Shirt>();
+  const [currentItem, setCurrentItem] = useState<Item>();
   const [currentFile, setCurrentFile] = useState<File>();
-  const [shirts, isShirtLoading] = useData<Shirt>("shirts");
-  const [addShirt, isAddShirtLoading] = useAddDocument<Shirt>("shirts");
-  const [deleteShirt, isDeletingShirt] = useDeleteDocument("shirts");
-  const [updateShirt, isUpdateShirtLoading] = useUpdateDocument("shirts");
-  const [uploadShirtImage, isShirtImageUploading, uploadSnapshot] =
+  const [items, isItemsLoading] = useData<Item>(
+    "wardrobe-items",
+    where("type", "==", type)
+  );
+  const [addItem, isAddItemLoading] = useAddDocument<Item>("wardrobe-items");
+  const [deleteItem, isDeletingItem] = useDeleteDocument("wardrobe-items");
+  const [updateItem, isUpdateItemLoading] = useUpdateDocument("wardrobe-items");
+  const [uploadItemImage, isItemImageUploading, uploadSnapshot] =
     useUploadImage();
-  const [deleteShirtImage, isDeleteShirtImageLoading] = useDeleteImage();
+  const [deleteItemImage, isDeleteItemImageLoading] = useDeleteImage();
 
+  const requiredFrom = useRequiredForm<InitialForm>({
+    ...formBase,
+    ...formData,
+  });
   const {
     values,
     errors,
@@ -68,27 +91,23 @@ const Shirts = ({
     setFieldTouched,
     setFormValues,
     destroyForm,
-  } = useRequiredForm({
-    title: "",
-    description: "",
-    imageUrl: "",
-  });
+  } = requiredFrom;
 
   const isOpen = activeModalIndex === modalIndex;
-  const isView = mode === "view" && currentShirt !== undefined;
-  const isEdit = mode === "submit" && currentShirt !== undefined;
+  const isView = mode === "view" && currentItem !== undefined;
+  const isEdit = mode === "submit" && currentItem !== undefined;
   const isLoading =
-    isAddShirtLoading ||
-    isShirtImageUploading ||
-    isDeleteShirtImageLoading ||
-    isDeletingShirt ||
-    isUpdateShirtLoading;
+    isAddItemLoading ||
+    isItemImageUploading ||
+    isDeleteItemImageLoading ||
+    isDeletingItem ||
+    isUpdateItemLoading;
 
   const heading = isView
-    ? "View your shirt"
+    ? `View your ${type}`
     : isEdit
-    ? "Edit your shirt"
-    : "Add new shirt";
+    ? `Edit your ${type}`
+    : `Add new ${type}`;
 
   const onClose = () => {
     setActiveModalIndex();
@@ -96,20 +115,20 @@ const Shirts = ({
 
   const reset = () => {
     destroyForm();
-    setCurrentShirt(undefined);
+    setCurrentItem(undefined);
   };
 
   const onSubmit = () => {
     handleSubmit().then((values) => {
-      if (currentShirt) {
-        const isSameImage = currentShirt.imageUrl === values.imageUrl;
+      if (currentItem) {
+        const isSameImage = currentItem.imageUrl === values.imageUrl;
         if (isSameImage) {
-          updateShirt(currentShirt.id, { ...values }).then(onClose);
+          updateItem(currentItem.id, { ...values }).then(onClose);
         } else if (currentFile) {
-          uploadShirtImage(currentFile, currentShirt.imageUrl).then(
+          uploadItemImage(currentFile, currentItem.imageUrl).then(
             async (response) => {
               const imageUrl = await geFileURL(response?.metadata.name || "");
-              updateShirt(currentShirt.id, {
+              updateItem(currentItem.id, {
                 ...values,
                 imageUrl,
               }).then(onClose);
@@ -118,11 +137,11 @@ const Shirts = ({
         }
       } else {
         if (currentFile) {
-          uploadShirtImage(currentFile).then(async (response) => {
+          uploadItemImage(currentFile).then(async (response) => {
             const imageUrl = await geFileURL(response?.metadata.name || "");
-            await addShirt({
+            await addItem({
               ...values,
-              type: "shirt",
+              type,
               imageUrl,
             });
 
@@ -134,37 +153,37 @@ const Shirts = ({
   };
 
   const onDelete = () => {
-    deleteShirtImage(currentShirt?.imageUrl || "").then(() => {
-      deleteShirt((currentShirt as Shirt).id).then(onClose);
+    deleteItemImage(currentItem?.imageUrl || "").then(() => {
+      deleteItem((currentItem as Item).id).then(onClose);
     });
   };
 
   useEffect(() => {
-    if (currentShirt) {
+    if (currentItem) {
       setMode("view");
     } else {
       setMode("submit");
     }
-  }, [currentShirt]);
+  }, [currentItem]);
 
-  if (isShirtLoading || !shirts) {
-    return <Loading message="Loading your shirts, please wait" />;
+  if (isItemsLoading || !items) {
+    return <Loading message={`Loading your ${type}s, please wait`} />;
   }
 
   return (
     <>
-      {shirts.length > 0 ? (
+      {items.length > 0 ? (
         <Grid templateColumns="repeat(3, 1fr)" gap={2}>
-          {shirts.map((shirt) => (
+          {items.map((item) => (
             <OutfitItem
-              key={shirt.id}
-              title={shirt.title}
-              description={shirt.description}
-              imageUrl={shirt.imageUrl}
+              key={item.id}
+              title={item.title}
+              description={item.description}
+              imageUrl={item.imageUrl}
               onClick={() => {
-                const { title, description, imageUrl } = shirt;
+                const { title, description, imageUrl } = item;
                 setFormValues({ title, description, imageUrl });
-                setCurrentShirt(shirt);
+                setCurrentItem(item);
                 setActiveModalIndex(modalIndex);
               }}
             />
@@ -180,10 +199,10 @@ const Shirts = ({
         >
           <AlertIcon boxSize="30px" mr={0} />
           <AlertTitle mt={4} mb={1} fontSize="lg">
-            No Shirts
+            No {type}s
           </AlertTitle>
           <AlertDescription maxWidth="sm">
-            Click on Add and choose Shirts to add
+            Click on Add and choose {type}s to add
           </AlertDescription>
         </Alert>
       )}
@@ -222,9 +241,9 @@ const Shirts = ({
               }
             />
             <Text sx={{ flexGrow: 1 }}>{heading}</Text>
-            {currentShirt && (
+            {currentItem && (
               <Confirm
-                message={`Are you sure you want to delete ${currentShirt.title}?`}
+                message={`Are you sure you want to delete ${currentItem.title}?`}
                 onConfirm={onDelete}
                 okText="Delete"
                 okType="red"
@@ -233,7 +252,7 @@ const Shirts = ({
                   <IconButton
                     isLoading={isLoading}
                     onClick={onOpen}
-                    aria-label="Delete shirt"
+                    aria-label={`Delete ${type}`}
                     size="sm"
                     colorScheme="red"
                     icon={<Icon w={5} h={5} as={MdDeleteForever} />}
@@ -246,7 +265,7 @@ const Shirts = ({
               <IconButton
                 colorScheme="whiteAlpha"
                 onClick={() => setMode("submit")}
-                aria-label="Edit shirt"
+                aria-label={`Edit ${type}`}
                 size="sm"
                 icon={
                   <Icon
@@ -263,7 +282,7 @@ const Shirts = ({
               <IconButton
                 colorScheme="teal"
                 onClick={onSubmit}
-                aria-label="Submit new shirt"
+                aria-label={`Submit new ${type}`}
                 size="sm"
                 isLoading={isLoading}
                 icon={
@@ -328,6 +347,11 @@ const Shirts = ({
                 onBlur={onBlur}
                 isReadOnly={isLoading || mode === "view"}
               />
+
+              {children?.({
+                mode,
+                ...requiredFrom,
+              })}
             </Stack>
           </DrawerBody>
         </DrawerContent>
@@ -336,4 +360,4 @@ const Shirts = ({
   );
 };
 
-export default Shirts;
+export default WardrobeItem;

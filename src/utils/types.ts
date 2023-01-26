@@ -46,3 +46,5 @@ export interface Jacket {
   imageUrl: string;
   maxTemperature: number;
 }
+
+export type Item = Shirt | Belt | PantsPair | ShoePair | Jacket;
