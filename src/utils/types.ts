@@ -44,3 +44,11 @@ export interface Jacket extends Common {
 }
 
 export type Item = Shirt | Belt | PantsPair | ShoePair | Jacket;
+
+export interface Outfit extends Common {
+  id: string;
+  shirt: Shirt;
+  belt: Belt;
+  pants: PantsPair;
+  shoes: ShoePair;
+}

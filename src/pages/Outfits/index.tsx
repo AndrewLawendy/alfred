@@ -16,19 +16,12 @@ import {
   DropResult,
 } from "react-beautiful-dnd";
 import { MdAdd } from "react-icons/md";
-import { Photo } from "pexels";
+
+import { Outfit } from "utils/types";
 
 import OutfitItem from "components/OutfitItem";
 
 import OutfitDetails from "./OutfitDetails";
-
-export interface Outfit {
-  id: string;
-  shirt: Photo;
-  belt: Photo;
-  pants: Photo;
-  shoes: Photo;
-}
 
 const Outfits = () => {
   const [currentOutfit, setCurrentOutfit] = useState<Outfit>();
@@ -116,18 +109,10 @@ const Outfits = () => {
                               templateColumns="repeat(4, 1fr)"
                               sx={{ backgroundColor: "white" }}
                             >
-                              <OutfitItem
-                                imageUrl={outfit.shirt?.src.small || ""}
-                              />
-                              <OutfitItem
-                                imageUrl={outfit.belt?.src.small || ""}
-                              />
-                              <OutfitItem
-                                imageUrl={outfit.pants?.src.small || ""}
-                              />
-                              <OutfitItem
-                                imageUrl={outfit.shoes?.src.small || ""}
-                              />
+                              <OutfitItem imageUrl={outfit.shirt?.imageUrl} />
+                              <OutfitItem imageUrl={outfit.belt?.imageUrl} />
+                              <OutfitItem imageUrl={outfit.pants?.imageUrl} />
+                              <OutfitItem imageUrl={outfit.shoes?.imageUrl} />
                             </Grid>
                           )}
                         </Box>
