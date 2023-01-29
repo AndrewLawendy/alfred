@@ -22,38 +22,13 @@ import OutfitReference from "components/OutfitReference";
 import Loading from "components/Loading";
 
 import useData from "resources/useData";
-import useAddDocument from "resources/useAddDocument";
-// import useUpdateDocument from "resources/useUpdateDocument";
-// import useDeleteDocument from "resources/useDeleteDocument";
 
 import OutfitDetails from "./OutfitDetails";
 
 const Outfits = () => {
   const [currentOutfit, setCurrentOutfit] = useState<Outfit>();
   const [outfits, isOutfitsLoading] = useData<Outfit>("outfits");
-  const [addOutfit] = useAddDocument<Outfit>("outfits");
-  // const [deleteOutfit, isDeletingOutfit] = useDeleteDocument("outfits");
-  // const [updateOutfit, isUpdateOutfitLoading] = useUpdateDocument("outfits");
   const { isOpen, onOpen, onClose } = useDisclosure();
-
-  const onSubmit = (outfit: Outfit) => {
-    const isNewOutfit = outfit.id === currentOutfit?.id;
-
-    if (outfits === undefined) return;
-
-    if (isNewOutfit) {
-      const currentOutfitIndex = outfits.findIndex(
-        ({ id }) => id === currentOutfit.id
-      );
-      outfits.splice(currentOutfitIndex, 1, outfit);
-    } else {
-      addOutfit({
-        ...outfit,
-        order: outfits.length ?? 0,
-        active: outfits.length < 1,
-      });
-    }
-  };
 
   const onDragEnd = (result: DropResult) => {
     const { destination } = result;
@@ -177,8 +152,8 @@ const Outfits = () => {
           onClose();
           setCurrentOutfit(undefined);
         }}
-        onSubmit={onSubmit}
         currentOutfit={currentOutfit}
+        outfitsLength={outfits?.length}
       />
     </>
   );

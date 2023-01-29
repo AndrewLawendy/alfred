@@ -28,6 +28,7 @@ import {
   MdExpand,
   MdCompress,
   MdEdit,
+  MdDeleteForever,
 } from "react-icons/md";
 
 import { db } from "utils/firebase";
@@ -35,15 +36,19 @@ import { Outfit, Shirt, Belt, PantsPair, ShoePair } from "utils/types";
 
 import OutfitItem from "components/OutfitItem";
 import OutfitReference from "components/OutfitReference";
+import Confirm from "components/Confirm";
 import Loading from "components/Loading";
 
 import useData from "resources/useData";
+import useAddDocument from "resources/useAddDocument";
+import useUpdateDocument from "resources/useUpdateDocument";
+import useDeleteDocument from "resources/useDeleteDocument";
 
 type AddOutfitProps = {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (outfit: Outfit) => void;
   currentOutfit?: Outfit;
+  outfitsLength?: number;
 };
 
 type OutfitKeys = keyof Omit<
@@ -62,8 +67,8 @@ const fieldsNameMap: { [key in OutfitKeys]: string } = {
 const OutfitDetails = ({
   isOpen,
   onClose,
-  onSubmit,
   currentOutfit,
+  outfitsLength = 0,
 }: AddOutfitProps) => {
   const closetContainerRef = useRef(null);
   const [closetExpanded, setClosetExpanded] = useState(false);
@@ -88,10 +93,16 @@ const OutfitDetails = ({
     "wardrobe-items",
     where("type", "==", "shoes")
   );
+  const [addOutfit, isAssOutfitLoading] = useAddDocument<Outfit>("outfits");
+  const [updateOutfit, isUpdateOutfitLoading] = useUpdateDocument("outfits");
+  const [deleteOutfit, isDeletingOutfit] = useDeleteDocument("outfits");
 
   const isView = mode === "view" && currentOutfit !== undefined;
   const isEdit = mode === "submit" && currentOutfit !== undefined;
   const isAdd = mode === "submit" && currentOutfit === undefined;
+  const isLoading =
+    isAssOutfitLoading || isUpdateOutfitLoading || isDeletingOutfit;
+
   const heading = isView
     ? "View your outfit"
     : isEdit
@@ -133,11 +144,17 @@ const OutfitDetails = ({
         });
       }
     } else {
-      onClose();
-      onSubmit({
-        id: Math.random().toString(36).slice(2),
-        ...outfit,
-      } as Outfit);
+      const isNewOutfit = outfit.id === undefined;
+
+      if (isNewOutfit) {
+        addOutfit({
+          ...(outfit as Outfit),
+          order: outfitsLength,
+          active: outfitsLength < 1,
+        }).then(onClose);
+      } else if (outfit.id) {
+        updateOutfit(outfit.id, outfit).then(onClose);
+      }
     }
   };
 
@@ -185,6 +202,25 @@ const OutfitDetails = ({
             }
           />
           <Text sx={{ flexGrow: 1 }}>{heading}</Text>
+          {currentOutfit && (
+            <Confirm
+              message="Are you sure you want to delete this outfit?"
+              onConfirm={() => deleteOutfit(currentOutfit.id).then(onClose)}
+              okText="Delete"
+              okType="red"
+            >
+              {({ onOpen }) => (
+                <IconButton
+                  isLoading={isLoading}
+                  onClick={onOpen}
+                  aria-label="Delete outfit"
+                  size="sm"
+                  colorScheme="red"
+                  icon={<Icon w={5} h={5} as={MdDeleteForever} />}
+                />
+              )}
+            </Confirm>
+          )}
           {isView ? (
             <IconButton
               colorScheme="whiteAlpha"
@@ -208,6 +244,7 @@ const OutfitDetails = ({
               onClick={submit}
               aria-label="Submit New Outfit"
               size="sm"
+              isLoading={isLoading}
               icon={
                 <Icon
                   as={MdCheck}
