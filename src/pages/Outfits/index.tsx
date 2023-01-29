@@ -15,7 +15,7 @@ import {
   Draggable,
   DropResult,
 } from "react-beautiful-dnd";
-import { MdAdd } from "react-icons/md";
+import { MdAdd, MdAutoAwesome } from "react-icons/md";
 
 import { Outfit } from "utils/types";
 
@@ -98,11 +98,15 @@ const Outfits = () => {
                                 borderTop: "1px solid",
                                 borderX: "1px solid",
                                 borderColor: "gray.100",
+                                display: "flex",
+                                justifyContent: "space-between",
                               }}
                             >
                               <Heading as="h6" size="sm">
                                 #{index + 1}
                               </Heading>
+
+                              {outfit.active && <Icon as={MdAutoAwesome} />}
                             </Box>
                             {Object.values(outfit).length > 0 && (
                               <Grid
