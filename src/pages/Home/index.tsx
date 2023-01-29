@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import {
   Heading,
   Button,
@@ -20,25 +21,34 @@ import { orderBy } from "@firebase/firestore";
 import { Link as WouterLink } from "wouter";
 
 import Weather from "components/Weather";
-// import OutfitItem from "components/OutfitItem";
-import OutfitReference from "components/OutfitReference";
 import Loading from "components/Loading";
+import OutfitReference from "components/OutfitReference";
+import OutfitItem from "components/OutfitItem";
 
 import useAuth from "hooks/useAuth";
 
 import useData from "resources/useData";
 import useUpdateDocument from "resources/useUpdateDocument";
+import useWeather from "resources/useWeather";
 
-import { Outfit } from "utils/types";
-import { useMemo } from "react";
+import { Jacket, Outfit } from "utils/types";
 
 const Home = () => {
   const [user] = useAuth();
   const { isOpen, onClose, onOpen } = useDisclosure();
+  const { data: weatherData, isLoading: isWeatherLoading } = useWeather();
   const [outfits, isOutfitsLoading] = useData<Outfit>(
     "outfits",
     orderBy("order")
   );
+  const [jackets] = useData<Jacket>("wardrobe-items");
+  const temperatureJacket = useMemo(() => {
+    if (jackets && weatherData) {
+      return jackets.find(
+        ({ maxTemperature }) => maxTemperature >= weatherData.main.temp
+      );
+    }
+  }, [jackets, weatherData]);
   const [updateOutfit, isUpdateOutfitLoading] = useUpdateDocument("outfits");
   const [firstOutfit] = outfits || [];
   const activeOutfit = useMemo(() => {
@@ -79,7 +89,7 @@ const Home = () => {
           Hi, {user.displayName}
         </Heading>
 
-        <Weather />
+        <Weather weatherData={weatherData} isLoading={isWeatherLoading} />
       </Flex>
 
       {isOutfitsLoading ? (
@@ -91,6 +101,9 @@ const Home = () => {
             <OutfitReference reference={activeOutfit.belt} />
             <OutfitReference reference={activeOutfit.pants} />
             <OutfitReference reference={activeOutfit.shoes} />
+            {temperatureJacket && (
+              <OutfitItem imageUrl={temperatureJacket.imageUrl} />
+            )}
           </Grid>
 
           <Popover isOpen={isOpen} onClose={onClose} placement="top">
