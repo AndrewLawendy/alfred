@@ -136,19 +136,17 @@ const WardrobeItem = ({
             }
           );
         }
-      } else {
-        if (currentFile) {
-          uploadItemImage(currentFile).then(async (response) => {
-            const imageUrl = await geFileURL(response?.metadata.name || "");
-            await addItem({
-              ...values,
-              type,
-              imageUrl,
-            });
-
-            onClose();
+      } else if (currentFile) {
+        uploadItemImage(currentFile).then(async (response) => {
+          const imageUrl = await geFileURL(response?.metadata.name || "");
+          await addItem({
+            ...values,
+            type,
+            imageUrl,
           });
-        }
+
+          onClose();
+        });
       }
     });
   };

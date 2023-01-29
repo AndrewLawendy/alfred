@@ -1,12 +1,16 @@
 import { Flex, Box, Image, Spinner, Text } from "@chakra-ui/react";
 
-import useWeather from "resources/useWeather";
+import { WeatherResponse } from "resources/useWeather";
 
-const Weather = () => {
-  const { isLoading, data } = useWeather();
-  const [weather] = data?.weather || [];
+type WeatherProps = {
+  weatherData: WeatherResponse | undefined;
+  isLoading: boolean;
+};
 
-  if (isLoading || !data) {
+const Weather = ({ weatherData, isLoading }: WeatherProps) => {
+  const [weather] = weatherData?.weather || [];
+
+  if (isLoading || !weatherData) {
     return <Spinner speed="0.65s" emptyColor="gray.200" color="teal.500" />;
   }
 
@@ -19,7 +23,7 @@ const Weather = () => {
       />
       <Box>
         <Text sx={{ fontWeight: "semibold" }}>
-          {Math.trunc(data.main.temp)}°C
+          {Math.trunc(weatherData.main.temp)}°C
         </Text>
         <Text fontSize="sm">{weather.main}</Text>
       </Box>

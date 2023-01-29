@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { where, doc } from "firebase/firestore";
 import {
   IconButton,
   Icon,
@@ -27,22 +28,33 @@ import {
   MdExpand,
   MdCompress,
   MdEdit,
+  MdDeleteForever,
 } from "react-icons/md";
 
-import { Outfit } from "pages/Outfits";
+import { db } from "utils/firebase";
+import { Outfit, Shirt, Belt, PantsPair, ShoePair } from "utils/types";
 
 import OutfitItem from "components/OutfitItem";
+import OutfitReference from "components/OutfitReference";
+import Confirm from "components/Confirm";
+import Loading from "components/Loading";
 
-import usePexels from "resources/usePexels";
+import useData from "resources/useData";
+import useAddDocument from "resources/useAddDocument";
+import useUpdateDocument from "resources/useUpdateDocument";
+import useDeleteDocument from "resources/useDeleteDocument";
 
 type AddOutfitProps = {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (outfit: Outfit) => void;
   currentOutfit?: Outfit;
+  outfitsLength?: number;
 };
 
-type OutfitKeys = keyof Omit<Outfit, "id">;
+type OutfitKeys = keyof Omit<
+  Outfit,
+  "id" | "user" | "createdAt" | "updatedAt" | "order" | "active"
+>;
 
 const fields: OutfitKeys[] = ["shirt", "belt", "pants", "shoes"];
 const fieldsNameMap: { [key in OutfitKeys]: string } = {
@@ -55,8 +67,8 @@ const fieldsNameMap: { [key in OutfitKeys]: string } = {
 const OutfitDetails = ({
   isOpen,
   onClose,
-  onSubmit,
   currentOutfit,
+  outfitsLength = 0,
 }: AddOutfitProps) => {
   const closetContainerRef = useRef(null);
   const [closetExpanded, setClosetExpanded] = useState(false);
@@ -65,14 +77,32 @@ const OutfitDetails = ({
   const [mode, setMode] = useState<"submit" | "view">("view");
   const toastId = "validation-toast";
   const toast = useToast();
-  const { data: shirts } = usePexels("shirt", 7);
-  const { data: belts } = usePexels("belts", 4);
-  const { data: pants } = usePexels("pants", 7);
-  const { data: shoes } = usePexels("shoes", 5);
+  const [shirts, isShirtLoading] = useData<Shirt>(
+    "wardrobe-items",
+    where("type", "==", "shirt")
+  );
+  const [belts, isBeltsLoading] = useData<Belt>(
+    "wardrobe-items",
+    where("type", "==", "belt")
+  );
+  const [pants, isPantsLoading] = useData<PantsPair>(
+    "wardrobe-items",
+    where("type", "==", "pants")
+  );
+  const [shoes, isShoesLoading] = useData<ShoePair>(
+    "wardrobe-items",
+    where("type", "==", "shoes")
+  );
+  const [addOutfit, isAssOutfitLoading] = useAddDocument<Outfit>("outfits");
+  const [updateOutfit, isUpdateOutfitLoading] = useUpdateDocument("outfits");
+  const [deleteOutfit, isDeletingOutfit] = useDeleteDocument("outfits");
 
   const isView = mode === "view" && currentOutfit !== undefined;
   const isEdit = mode === "submit" && currentOutfit !== undefined;
   const isAdd = mode === "submit" && currentOutfit === undefined;
+  const isLoading =
+    isAssOutfitLoading || isUpdateOutfitLoading || isDeletingOutfit;
+
   const heading = isView
     ? "View your outfit"
     : isEdit
@@ -114,11 +144,17 @@ const OutfitDetails = ({
         });
       }
     } else {
-      onClose();
-      onSubmit({
-        id: Math.random().toString(36).slice(2),
-        ...outfit,
-      } as Outfit);
+      const isNewOutfit = outfit.id === undefined;
+
+      if (isNewOutfit) {
+        addOutfit({
+          ...(outfit as Outfit),
+          order: outfitsLength,
+          active: outfitsLength < 1,
+        }).then(onClose);
+      } else if (outfit.id) {
+        updateOutfit(outfit.id, outfit).then(onClose);
+      }
     }
   };
 
@@ -166,6 +202,25 @@ const OutfitDetails = ({
             }
           />
           <Text sx={{ flexGrow: 1 }}>{heading}</Text>
+          {currentOutfit && (
+            <Confirm
+              message="Are you sure you want to delete this outfit?"
+              onConfirm={() => deleteOutfit(currentOutfit.id).then(onClose)}
+              okText="Delete"
+              okType="red"
+            >
+              {({ onOpen }) => (
+                <IconButton
+                  isLoading={isLoading}
+                  onClick={onOpen}
+                  aria-label="Delete outfit"
+                  size="sm"
+                  colorScheme="red"
+                  icon={<Icon w={5} h={5} as={MdDeleteForever} />}
+                />
+              )}
+            </Confirm>
+          )}
           {isView ? (
             <IconButton
               colorScheme="whiteAlpha"
@@ -189,6 +244,7 @@ const OutfitDetails = ({
               onClick={submit}
               aria-label="Submit New Outfit"
               size="sm"
+              isLoading={isLoading}
               icon={
                 <Icon
                   as={MdCheck}
@@ -205,34 +261,10 @@ const OutfitDetails = ({
         <DrawerBody>
           {Object.values(outfit).length > 0 && (
             <Grid templateColumns="repeat(2, 1fr)" gap={2}>
-              {outfit.shirt && (
-                <OutfitItem
-                  title={outfit.shirt.photographer}
-                  description={outfit.shirt.alt || ""}
-                  imageUrl={outfit.shirt.src.small || ""}
-                />
-              )}
-              {outfit.belt && (
-                <OutfitItem
-                  title={outfit.belt.photographer}
-                  description={outfit.belt.alt || ""}
-                  imageUrl={outfit.belt.src.small || ""}
-                />
-              )}
-              {outfit.pants && (
-                <OutfitItem
-                  title={outfit.pants.photographer}
-                  description={outfit.pants.alt || ""}
-                  imageUrl={outfit.pants.src.small || ""}
-                />
-              )}
-              {outfit.shoes && (
-                <OutfitItem
-                  title={outfit.shoes.photographer}
-                  description={outfit.shoes.alt || ""}
-                  imageUrl={outfit.shoes.src.small || ""}
-                />
-              )}
+              {outfit.shirt && <OutfitReference reference={outfit.shirt} />}
+              {outfit.belt && <OutfitReference reference={outfit.belt} />}
+              {outfit.pants && <OutfitReference reference={outfit.pants} />}
+              {outfit.shoes && <OutfitReference reference={outfit.shoes} />}
             </Grid>
           )}
 
@@ -303,19 +335,26 @@ const OutfitDetails = ({
 
                     <AccordionPanel>
                       <Grid templateColumns="repeat(3, 1fr)" gap={2}>
-                        {shirts?.photos.map((shirt) => (
-                          <OutfitItem
-                            key={shirt.id}
-                            title={shirt.photographer}
-                            description={shirt.alt || ""}
-                            imageUrl={shirt.src.small}
-                            cursor="pointer"
-                            onClick={() => {
-                              setOutfit({ ...outfit, shirt });
-                              setActiveDrawer((activeDrawer as number) + 1);
-                            }}
-                          />
-                        ))}
+                        {isShirtLoading || !shirts ? (
+                          <Loading message="Loading your shirts, please wait" />
+                        ) : (
+                          shirts.map((shirt) => (
+                            <OutfitItem
+                              key={shirt.id}
+                              title={shirt.title}
+                              description={shirt.description}
+                              imageUrl={shirt.imageUrl}
+                              cursor="pointer"
+                              onClick={() => {
+                                setOutfit({
+                                  ...outfit,
+                                  shirt: doc(db, "wardrobe-items", shirt.id),
+                                });
+                                setActiveDrawer((activeDrawer as number) + 1);
+                              }}
+                            />
+                          ))
+                        )}
                       </Grid>
                     </AccordionPanel>
                   </AccordionItem>
@@ -330,19 +369,26 @@ const OutfitDetails = ({
 
                     <AccordionPanel>
                       <Grid templateColumns="repeat(3, 1fr)" gap={2}>
-                        {belts?.photos.map((belt) => (
-                          <OutfitItem
-                            key={belt.id}
-                            title={belt.photographer}
-                            description={belt.alt || ""}
-                            imageUrl={belt.src.small}
-                            cursor="pointer"
-                            onClick={() => {
-                              setOutfit({ ...outfit, belt });
-                              setActiveDrawer((activeDrawer as number) + 1);
-                            }}
-                          />
-                        ))}
+                        {isBeltsLoading || !belts ? (
+                          <Loading message="Loading your belts, please wait" />
+                        ) : (
+                          belts.map((belt) => (
+                            <OutfitItem
+                              key={belt.id}
+                              title={belt.title}
+                              description={belt.description}
+                              imageUrl={belt.imageUrl}
+                              cursor="pointer"
+                              onClick={() => {
+                                setOutfit({
+                                  ...outfit,
+                                  belt: doc(db, "wardrobe-items", belt.id),
+                                });
+                                setActiveDrawer((activeDrawer as number) + 1);
+                              }}
+                            />
+                          ))
+                        )}
                       </Grid>
                     </AccordionPanel>
                   </AccordionItem>
@@ -357,19 +403,30 @@ const OutfitDetails = ({
 
                     <AccordionPanel>
                       <Grid templateColumns="repeat(3, 1fr)" gap={2}>
-                        {pants?.photos.map((pantsPair) => (
-                          <OutfitItem
-                            key={pantsPair.id}
-                            title={pantsPair.photographer}
-                            description={pantsPair.alt || ""}
-                            imageUrl={pantsPair.src.small}
-                            cursor="pointer"
-                            onClick={() => {
-                              setOutfit({ ...outfit, pants: pantsPair });
-                              setActiveDrawer((activeDrawer as number) + 1);
-                            }}
-                          />
-                        ))}
+                        {isPantsLoading || !pants ? (
+                          <Loading message="Loading your pants, please wait" />
+                        ) : (
+                          pants.map((pantsPair) => (
+                            <OutfitItem
+                              key={pantsPair.id}
+                              title={pantsPair.title}
+                              description={pantsPair.description}
+                              imageUrl={pantsPair.imageUrl}
+                              cursor="pointer"
+                              onClick={() => {
+                                setOutfit({
+                                  ...outfit,
+                                  pants: doc(
+                                    db,
+                                    "wardrobe-items",
+                                    pantsPair.id
+                                  ),
+                                });
+                                setActiveDrawer((activeDrawer as number) + 1);
+                              }}
+                            />
+                          ))
+                        )}
                       </Grid>
                     </AccordionPanel>
                   </AccordionItem>
@@ -384,19 +441,30 @@ const OutfitDetails = ({
 
                     <AccordionPanel>
                       <Grid templateColumns="repeat(3, 1fr)" gap={2}>
-                        {shoes?.photos.map((shoesPair) => (
-                          <OutfitItem
-                            key={shoesPair.id}
-                            title={shoesPair.photographer}
-                            description={shoesPair.alt || ""}
-                            imageUrl={shoesPair.src.small}
-                            cursor="pointer"
-                            onClick={() => {
-                              setOutfit({ ...outfit, shoes: shoesPair });
-                              setClosetExpanded(false);
-                            }}
-                          />
-                        ))}
+                        {isShoesLoading || !shoes ? (
+                          <Loading message="Loading our shoes, please wait" />
+                        ) : (
+                          shoes.map((shoesPair) => (
+                            <OutfitItem
+                              key={shoesPair.id}
+                              title={shoesPair.title}
+                              description={shoesPair.description}
+                              imageUrl={shoesPair.imageUrl}
+                              cursor="pointer"
+                              onClick={() => {
+                                setOutfit({
+                                  ...outfit,
+                                  shoes: doc(
+                                    db,
+                                    "wardrobe-items",
+                                    shoesPair.id
+                                  ),
+                                });
+                                setClosetExpanded(false);
+                              }}
+                            />
+                          ))
+                        )}
                       </Grid>
                     </AccordionPanel>
                   </AccordionItem>

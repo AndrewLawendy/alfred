@@ -1,4 +1,4 @@
-import { Timestamp } from "firebase/firestore";
+import { DocumentReference, DocumentData, Timestamp } from "firebase/firestore";
 
 export interface Common {
   id: string;
@@ -44,3 +44,12 @@ export interface Jacket extends Common {
 }
 
 export type Item = Shirt | Belt | PantsPair | ShoePair | Jacket;
+
+export interface Outfit extends Common {
+  shirt: DocumentReference<DocumentData>;
+  belt: DocumentReference<DocumentData>;
+  pants: DocumentReference<DocumentData>;
+  shoes: DocumentReference<DocumentData>;
+  order: number;
+  active: boolean;
+}

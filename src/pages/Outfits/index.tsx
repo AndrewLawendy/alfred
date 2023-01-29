@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { orderBy } from "@firebase/firestore";
 import {
   Box,
   Grid,
@@ -8,54 +9,43 @@ import {
   Icon,
   useDisclosure,
 } from "@chakra-ui/react";
-
 import {
   DragDropContext,
   Droppable,
   Draggable,
   DropResult,
 } from "react-beautiful-dnd";
-import { MdAdd } from "react-icons/md";
-import { Photo } from "pexels";
+import { MdAdd, MdAutoAwesome } from "react-icons/md";
 
-import OutfitItem from "components/OutfitItem";
+import { Outfit } from "utils/types";
+
+import OutfitReference from "components/OutfitReference";
+import Loading from "components/Loading";
+
+import useData from "resources/useData";
+import useUpdateDocument from "resources/useUpdateDocument";
 
 import OutfitDetails from "./OutfitDetails";
 
-export interface Outfit {
-  id: string;
-  shirt: Photo;
-  belt: Photo;
-  pants: Photo;
-  shoes: Photo;
-}
-
 const Outfits = () => {
   const [currentOutfit, setCurrentOutfit] = useState<Outfit>();
-  const [outfits, setOutfits] = useState<Outfit[]>([]);
+  const [outfits, isOutfitsLoading] = useData<Outfit>(
+    "outfits",
+    orderBy("order")
+  );
+  const [updateOutfit] = useUpdateDocument("outfits");
   const { isOpen, onOpen, onClose } = useDisclosure();
-
-  const onSubmit = (outfit: Outfit) => {
-    if (outfit.id === currentOutfit?.id) {
-      const currentOutfitIndex = outfits.findIndex(
-        ({ id }) => id === currentOutfit.id
-      );
-      outfits.splice(currentOutfitIndex, 1, outfit);
-
-      setOutfits([...outfits]);
-    } else {
-      setOutfits([...outfits, outfit]);
-    }
-  };
 
   const onDragEnd = (result: DropResult) => {
     const { destination, source } = result;
-    if (!destination) return;
+    if (!destination || !outfits) return;
 
     const [droppedItem] = outfits.splice(source.index, 1);
     outfits.splice(destination.index, 0, droppedItem);
 
-    setOutfits([...outfits]);
+    outfits.forEach((outfit, index) =>
+      updateOutfit(outfit.id, { ...outfit, order: index })
+    );
   };
 
   return (
@@ -68,74 +58,74 @@ const Outfits = () => {
               ref={provided.innerRef}
               sx={{ pb: 14 }}
             >
-              {outfits.map((outfit, index) => {
-                return (
-                  <Draggable
-                    key={outfit.id}
-                    draggableId={outfit.id}
-                    index={index}
-                  >
-                    {(provided, snapshot) => (
-                      <Box
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                        onClick={() => {
-                          setCurrentOutfit(outfit);
-                          onOpen();
-                        }}
-                      >
+              {isOutfitsLoading || !outfits ? (
+                <Loading message="Loading your outfits, please wait" />
+              ) : (
+                outfits.map((outfit, index) => {
+                  return (
+                    <Draggable
+                      key={outfit.id}
+                      draggableId={outfit.id}
+                      index={index}
+                    >
+                      {(provided, snapshot) => (
                         <Box
-                          sx={{
-                            borderTopRadius: 6,
-                            transition: "all 0.15s",
-                            transform: snapshot.isDragging
-                              ? "scale(1.01)"
-                              : undefined,
-                            boxShadow: snapshot.isDragging
-                              ? "material"
-                              : undefined,
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                          onClick={() => {
+                            setCurrentOutfit(outfit);
+                            onOpen();
                           }}
                         >
                           <Box
                             sx={{
-                              p: 2,
-                              backgroundColor: "white",
                               borderTopRadius: 6,
-                              borderTop: "1px solid",
-                              borderX: "1px solid",
-                              borderColor: "gray.100",
+                              transition: "all 0.15s",
+                              transform: snapshot.isDragging
+                                ? "scale(1.01)"
+                                : undefined,
+                              boxShadow: snapshot.isDragging
+                                ? "material"
+                                : undefined,
                             }}
                           >
-                            <Heading as="h6" size="sm">
-                              #{index + 1}
-                            </Heading>
-                          </Box>
-                          {Object.values(outfit).length > 0 && (
-                            <Grid
-                              templateColumns="repeat(4, 1fr)"
-                              sx={{ backgroundColor: "white" }}
+                            <Box
+                              sx={{
+                                p: 2,
+                                backgroundColor: "white",
+                                borderTopRadius: 6,
+                                borderTop: "1px solid",
+                                borderX: "1px solid",
+                                borderColor: "gray.100",
+                                display: "flex",
+                                justifyContent: "space-between",
+                              }}
                             >
-                              <OutfitItem
-                                imageUrl={outfit.shirt?.src.small || ""}
-                              />
-                              <OutfitItem
-                                imageUrl={outfit.belt?.src.small || ""}
-                              />
-                              <OutfitItem
-                                imageUrl={outfit.pants?.src.small || ""}
-                              />
-                              <OutfitItem
-                                imageUrl={outfit.shoes?.src.small || ""}
-                              />
-                            </Grid>
-                          )}
+                              <Heading as="h6" size="sm">
+                                #{index + 1}
+                              </Heading>
+
+                              {outfit.active && <Icon as={MdAutoAwesome} />}
+                            </Box>
+                            {Object.values(outfit).length > 0 && (
+                              <Grid
+                                templateColumns="repeat(4, 1fr)"
+                                sx={{ backgroundColor: "white" }}
+                              >
+                                <OutfitReference reference={outfit.shirt} />
+                                <OutfitReference reference={outfit.belt} />
+                                <OutfitReference reference={outfit.pants} />
+                                <OutfitReference reference={outfit.shoes} />
+                              </Grid>
+                            )}
+                          </Box>
                         </Box>
-                      </Box>
-                    )}
-                  </Draggable>
-                );
-              })}
+                      )}
+                    </Draggable>
+                  );
+                })
+              )}
               {provided.placeholder}
             </Stack>
           )}
@@ -172,8 +162,8 @@ const Outfits = () => {
           onClose();
           setCurrentOutfit(undefined);
         }}
-        onSubmit={onSubmit}
         currentOutfit={currentOutfit}
+        outfitsLength={outfits?.length}
       />
     </>
   );
