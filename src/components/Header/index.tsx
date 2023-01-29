@@ -39,7 +39,10 @@ const Header = () => {
             lineHeight: 6,
           }}
         >
-          Alfred
+          Alfred{" "}
+          <Text as="span" fontSize="md">
+            v{process.env.REACT_APP_VERSION}
+          </Text>
         </Text>
       </ChakraLink>
 
