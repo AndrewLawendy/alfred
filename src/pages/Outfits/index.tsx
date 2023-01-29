@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { orderBy } from "@firebase/firestore";
 import {
   Box,
   Grid,
@@ -28,7 +29,10 @@ import OutfitDetails from "./OutfitDetails";
 
 const Outfits = () => {
   const [currentOutfit, setCurrentOutfit] = useState<Outfit>();
-  const [outfits, isOutfitsLoading] = useData<Outfit>("outfits");
+  const [outfits, isOutfitsLoading] = useData<Outfit>(
+    "outfits",
+    orderBy("order")
+  );
   const [updateOutfit] = useUpdateDocument("outfits");
   const { isOpen, onOpen, onClose } = useDisclosure();
 
@@ -57,71 +61,66 @@ const Outfits = () => {
               {isOutfitsLoading || !outfits ? (
                 <Loading message="Loading your outfits, please wait" />
               ) : (
-                outfits
-                  .sort(
-                    ({ order: outfitOrderA }, { order: outfitOrderB }) =>
-                      outfitOrderA - outfitOrderB
-                  )
-                  .map((outfit, index) => {
-                    return (
-                      <Draggable
-                        key={outfit.id}
-                        draggableId={outfit.id}
-                        index={index}
-                      >
-                        {(provided, snapshot) => (
+                outfits.map((outfit, index) => {
+                  return (
+                    <Draggable
+                      key={outfit.id}
+                      draggableId={outfit.id}
+                      index={index}
+                    >
+                      {(provided, snapshot) => (
+                        <Box
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                          onClick={() => {
+                            setCurrentOutfit(outfit);
+                            onOpen();
+                          }}
+                        >
                           <Box
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            onClick={() => {
-                              setCurrentOutfit(outfit);
-                              onOpen();
+                            sx={{
+                              borderTopRadius: 6,
+                              transition: "all 0.15s",
+                              transform: snapshot.isDragging
+                                ? "scale(1.01)"
+                                : undefined,
+                              boxShadow: snapshot.isDragging
+                                ? "material"
+                                : undefined,
                             }}
                           >
                             <Box
                               sx={{
+                                p: 2,
+                                backgroundColor: "white",
                                 borderTopRadius: 6,
-                                transition: "all 0.15s",
-                                transform: snapshot.isDragging
-                                  ? "scale(1.01)"
-                                  : undefined,
-                                boxShadow: snapshot.isDragging
-                                  ? "material"
-                                  : undefined,
+                                borderTop: "1px solid",
+                                borderX: "1px solid",
+                                borderColor: "gray.100",
                               }}
                             >
-                              <Box
-                                sx={{
-                                  p: 2,
-                                  backgroundColor: "white",
-                                  borderTopRadius: 6,
-                                  borderTop: "1px solid",
-                                  borderX: "1px solid",
-                                  borderColor: "gray.100",
-                                }}
-                              >
-                                <Heading as="h6" size="sm">
-                                  #{index + 1}
-                                </Heading>
-                              </Box>
-                              {Object.values(outfit).length > 0 && (
-                                <Grid
-                                  templateColumns="repeat(4, 1fr)"
-                                  sx={{ backgroundColor: "white" }}
-                                >
-                                  <OutfitReference reference={outfit.shirt} />
-                                  <OutfitReference reference={outfit.belt} />
-                                  <OutfitReference reference={outfit.pants} />
-                                  <OutfitReference reference={outfit.shoes} />
-                                </Grid>
-                              )}
+                              <Heading as="h6" size="sm">
+                                #{index + 1}
+                              </Heading>
                             </Box>
+                            {Object.values(outfit).length > 0 && (
+                              <Grid
+                                templateColumns="repeat(4, 1fr)"
+                                sx={{ backgroundColor: "white" }}
+                              >
+                                <OutfitReference reference={outfit.shirt} />
+                                <OutfitReference reference={outfit.belt} />
+                                <OutfitReference reference={outfit.pants} />
+                                <OutfitReference reference={outfit.shoes} />
+                              </Grid>
+                            )}
                           </Box>
-                        )}
-                      </Draggable>
-                    );
-                  })
+                        </Box>
+                      )}
+                    </Draggable>
+                  );
+                })
               )}
               {provided.placeholder}
             </Stack>
