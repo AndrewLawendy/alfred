@@ -72,8 +72,9 @@ const WardrobeItem = ({
     where("type", "==", type)
   );
   const [addItem, isAddItemLoading] = useAddDocument<Item>("wardrobe-items");
+  const [updateItem, isUpdateItemLoading] =
+    useUpdateDocument<Item>("wardrobe-items");
   const [deleteItem, isDeletingItem] = useDeleteDocument("wardrobe-items");
-  const [updateItem, isUpdateItemLoading] = useUpdateDocument("wardrobe-items");
   const [uploadItemImage, isItemImageUploading, uploadSnapshot] =
     useUploadImage();
   const [deleteItemImage, isDeleteItemImageLoading] = useDeleteImage();

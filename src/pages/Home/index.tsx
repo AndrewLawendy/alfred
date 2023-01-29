@@ -49,7 +49,8 @@ const Home = () => {
       );
     }
   }, [jackets, weatherData]);
-  const [updateOutfit, isUpdateOutfitLoading] = useUpdateDocument("outfits");
+  const [updateOutfit, isUpdateOutfitLoading] =
+    useUpdateDocument<Outfit>("outfits");
   const [firstOutfit] = outfits || [];
   const activeOutfit = useMemo(() => {
     return outfits?.find(({ active }) => active) || firstOutfit;

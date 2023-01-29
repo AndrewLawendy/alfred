@@ -94,7 +94,8 @@ const OutfitDetails = ({
     where("type", "==", "shoes")
   );
   const [addOutfit, isAssOutfitLoading] = useAddDocument<Outfit>("outfits");
-  const [updateOutfit, isUpdateOutfitLoading] = useUpdateDocument("outfits");
+  const [updateOutfit, isUpdateOutfitLoading] =
+    useUpdateDocument<Outfit>("outfits");
   const [deleteOutfit, isDeletingOutfit] = useDeleteDocument("outfits");
 
   const isView = mode === "view" && currentOutfit !== undefined;
