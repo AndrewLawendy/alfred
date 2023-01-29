@@ -1,32 +1,57 @@
-import { Heading, Button, Flex, Grid } from "@chakra-ui/react";
+import {
+  Heading,
+  Button,
+  Flex,
+  Grid,
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  AlertDescription,
+  Link,
+} from "@chakra-ui/react";
+import { orderBy } from "@firebase/firestore";
+import { Link as WouterLink } from "wouter";
 
 import Weather from "components/Weather";
-import OutfitItem from "components/OutfitItem";
+// import OutfitItem from "components/OutfitItem";
+import OutfitReference from "components/OutfitReference";
+import Loading from "components/Loading";
 
 import useAuth from "hooks/useAuth";
 
-import usePexels from "resources/usePexels";
+import useData from "resources/useData";
+import useUpdateDocument from "resources/useUpdateDocument";
+
+import { Outfit } from "utils/types";
+import { useMemo } from "react";
 
 const Home = () => {
   const [user] = useAuth();
-  const { data: shirtData, isLoading: isShirtLoading } = usePexels("shirt", 1);
-  const { data: beltData, isLoading: isBeltLoading } = usePexels("belt", 1);
-  const { data: pantsData, isLoading: isPantsLoading } = usePexels("pants", 1);
-  const { data: shoesData, isLoading: isShoesLoading } = usePexels("shoes", 1);
+  const [outfits, isOutfitsLoading] = useData<Outfit>(
+    "outfits",
+    orderBy("order")
+  );
+  const [updateOutfit, isUpdateOutfitLoading] = useUpdateDocument("outfits");
+  const [firstOutfit] = outfits || [];
+  const activeOutfit = useMemo(() => {
+    return outfits?.find(({ active }) => active) || firstOutfit;
+  }, [outfits]);
 
-  const isLoading =
-    !shirtData ||
-    !beltData ||
-    !pantsData ||
-    !shoesData ||
-    isShirtLoading ||
-    isBeltLoading ||
-    isPantsLoading ||
-    isShoesLoading;
-  const [shirt] = shirtData?.photos || [];
-  const [belt] = beltData?.photos || [];
-  const [pants] = pantsData?.photos || [];
-  const [shoes] = shoesData?.photos || [];
+  const onFetchNextOutfit = () => {
+    const { order: activeOutfitOrder } = activeOutfit;
+
+    if (!outfits) return;
+
+    if (activeOutfitOrder === outfits?.length - 1) {
+      updateOutfit(firstOutfit.id, { ...firstOutfit, active: true });
+    } else {
+      const nextOutfit = outfits[activeOutfitOrder + 1];
+
+      updateOutfit(nextOutfit.id, { ...nextOutfit, active: true });
+    }
+
+    updateOutfit(activeOutfit.id, { ...activeOutfit, active: false });
+  };
 
   if (!user) return null;
 
@@ -47,46 +72,54 @@ const Home = () => {
         <Weather />
       </Flex>
 
-      <Grid templateColumns="repeat(2, 1fr)" gap={2} sx={{ mb: 20 }}>
-        <OutfitItem
-          isLoaded={!isLoading}
-          title={shirt?.photographer}
-          description={shirt?.alt || ""}
-          imageUrl={shirt?.src.small}
-        />
-        <OutfitItem
-          isLoaded={!isLoading}
-          title={belt?.photographer}
-          description={belt?.alt || ""}
-          imageUrl={belt?.src.small}
-        />
-        <OutfitItem
-          isLoaded={!isLoading}
-          title={pants?.photographer}
-          description={pants?.alt || ""}
-          imageUrl={pants?.src.small}
-        />
-        <OutfitItem
-          isLoaded={!isLoading}
-          title={shoes?.photographer}
-          description={shoes?.alt || ""}
-          imageUrl={shoes?.src.small}
-        />
-      </Grid>
+      {isOutfitsLoading ? (
+        <Loading message="Loading today's outfit, please wait" />
+      ) : activeOutfit ? (
+        <>
+          <Grid templateColumns="repeat(2, 1fr)" gap={2} sx={{ mb: 20 }}>
+            <OutfitReference reference={activeOutfit.shirt} />
+            <OutfitReference reference={activeOutfit.belt} />
+            <OutfitReference reference={activeOutfit.pants} />
+            <OutfitReference reference={activeOutfit.shoes} />
+          </Grid>
 
-      <Button
-        size="lg"
-        colorScheme="teal"
-        sx={{
-          borderRadius: "3xl",
-          position: "fixed",
-          bottom: 16,
-          left: "50%",
-          transform: "translate3d(-50%, 0, 0)",
-        }}
-      >
-        Fetch Next Outfit
-      </Button>
+          <Button
+            size="lg"
+            colorScheme="teal"
+            onClick={onFetchNextOutfit}
+            isLoading={isUpdateOutfitLoading}
+            sx={{
+              borderRadius: "3xl",
+              position: "fixed",
+              bottom: 16,
+              left: "50%",
+              transform: "translate3d(-50%, 0, 0)",
+            }}
+          >
+            Fetch Next Outfit
+          </Button>
+        </>
+      ) : (
+        <Alert
+          status="warning"
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+          textAlign="center"
+        >
+          <AlertIcon boxSize="30px" mr={0} />
+          <AlertTitle mt={4} mb={1} fontSize="lg">
+            No outfits
+          </AlertTitle>
+          <AlertDescription maxWidth="sm">
+            Go to{" "}
+            <Link color="teal.500" as={WouterLink} to="/outfits">
+              Outfits
+            </Link>{" "}
+            and start adding
+          </AlertDescription>
+        </Alert>
+      )}
     </>
   );
 };
