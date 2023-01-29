@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { where } from "firebase/firestore";
+import { where, doc } from "firebase/firestore";
 import {
   IconButton,
   Icon,
@@ -30,9 +30,11 @@ import {
   MdEdit,
 } from "react-icons/md";
 
+import { db } from "utils/firebase";
 import { Outfit, Shirt, Belt, PantsPair, ShoePair } from "utils/types";
 
 import OutfitItem from "components/OutfitItem";
+import OutfitReference from "components/OutfitReference";
 import Loading from "components/Loading";
 
 import useData from "resources/useData";
@@ -44,7 +46,10 @@ type AddOutfitProps = {
   currentOutfit?: Outfit;
 };
 
-type OutfitKeys = keyof Omit<Outfit, "id" | "user" | "createdAt" | "updatedAt">;
+type OutfitKeys = keyof Omit<
+  Outfit,
+  "id" | "user" | "createdAt" | "updatedAt" | "order" | "active"
+>;
 
 const fields: OutfitKeys[] = ["shirt", "belt", "pants", "shoes"];
 const fieldsNameMap: { [key in OutfitKeys]: string } = {
@@ -219,34 +224,10 @@ const OutfitDetails = ({
         <DrawerBody>
           {Object.values(outfit).length > 0 && (
             <Grid templateColumns="repeat(2, 1fr)" gap={2}>
-              {outfit.shirt && (
-                <OutfitItem
-                  title={outfit.shirt.title}
-                  description={outfit.shirt.description}
-                  imageUrl={outfit.shirt.imageUrl}
-                />
-              )}
-              {outfit.belt && (
-                <OutfitItem
-                  title={outfit.belt.title}
-                  description={outfit.belt.description}
-                  imageUrl={outfit.belt.imageUrl}
-                />
-              )}
-              {outfit.pants && (
-                <OutfitItem
-                  title={outfit.pants.title}
-                  description={outfit.pants.description}
-                  imageUrl={outfit.pants.imageUrl}
-                />
-              )}
-              {outfit.shoes && (
-                <OutfitItem
-                  title={outfit.shoes.title}
-                  description={outfit.shoes.description}
-                  imageUrl={outfit.shoes.imageUrl}
-                />
-              )}
+              {outfit.shirt && <OutfitReference reference={outfit.shirt} />}
+              {outfit.belt && <OutfitReference reference={outfit.belt} />}
+              {outfit.pants && <OutfitReference reference={outfit.pants} />}
+              {outfit.shoes && <OutfitReference reference={outfit.shoes} />}
             </Grid>
           )}
 
@@ -328,7 +309,10 @@ const OutfitDetails = ({
                               imageUrl={shirt.imageUrl}
                               cursor="pointer"
                               onClick={() => {
-                                setOutfit({ ...outfit, shirt });
+                                setOutfit({
+                                  ...outfit,
+                                  shirt: doc(db, "wardrobe-items", shirt.id),
+                                });
                                 setActiveDrawer((activeDrawer as number) + 1);
                               }}
                             />
@@ -359,7 +343,10 @@ const OutfitDetails = ({
                               imageUrl={belt.imageUrl}
                               cursor="pointer"
                               onClick={() => {
-                                setOutfit({ ...outfit, belt });
+                                setOutfit({
+                                  ...outfit,
+                                  belt: doc(db, "wardrobe-items", belt.id),
+                                });
                                 setActiveDrawer((activeDrawer as number) + 1);
                               }}
                             />
@@ -380,7 +367,7 @@ const OutfitDetails = ({
                     <AccordionPanel>
                       <Grid templateColumns="repeat(3, 1fr)" gap={2}>
                         {isPantsLoading || !pants ? (
-                          <Loading message="Loading your patns, please wait" />
+                          <Loading message="Loading your pants, please wait" />
                         ) : (
                           pants.map((pantsPair) => (
                             <OutfitItem
@@ -390,7 +377,14 @@ const OutfitDetails = ({
                               imageUrl={pantsPair.imageUrl}
                               cursor="pointer"
                               onClick={() => {
-                                setOutfit({ ...outfit, pants: pantsPair });
+                                setOutfit({
+                                  ...outfit,
+                                  pants: doc(
+                                    db,
+                                    "wardrobe-items",
+                                    pantsPair.id
+                                  ),
+                                });
                                 setActiveDrawer((activeDrawer as number) + 1);
                               }}
                             />
@@ -411,7 +405,7 @@ const OutfitDetails = ({
                     <AccordionPanel>
                       <Grid templateColumns="repeat(3, 1fr)" gap={2}>
                         {isShoesLoading || !shoes ? (
-                          <Loading message="Your shoes is loading, please wait" />
+                          <Loading message="Loading our shoes, please wait" />
                         ) : (
                           shoes.map((shoesPair) => (
                             <OutfitItem
@@ -421,7 +415,14 @@ const OutfitDetails = ({
                               imageUrl={shoesPair.imageUrl}
                               cursor="pointer"
                               onClick={() => {
-                                setOutfit({ ...outfit, shoes: shoesPair });
+                                setOutfit({
+                                  ...outfit,
+                                  shoes: doc(
+                                    db,
+                                    "wardrobe-items",
+                                    shoesPair.id
+                                  ),
+                                });
                                 setClosetExpanded(false);
                               }}
                             />
