@@ -22,24 +22,26 @@ import OutfitReference from "components/OutfitReference";
 import Loading from "components/Loading";
 
 import useData from "resources/useData";
+import useUpdateDocument from "resources/useUpdateDocument";
 
 import OutfitDetails from "./OutfitDetails";
 
 const Outfits = () => {
   const [currentOutfit, setCurrentOutfit] = useState<Outfit>();
   const [outfits, isOutfitsLoading] = useData<Outfit>("outfits");
+  const [updateOutfit] = useUpdateDocument("outfits");
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const onDragEnd = (result: DropResult) => {
-    const { destination } = result;
-    if (!destination) return;
+    const { destination, source } = result;
+    if (!destination || !outfits) return;
 
-    console.log(result);
+    const [droppedItem] = outfits.splice(source.index, 1);
+    outfits.splice(destination.index, 0, droppedItem);
 
-    // const [droppedItem] = outfits.splice(source.index, 1);
-    // outfits.splice(destination.index, 0, droppedItem);
-
-    // setOutfits([...outfits]);
+    outfits.forEach((outfit, index) =>
+      updateOutfit(outfit.id, { ...outfit, order: index })
+    );
   };
 
   return (
@@ -55,66 +57,71 @@ const Outfits = () => {
               {isOutfitsLoading || !outfits ? (
                 <Loading message="Loading your outfits, please wait" />
               ) : (
-                outfits.map((outfit, index) => {
-                  return (
-                    <Draggable
-                      key={outfit.id}
-                      draggableId={outfit.id}
-                      index={index}
-                    >
-                      {(provided, snapshot) => (
-                        <Box
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          onClick={() => {
-                            setCurrentOutfit(outfit);
-                            onOpen();
-                          }}
-                        >
+                outfits
+                  .sort(
+                    ({ order: outfitOrderA }, { order: outfitOrderB }) =>
+                      outfitOrderA - outfitOrderB
+                  )
+                  .map((outfit, index) => {
+                    return (
+                      <Draggable
+                        key={outfit.id}
+                        draggableId={outfit.id}
+                        index={index}
+                      >
+                        {(provided, snapshot) => (
                           <Box
-                            sx={{
-                              borderTopRadius: 6,
-                              transition: "all 0.15s",
-                              transform: snapshot.isDragging
-                                ? "scale(1.01)"
-                                : undefined,
-                              boxShadow: snapshot.isDragging
-                                ? "material"
-                                : undefined,
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            onClick={() => {
+                              setCurrentOutfit(outfit);
+                              onOpen();
                             }}
                           >
                             <Box
                               sx={{
-                                p: 2,
-                                backgroundColor: "white",
                                 borderTopRadius: 6,
-                                borderTop: "1px solid",
-                                borderX: "1px solid",
-                                borderColor: "gray.100",
+                                transition: "all 0.15s",
+                                transform: snapshot.isDragging
+                                  ? "scale(1.01)"
+                                  : undefined,
+                                boxShadow: snapshot.isDragging
+                                  ? "material"
+                                  : undefined,
                               }}
                             >
-                              <Heading as="h6" size="sm">
-                                #{index + 1}
-                              </Heading>
-                            </Box>
-                            {Object.values(outfit).length > 0 && (
-                              <Grid
-                                templateColumns="repeat(4, 1fr)"
-                                sx={{ backgroundColor: "white" }}
+                              <Box
+                                sx={{
+                                  p: 2,
+                                  backgroundColor: "white",
+                                  borderTopRadius: 6,
+                                  borderTop: "1px solid",
+                                  borderX: "1px solid",
+                                  borderColor: "gray.100",
+                                }}
                               >
-                                <OutfitReference reference={outfit.shirt} />
-                                <OutfitReference reference={outfit.belt} />
-                                <OutfitReference reference={outfit.pants} />
-                                <OutfitReference reference={outfit.shoes} />
-                              </Grid>
-                            )}
+                                <Heading as="h6" size="sm">
+                                  #{index + 1}
+                                </Heading>
+                              </Box>
+                              {Object.values(outfit).length > 0 && (
+                                <Grid
+                                  templateColumns="repeat(4, 1fr)"
+                                  sx={{ backgroundColor: "white" }}
+                                >
+                                  <OutfitReference reference={outfit.shirt} />
+                                  <OutfitReference reference={outfit.belt} />
+                                  <OutfitReference reference={outfit.pants} />
+                                  <OutfitReference reference={outfit.shoes} />
+                                </Grid>
+                              )}
+                            </Box>
                           </Box>
-                        </Box>
-                      )}
-                    </Draggable>
-                  );
-                })
+                        )}
+                      </Draggable>
+                    );
+                  })
               )}
               {provided.placeholder}
             </Stack>
