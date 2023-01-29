@@ -7,6 +7,10 @@ import {
   Stack,
   IconButton,
   Icon,
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  AlertDescription,
   useDisclosure,
 } from "@chakra-ui/react";
 import {
@@ -50,18 +54,34 @@ const Outfits = () => {
 
   return (
     <>
-      <DragDropContext onDragEnd={onDragEnd}>
-        <Droppable droppableId="outfits">
-          {(provided) => (
-            <Stack
-              {...provided.droppableProps}
-              ref={provided.innerRef}
-              sx={{ pb: 14 }}
-            >
-              {isOutfitsLoading || !outfits ? (
-                <Loading message="Loading your outfits, please wait" />
-              ) : (
-                outfits.map((outfit, index) => {
+      {isOutfitsLoading || !outfits ? (
+        <Loading message="Loading your outfits, please wait" />
+      ) : outfits.length === 0 ? (
+        <Alert
+          status="warning"
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+          textAlign="center"
+        >
+          <AlertIcon boxSize="30px" mr={0} />
+          <AlertTitle mt={4} mb={1} fontSize="lg">
+            No outfits
+          </AlertTitle>
+          <AlertDescription maxWidth="sm">
+            Click on Add and gather your outfit
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <DragDropContext onDragEnd={onDragEnd}>
+          <Droppable droppableId="outfits">
+            {(provided) => (
+              <Stack
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+                sx={{ pb: 14 }}
+              >
+                {outfits.map((outfit, index) => {
                   return (
                     <Draggable
                       key={outfit.id}
@@ -124,13 +144,13 @@ const Outfits = () => {
                       )}
                     </Draggable>
                   );
-                })
-              )}
-              {provided.placeholder}
-            </Stack>
-          )}
-        </Droppable>
-      </DragDropContext>
+                })}
+                {provided.placeholder}
+              </Stack>
+            )}
+          </Droppable>
+        </DragDropContext>
+      )}
 
       <IconButton
         onClick={onOpen}
