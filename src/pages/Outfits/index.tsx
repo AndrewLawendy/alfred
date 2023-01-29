@@ -163,7 +163,7 @@ const Outfits = () => {
           setCurrentOutfit(undefined);
         }}
         currentOutfit={currentOutfit}
-        outfitsLength={outfits?.length}
+        outfits={outfits}
       />
     </>
   );

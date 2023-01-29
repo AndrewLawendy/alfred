@@ -48,7 +48,7 @@ type AddOutfitProps = {
   isOpen: boolean;
   onClose: () => void;
   currentOutfit?: Outfit;
-  outfitsLength?: number;
+  outfits?: Outfit[];
 };
 
 type OutfitKeys = keyof Omit<
@@ -68,7 +68,7 @@ const OutfitDetails = ({
   isOpen,
   onClose,
   currentOutfit,
-  outfitsLength = 0,
+  outfits = [],
 }: AddOutfitProps) => {
   const closetContainerRef = useRef(null);
   const [closetExpanded, setClosetExpanded] = useState(false);
@@ -126,7 +126,7 @@ const OutfitDetails = ({
     }
   };
 
-  const submit = () => {
+  const handleSubmit = () => {
     if (invalidFields.length > 0) {
       if (!toast.isActive(toastId)) {
         toast({
@@ -149,13 +149,24 @@ const OutfitDetails = ({
       if (isNewOutfit) {
         addOutfit({
           ...(outfit as Outfit),
-          order: outfitsLength,
-          active: outfitsLength < 1,
+          order: outfits.length,
+          active: outfits.length < 1,
         }).then(onClose);
       } else if (outfit.id) {
         updateOutfit(outfit.id, outfit).then(onClose);
       }
     }
+  };
+
+  const handleDelete = () => {
+    if (!currentOutfit) return;
+
+    if (outfits.length > 1) {
+      const [firstOutfit] = outfits;
+      updateOutfit(firstOutfit.id, { ...firstOutfit, active: true });
+    }
+
+    deleteOutfit(currentOutfit.id).then(onClose);
   };
 
   useEffect(() => {
@@ -204,8 +215,17 @@ const OutfitDetails = ({
           <Text sx={{ flexGrow: 1 }}>{heading}</Text>
           {currentOutfit && (
             <Confirm
-              message="Are you sure you want to delete this outfit?"
-              onConfirm={() => deleteOutfit(currentOutfit.id).then(onClose)}
+              message={
+                <>
+                  <Text>Are you sure you want to delete this outfit?</Text>
+                  {currentOutfit.active && (
+                    <Text fontSize="sm" color="red.500">
+                      Please not that this outfit is today&apos;s outfit
+                    </Text>
+                  )}
+                </>
+              }
+              onConfirm={handleDelete}
               okText="Delete"
               okType="red"
             >
@@ -241,7 +261,7 @@ const OutfitDetails = ({
           ) : (
             <IconButton
               colorScheme="teal"
-              onClick={submit}
+              onClick={handleSubmit}
               aria-label="Submit New Outfit"
               size="sm"
               isLoading={isLoading}

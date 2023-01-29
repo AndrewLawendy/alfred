@@ -16,7 +16,7 @@ type ChildrenProps = {
 
 type ConfirmProps = {
   children: (props: ChildrenProps) => React.ReactNode;
-  message: string;
+  message: string | JSX.Element;
   okText?: string;
   cancelText?: string;
   okType?: ThemingProps<"Button">["colorScheme"];
