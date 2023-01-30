@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { where, doc } from "firebase/firestore";
+import { Link as WouterLink } from "wouter";
 import {
   IconButton,
   Icon,
@@ -20,6 +21,11 @@ import {
   UnorderedList,
   ListItem,
   ExpandedIndex,
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  AlertDescription,
+  Link,
   useToast,
 } from "@chakra-ui/react";
 import {
@@ -355,11 +361,11 @@ const OutfitDetails = ({
                     </AccordionButton>
 
                     <AccordionPanel>
-                      <Grid templateColumns="repeat(3, 1fr)" gap={2}>
-                        {isShirtLoading || !shirts ? (
-                          <Loading message="Loading your shirts, please wait" />
-                        ) : (
-                          shirts.map((shirt) => (
+                      {isShirtLoading || !shirts ? (
+                        <Loading message="Loading your shirts, please wait" />
+                      ) : shirts.length > 0 ? (
+                        <Grid templateColumns="repeat(3, 1fr)" gap={2}>
+                          {shirts.map((shirt) => (
                             <OutfitItem
                               key={shirt.id}
                               title={shirt.title}
@@ -374,9 +380,33 @@ const OutfitDetails = ({
                                 setActiveDrawer((activeDrawer as number) + 1);
                               }}
                             />
-                          ))
-                        )}
-                      </Grid>
+                          ))}
+                        </Grid>
+                      ) : (
+                        <Alert
+                          status="warning"
+                          flexDirection="column"
+                          alignItems="center"
+                          justifyContent="center"
+                          textAlign="center"
+                        >
+                          <AlertIcon boxSize="30px" mr={0} />
+                          <AlertTitle mt={4} mb={1} fontSize="lg">
+                            No shirts
+                          </AlertTitle>
+                          <AlertDescription maxWidth="sm">
+                            Go to{" "}
+                            <Link
+                              color="teal.500"
+                              as={WouterLink}
+                              to="/wardrobe"
+                            >
+                              Wardrobe
+                            </Link>{" "}
+                            and start adding
+                          </AlertDescription>
+                        </Alert>
+                      )}
                     </AccordionPanel>
                   </AccordionItem>
 
@@ -389,11 +419,11 @@ const OutfitDetails = ({
                     </AccordionButton>
 
                     <AccordionPanel>
-                      <Grid templateColumns="repeat(3, 1fr)" gap={2}>
-                        {isBeltsLoading || !belts ? (
-                          <Loading message="Loading your belts, please wait" />
-                        ) : (
-                          belts.map((belt) => (
+                      {isBeltsLoading || !belts ? (
+                        <Loading message="Loading your belts, please wait" />
+                      ) : belts.length > 0 ? (
+                        <Grid templateColumns="repeat(3, 1fr)" gap={2}>
+                          {belts.map((belt) => (
                             <OutfitItem
                               key={belt.id}
                               title={belt.title}
@@ -408,9 +438,33 @@ const OutfitDetails = ({
                                 setActiveDrawer((activeDrawer as number) + 1);
                               }}
                             />
-                          ))
-                        )}
-                      </Grid>
+                          ))}
+                        </Grid>
+                      ) : (
+                        <Alert
+                          status="warning"
+                          flexDirection="column"
+                          alignItems="center"
+                          justifyContent="center"
+                          textAlign="center"
+                        >
+                          <AlertIcon boxSize="30px" mr={0} />
+                          <AlertTitle mt={4} mb={1} fontSize="lg">
+                            No belts
+                          </AlertTitle>
+                          <AlertDescription maxWidth="sm">
+                            Go to{" "}
+                            <Link
+                              color="teal.500"
+                              as={WouterLink}
+                              to="/wardrobe"
+                            >
+                              Wardrobe
+                            </Link>{" "}
+                            and start adding
+                          </AlertDescription>
+                        </Alert>
+                      )}
                     </AccordionPanel>
                   </AccordionItem>
 
@@ -423,11 +477,11 @@ const OutfitDetails = ({
                     </AccordionButton>
 
                     <AccordionPanel>
-                      <Grid templateColumns="repeat(3, 1fr)" gap={2}>
-                        {isPantsLoading || !pants ? (
-                          <Loading message="Loading your pants, please wait" />
-                        ) : (
-                          pants.map((pantsPair) => (
+                      {isPantsLoading || !pants ? (
+                        <Loading message="Loading your pants, please wait" />
+                      ) : pants.length > 0 ? (
+                        <Grid templateColumns="repeat(3, 1fr)" gap={2}>
+                          {pants.map((pantsPair) => (
                             <OutfitItem
                               key={pantsPair.id}
                               title={pantsPair.title}
@@ -446,9 +500,33 @@ const OutfitDetails = ({
                                 setActiveDrawer((activeDrawer as number) + 1);
                               }}
                             />
-                          ))
-                        )}
-                      </Grid>
+                          ))}
+                        </Grid>
+                      ) : (
+                        <Alert
+                          status="warning"
+                          flexDirection="column"
+                          alignItems="center"
+                          justifyContent="center"
+                          textAlign="center"
+                        >
+                          <AlertIcon boxSize="30px" mr={0} />
+                          <AlertTitle mt={4} mb={1} fontSize="lg">
+                            No pants
+                          </AlertTitle>
+                          <AlertDescription maxWidth="sm">
+                            Go to{" "}
+                            <Link
+                              color="teal.500"
+                              as={WouterLink}
+                              to="/wardrobe"
+                            >
+                              Wardrobe
+                            </Link>{" "}
+                            and start adding
+                          </AlertDescription>
+                        </Alert>
+                      )}
                     </AccordionPanel>
                   </AccordionItem>
 
@@ -461,11 +539,11 @@ const OutfitDetails = ({
                     </AccordionButton>
 
                     <AccordionPanel>
-                      <Grid templateColumns="repeat(3, 1fr)" gap={2}>
-                        {isShoesLoading || !shoes ? (
-                          <Loading message="Loading our shoes, please wait" />
-                        ) : (
-                          shoes.map((shoesPair) => (
+                      {isShoesLoading || !shoes ? (
+                        <Loading message="Loading our shoes, please wait" />
+                      ) : shoes.length > 0 ? (
+                        <Grid templateColumns="repeat(3, 1fr)" gap={2}>
+                          {shoes.map((shoesPair) => (
                             <OutfitItem
                               key={shoesPair.id}
                               title={shoesPair.title}
@@ -484,9 +562,33 @@ const OutfitDetails = ({
                                 setClosetExpanded(false);
                               }}
                             />
-                          ))
-                        )}
-                      </Grid>
+                          ))}
+                        </Grid>
+                      ) : (
+                        <Alert
+                          status="warning"
+                          flexDirection="column"
+                          alignItems="center"
+                          justifyContent="center"
+                          textAlign="center"
+                        >
+                          <AlertIcon boxSize="30px" mr={0} />
+                          <AlertTitle mt={4} mb={1} fontSize="lg">
+                            No shoes
+                          </AlertTitle>
+                          <AlertDescription maxWidth="sm">
+                            Go to{" "}
+                            <Link
+                              color="teal.500"
+                              as={WouterLink}
+                              to="/wardrobe"
+                            >
+                              Wardrobe
+                            </Link>{" "}
+                            and start adding
+                          </AlertDescription>
+                        </Alert>
+                      )}
                     </AccordionPanel>
                   </AccordionItem>
                 </Accordion>
