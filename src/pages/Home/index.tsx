@@ -51,8 +51,8 @@ const Home = () => {
   }, [jackets, weatherData]);
   const [updateOutfit, isUpdateOutfitLoading] =
     useUpdateDocument<Outfit>("outfits");
-  const [firstOutfit] = outfits || [];
   const activeOutfit = useMemo(() => {
+    const [firstOutfit] = outfits || [];
     return outfits?.find(({ active }) => active) || firstOutfit;
   }, [outfits]);
 
@@ -63,14 +63,10 @@ const Home = () => {
 
     if (outfits.length === 1) return onOpen();
 
-    if (activeOutfitOrder === outfits?.length - 1) {
-      updateOutfit(firstOutfit.id, { ...firstOutfit, active: true });
-    } else {
-      const nextOutfit = outfits[activeOutfitOrder + 1];
+    const nextOutfitIndex = (activeOutfitOrder + 1) % outfits.length;
+    const nextOutfit = outfits[nextOutfitIndex];
 
-      updateOutfit(nextOutfit.id, { ...nextOutfit, active: true });
-    }
-
+    updateOutfit(nextOutfit.id, { ...nextOutfit, active: true });
     updateOutfit(activeOutfit.id, { ...activeOutfit, active: false });
   };
 
