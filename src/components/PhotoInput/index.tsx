@@ -58,7 +58,6 @@ const PhotoInput = ({
           disabled={disabled}
           sx={{
             width: "80vw",
-            height: "80vw",
             border: "1px solid",
             borderRadius: "md",
             borderColor: error ? "red.500" : "gray.200",
@@ -68,7 +67,7 @@ const PhotoInput = ({
           }}
         >
           {imgSrc ? (
-            <Image src={imgSrc} boxSize="100%" objectFit="cover" />
+            <Image src={imgSrc} w="100%" />
           ) : (
             <Text>Tap to add a photo</Text>
           )}
