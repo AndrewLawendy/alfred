@@ -69,7 +69,9 @@ const PhotoInput = ({
           {imgSrc ? (
             <Image src={imgSrc} w="100%" />
           ) : (
-            <Text>Tap to add a photo</Text>
+            <Text sx={{ height: "80vw", lineHeight: "80vw" }}>
+              Tap to add a photo
+            </Text>
           )}
         </Box>
 

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Heading,
   Button,
@@ -8,6 +8,12 @@ import {
   AlertIcon,
   AlertTitle,
   AlertDescription,
+  Drawer,
+  DrawerBody,
+  DrawerHeader,
+  DrawerOverlay,
+  DrawerContent,
+  Text,
   Link,
   useDisclosure,
   Popover,
@@ -41,20 +47,24 @@ const Home = () => {
     "outfits",
     orderBy("order")
   );
-  const [jackets] = useData<Jacket>("wardrobe-items");
-  const temperatureJacket = useMemo(() => {
-    if (jackets && weatherData) {
-      return jackets.find(
-        ({ maxTemperature }) => maxTemperature >= weatherData.main.temp
-      );
-    }
-  }, [jackets, weatherData]);
   const [updateOutfit, isUpdateOutfitLoading] =
     useUpdateDocument<Outfit>("outfits");
   const activeOutfit = useMemo(() => {
     const [firstOutfit] = outfits || [];
     return outfits?.find(({ active }) => active) || firstOutfit;
   }, [outfits]);
+  const [todayJacket, setTodayJacket] = useState<Jacket>();
+  const [jackets] = useData<Jacket>("wardrobe-items");
+  const temperatureJackets = useMemo(() => {
+    if (jackets && weatherData) {
+      return jackets.filter(
+        ({ maxTemperature }) => maxTemperature >= weatherData.main.temp
+      );
+    } else {
+      return [];
+    }
+  }, [jackets, weatherData]);
+  const isJacketPopupOpen = !todayJacket && temperatureJackets.length > 1;
 
   const onFetchNextOutfit = () => {
     const { order: activeOutfitOrder } = activeOutfit;
@@ -98,9 +108,46 @@ const Home = () => {
             <OutfitReference reference={activeOutfit.belt} />
             <OutfitReference reference={activeOutfit.pants} />
             <OutfitReference reference={activeOutfit.shoes} />
-            {temperatureJacket && (
-              <OutfitItem imageUrl={temperatureJacket.imageUrl} />
-            )}
+            {todayJacket ? (
+              <OutfitItem imageUrl={todayJacket.imageUrl} />
+            ) : temperatureJackets.length === 1 ? (
+              <OutfitItem imageUrl={temperatureJackets[0].imageUrl} />
+            ) : isJacketPopupOpen ? (
+              <Drawer
+                isOpen={isJacketPopupOpen}
+                onClose={() => false}
+                placement="bottom"
+              >
+                <DrawerOverlay />
+                <DrawerContent>
+                  <DrawerHeader
+                    sx={{
+                      boxShadow: "material",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 2,
+                    }}
+                  >
+                    Choose today&apos;s jacket
+                  </DrawerHeader>
+                  <DrawerBody>
+                    <Text>
+                      Several jackets meet the same temperature threshold
+                    </Text>
+                    <Text>Choose the right one to your outfit</Text>
+                    <Grid templateColumns="repeat(2, 1fr)" gap={2} my={3}>
+                      {temperatureJackets.map((jacket) => (
+                        <OutfitItem
+                          imageUrl={jacket.imageUrl}
+                          key={jacket.id}
+                          onClick={() => setTodayJacket(jacket)}
+                        />
+                      ))}
+                    </Grid>
+                  </DrawerBody>
+                </DrawerContent>
+              </Drawer>
+            ) : null}
           </Grid>
 
           <Popover isOpen={isOpen} onClose={onClose} placement="top">
