@@ -9,6 +9,7 @@ import {
   ExpandedIndex,
 } from "@chakra-ui/react";
 
+import { IconType } from "react-icons";
 import { RiShirtFill } from "react-icons/ri";
 import {
   GiSleevelessJacket,
@@ -17,21 +18,27 @@ import {
   GiRunningShoe,
 } from "react-icons/gi";
 
+import { Item } from "utils/types";
+
 import AddItemsBtn from "./AddItemsBtn";
 import WardrobeItem from "./WardrobeItem";
 import JacketsForm from "./JacketsForm";
 
-const addOptions = [
-  { label: "Add Shirt", icon: RiShirtFill },
-  { label: "Add Jacket", icon: GiSleevelessJacket },
-  { label: "Add Bel", icon: GiBelt },
-  { label: "Add Pants", icon: GiTrousers },
-  { label: "Add Shoes", icon: GiRunningShoe },
+export interface AddOption extends Pick<Item, "type"> {
+  label: string;
+  icon: IconType;
+}
+
+const addOptions: AddOption[] = [
+  { label: "Add Shirt", type: "shirt", icon: RiShirtFill },
+  { label: "Add Jacket", type: "jacket", icon: GiSleevelessJacket },
+  { label: "Add Bel", type: "belt", icon: GiBelt },
+  { label: "Add Pants", type: "pants", icon: GiTrousers },
+  { label: "Add Shoes", type: "shoes", icon: GiRunningShoe },
 ];
 
 const Wardrobe = () => {
   const [activeItem, setActiveItem] = useState<ExpandedIndex>(0);
-  const [activeModalIndex, setActiveModalIndex] = useState<number>();
 
   const pickActiveDrawer = (index: number) => {
     if (index === activeItem) {
@@ -56,12 +63,7 @@ const Wardrobe = () => {
           </AccordionButton>
 
           <AccordionPanel>
-            <WardrobeItem
-              type="shirt"
-              modalIndex={0}
-              activeModalIndex={activeModalIndex}
-              setActiveModalIndex={setActiveModalIndex}
-            />
+            <WardrobeItem type="shirt" />
           </AccordionPanel>
         </AccordionItem>
 
@@ -79,10 +81,9 @@ const Wardrobe = () => {
           <AccordionPanel>
             <WardrobeItem
               type="jacket"
-              modalIndex={1}
-              activeModalIndex={activeModalIndex}
-              setActiveModalIndex={setActiveModalIndex}
-              formData={{ maxTemperature: "" }}
+              formData={{
+                maxTemperature: { initialValue: "", isRequired: true },
+              }}
             >
               {(props) => <JacketsForm {...props} />}
             </WardrobeItem>
@@ -101,12 +102,7 @@ const Wardrobe = () => {
           </AccordionButton>
 
           <AccordionPanel>
-            <WardrobeItem
-              type="belt"
-              modalIndex={2}
-              activeModalIndex={activeModalIndex}
-              setActiveModalIndex={setActiveModalIndex}
-            />
+            <WardrobeItem type="belt" />
           </AccordionPanel>
         </AccordionItem>
 
@@ -122,12 +118,7 @@ const Wardrobe = () => {
           </AccordionButton>
 
           <AccordionPanel>
-            <WardrobeItem
-              type="pants"
-              modalIndex={3}
-              activeModalIndex={activeModalIndex}
-              setActiveModalIndex={setActiveModalIndex}
-            />
+            <WardrobeItem type="pants" />
           </AccordionPanel>
         </AccordionItem>
 
@@ -143,12 +134,7 @@ const Wardrobe = () => {
           </AccordionButton>
 
           <AccordionPanel>
-            <WardrobeItem
-              type="shoes"
-              modalIndex={4}
-              activeModalIndex={activeModalIndex}
-              setActiveModalIndex={setActiveModalIndex}
-            />
+            <WardrobeItem type="shoes" />
           </AccordionPanel>
         </AccordionItem>
       </Accordion>
@@ -156,7 +142,6 @@ const Wardrobe = () => {
       <AddItemsBtn
         sx={{ position: "fixed", bottom: 16, right: 3 }}
         addOptions={addOptions}
-        setActiveModalIndex={setActiveModalIndex}
       />
     </>
   );

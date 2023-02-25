@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { where } from "firebase/firestore";
+import { useRoute, useLocation } from "wouter";
 import {
   Grid,
   IconButton,
@@ -16,6 +17,7 @@ import {
   AlertTitle,
   AlertDescription,
   Progress,
+  useDisclosure,
 } from "@chakra-ui/react";
 import { MdCheck, MdArrowBack, MdEdit, MdDeleteForever } from "react-icons/md";
 import omit from "lodash.omit";
@@ -26,7 +28,7 @@ import PhotoInput from "components/PhotoInput";
 import Loading from "components/Loading";
 import Confirm from "components/Confirm";
 
-import useRequiredForm, { RequiredFromReturn } from "hooks/useRequiredForm";
+import useForm, { FromReturn, FormConfig } from "hooks/useForm";
 import useData from "resources/useData";
 import useAddDocument from "resources/useAddDocument";
 import useUploadImage from "resources/useUploadImage";
@@ -38,39 +40,38 @@ import resizeImage from "utils/resizeImage";
 
 import { Item } from "utils/types";
 
-const formBase = { title: "", description: "", imageUrl: "" };
+const formBase = {
+  title: { initialValue: "", isRequired: true },
+  description: { initialValue: "" },
+  imageUrl: { initialValue: "", isRequired: true },
+};
 
-type InitialForm = {
-  [formName: string]: string;
-} & typeof formBase;
+type InitialForm = FormConfig & typeof formBase;
 
-export interface ChildrenProps extends RequiredFromReturn<InitialForm> {
+export interface ChildrenProps extends FromReturn<InitialForm> {
   mode: "submit" | "view";
 }
 
 interface WardrobeItemPros extends Pick<Item, "type"> {
-  modalIndex: number;
-  activeModalIndex: number | undefined;
-  setActiveModalIndex: (index?: number) => void;
-  formData?: { [formName: string]: string };
+  formData?: FormConfig;
   children?: (props: ChildrenProps) => JSX.Element;
 }
 
-const WardrobeItem = ({
-  type,
-  modalIndex,
-  activeModalIndex,
-  setActiveModalIndex,
-  formData,
-  children,
-}: WardrobeItemPros) => {
+const WardrobeItem = ({ type, formData, children }: WardrobeItemPros) => {
   const [mode, setMode] = useState<"submit" | "view">("view");
-  const [currentItem, setCurrentItem] = useState<Item>();
   const [currentFile, setCurrentFile] = useState<File>();
+  const { isOpen, onOpen, onClose: onDrawerClose } = useDisclosure();
   const [items, isItemsLoading] = useData<Item>(
     "wardrobe-items",
     where("type", "==", type)
   );
+  const [, params] = useRoute("/:type/:currentItem");
+  const [, navigate] = useLocation();
+  const currentItem: Item | undefined = useMemo(() => {
+    if (items && params?.currentItem) {
+      return items.find(({ id }) => id === params.currentItem);
+    }
+  }, [items, params?.currentItem]);
   const [addItem, isAddItemLoading] = useAddDocument<Item>("wardrobe-items");
   const [updateItem, isUpdateItemLoading] =
     useUpdateDocument<Item>("wardrobe-items");
@@ -79,7 +80,7 @@ const WardrobeItem = ({
     useUploadImage();
   const [deleteItemImage, isDeleteItemImageLoading] = useDeleteImage();
 
-  const requiredFrom = useRequiredForm<InitialForm>({
+  const requiredFrom = useForm<InitialForm>({
     ...formBase,
     ...formData,
   });
@@ -95,7 +96,6 @@ const WardrobeItem = ({
     destroyForm,
   } = requiredFrom;
 
-  const isOpen = activeModalIndex === modalIndex;
   const isView = mode === "view" && currentItem !== undefined;
   const isEdit = mode === "submit" && currentItem !== undefined;
   const isLoading =
@@ -112,12 +112,11 @@ const WardrobeItem = ({
     : `Add new ${type}`;
 
   const onClose = () => {
-    setActiveModalIndex();
+    navigate("");
   };
 
   const reset = () => {
     destroyForm();
-    setCurrentItem(undefined);
   };
 
   const onSubmit = () => {
@@ -159,12 +158,24 @@ const WardrobeItem = ({
   };
 
   useEffect(() => {
-    if (currentItem) {
-      setMode("view");
+    if (params?.type) {
+      if (params.type === type) {
+        if (params.currentItem === "new") {
+          onOpen();
+        } else if (params.currentItem && currentItem) {
+          setMode("view");
+          setFormValues(
+            omit(currentItem, ["id", "user", "createdAt", "updatedAt", "type"])
+          );
+          onOpen();
+        }
+      }
     } else {
+      onDrawerClose();
       setMode("submit");
+      reset();
     }
-  }, [currentItem]);
+  }, [params?.currentItem, currentItem]);
 
   if (isItemsLoading || !items) {
     return <Loading message={`Loading your ${type}s, please wait`} />;
@@ -177,16 +188,12 @@ const WardrobeItem = ({
           {items.map((item) => (
             <OutfitItem
               key={item.id}
+              id={item.id}
+              type={type}
               title={item.title}
               description={item.description}
               imageUrl={item.imageUrl}
-              onClick={() => {
-                setFormValues(
-                  omit(item, ["id", "user", "createdAt", "updatedAt", "type"])
-                );
-                setCurrentItem(item);
-                setActiveModalIndex(modalIndex);
-              }}
+              onClick={() => navigate(`/${type}/${item.id}`)}
             />
           ))}
         </Grid>
@@ -338,9 +345,10 @@ const WardrobeItem = ({
                 onChange={onChange}
                 onBlur={onBlur}
                 isReadOnly={isLoading || mode === "view"}
+                isRequired
               />
               <FormInput
-                label="Description"
+                label="Description (Optional)"
                 name="description"
                 value={values.description}
                 error={errors.description}

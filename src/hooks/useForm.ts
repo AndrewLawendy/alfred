@@ -1,11 +1,11 @@
-import { useState, useEffect, ChangeEvent, FocusEvent } from "react";
+import { useState, useEffect, useRef, ChangeEvent, FocusEvent } from "react";
 
 export type Errors = {
   [key: string]: string | null;
 };
 
-export type RequiredFromReturn<T extends Record<string, unknown>> = {
-  values: T;
+export type FromReturn<T extends Record<string, unknown>> = {
+  values: { [key in keyof T]: string };
   errors: Errors;
   onChange: ({
     target: { name, value },
@@ -13,18 +13,46 @@ export type RequiredFromReturn<T extends Record<string, unknown>> = {
   onBlur: ({ target: { name } }: FocusEvent<HTMLInputElement>) => void;
   setFieldValue: (name: keyof T, value: unknown) => void;
   setFieldTouched: (name: keyof T) => void;
-  setFormValues: (values: T) => void;
+  setFormValues: (values: { [key in keyof T]: string }) => void;
   destroyForm: () => void;
-  reInitializeForm: (values: T) => void;
+  reInitializeForm: (values: { [key in keyof T]: string }) => void;
   isValid: boolean;
-  handleSubmit: () => Promise<T>;
+  handleSubmit: () => Promise<{ [key in keyof T]: string }>;
 };
 
-const useRequiredForm = <T extends Record<string, unknown>>(
-  initialFormValue: T
-): RequiredFromReturn<T> => {
-  const [initialValues, setInitialValues] = useState(initialFormValue);
-  const [values, setValues] = useState(initialFormValue);
+export type FormConfig = {
+  [fieldName: string]: {
+    initialValue: string;
+    isRequired?: boolean;
+  };
+};
+
+export type FormValue = {
+  [fieldName: string]: string;
+};
+
+export const useForm = <T extends FormConfig>(
+  initialForm: T
+): FromReturn<T> => {
+  const initialFormValueRef = useRef(
+    (
+      Object.entries(initialForm) as [
+        keyof T,
+        {
+          initialValue: string;
+          isRequired?: boolean;
+        }
+      ][]
+    ).reduce((formValues, [fieldName, config]) => {
+      formValues[fieldName] = config.initialValue;
+
+      return formValues;
+    }, {} as { [key in keyof T]: string })
+  );
+  const [initialValues, setInitialValues] = useState(
+    initialFormValueRef.current
+  );
+  const [values, setValues] = useState(initialFormValueRef.current);
   const [errors, setErrors] = useState<Errors>({});
   const [touched, setTouched] = useState<Partial<Record<keyof T, unknown>>>({});
   const [isValid, setValid] = useState(false);
@@ -43,7 +71,7 @@ const useRequiredForm = <T extends Record<string, unknown>>(
     setFieldTouched(name);
   }
 
-  function reInitializeForm(values: T) {
+  function reInitializeForm(values: { [name in keyof T]: string }) {
     setInitialValues(values);
   }
 
@@ -54,7 +82,7 @@ const useRequiredForm = <T extends Record<string, unknown>>(
   }
 
   function handleSubmit() {
-    return new Promise<T>((resolve) => {
+    return new Promise<{ [name in keyof T]: string }>((resolve) => {
       touchForm();
 
       const isFormValid = validateForm();
@@ -66,7 +94,7 @@ const useRequiredForm = <T extends Record<string, unknown>>(
     setValues({ ...values, [name]: value });
   }
 
-  function setFormValues(values: T) {
+  function setFormValues(values: { [name in keyof T]: string }) {
     setValues(values);
   }
 
@@ -89,7 +117,7 @@ const useRequiredForm = <T extends Record<string, unknown>>(
     let isFormValid = true;
 
     for (const name in values) {
-      if (!values[name] && touched[name]) {
+      if (!values[name] && touched[name] && initialForm[name].isRequired) {
         isFormValid = false;
         validationErrors[name] = `${name} is a required field`;
       } else {
@@ -117,4 +145,4 @@ const useRequiredForm = <T extends Record<string, unknown>>(
   };
 };
 
-export default useRequiredForm;
+export default useForm;

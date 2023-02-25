@@ -1,28 +1,26 @@
 import { useRef, useState } from "react";
+import { useLocation } from "wouter";
 import { Box, BoxProps, IconButton, Icon, Stack } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MdAdd } from "react-icons/md";
-import { IconType } from "react-icons";
+
+import { AddOption } from ".";
 
 interface AddItemsBtnProps extends BoxProps {
-  setActiveModalIndex: (index: number) => void;
-  addOptions: { label: string; icon: IconType }[];
+  addOptions: AddOption[];
 }
 
-const AddItemsBtn = ({
-  setActiveModalIndex,
-  addOptions,
-  ...props
-}: AddItemsBtnProps) => {
+const AddItemsBtn = ({ addOptions, ...props }: AddItemsBtnProps) => {
   const triggerButtonRef = useRef<HTMLButtonElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [, navigate] = useLocation();
 
   return (
     <Box {...props}>
       <AnimatePresence>
         {menuOpen && (
           <Stack sx={{ alignItems: "center", pb: 2 }}>
-            {addOptions.map(({ label, icon }, index, arr) => {
+            {addOptions.map(({ type, label, icon }, index, arr) => {
               const delay = (arr.length - index) * 0.05;
               const exitDelay = index * 0.05;
 
@@ -52,7 +50,7 @@ const AddItemsBtn = ({
                       boxShadow: "material",
                       backgroundColor: "white",
                     }}
-                    onClick={() => setActiveModalIndex(index)}
+                    onClick={() => navigate(`/${type}/new`)}
                     icon={
                       <Icon
                         as={icon}
