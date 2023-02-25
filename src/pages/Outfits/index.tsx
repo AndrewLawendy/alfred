@@ -132,6 +132,7 @@ const Outfits = () => {
                               <Grid
                                 templateColumns="repeat(4, 1fr)"
                                 sx={{ backgroundColor: "white" }}
+                                pointerEvents="none"
                               >
                                 <OutfitReference reference={outfit.shirt} />
                                 <OutfitReference reference={outfit.belt} />
