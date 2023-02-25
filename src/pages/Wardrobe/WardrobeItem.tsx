@@ -27,7 +27,7 @@ import PhotoInput from "components/PhotoInput";
 import Loading from "components/Loading";
 import Confirm from "components/Confirm";
 
-import useRequiredForm, { RequiredFromReturn } from "hooks/useRequiredForm";
+import useForm, { FromReturn, FormConfig } from "hooks/useForm";
 import useData from "resources/useData";
 import useAddDocument from "resources/useAddDocument";
 import useUploadImage from "resources/useUploadImage";
@@ -39,13 +39,15 @@ import resizeImage from "utils/resizeImage";
 
 import { Item } from "utils/types";
 
-const formBase = { title: "", description: "", imageUrl: "" };
+const formBase = {
+  title: { initialValue: "", isRequired: true },
+  description: { initialValue: "" },
+  imageUrl: { initialValue: "", isRequired: true },
+};
 
-type InitialForm = {
-  [formName: string]: string;
-} & typeof formBase;
+type InitialForm = FormConfig & typeof formBase;
 
-export interface ChildrenProps extends RequiredFromReturn<InitialForm> {
+export interface ChildrenProps extends FromReturn<InitialForm> {
   mode: "submit" | "view";
 }
 
@@ -53,7 +55,7 @@ interface WardrobeItemPros extends Pick<Item, "type"> {
   modalIndex: number;
   activeModalIndex: number | undefined;
   setActiveModalIndex: (index?: number) => void;
-  formData?: { [formName: string]: string };
+  formData?: FormConfig;
   children?: (props: ChildrenProps) => JSX.Element;
 }
 
@@ -86,7 +88,7 @@ const WardrobeItem = ({
     useUploadImage();
   const [deleteItemImage, isDeleteItemImageLoading] = useDeleteImage();
 
-  const requiredFrom = useRequiredForm<InitialForm>({
+  const requiredFrom = useForm<InitialForm>({
     ...formBase,
     ...formData,
   });
@@ -348,9 +350,10 @@ const WardrobeItem = ({
                 onChange={onChange}
                 onBlur={onBlur}
                 isReadOnly={isLoading || mode === "view"}
+                isRequired
               />
               <FormInput
-                label="Description"
+                label="Description (Optional)"
                 name="description"
                 value={values.description}
                 error={errors.description}

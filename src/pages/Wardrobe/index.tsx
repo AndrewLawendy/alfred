@@ -82,7 +82,9 @@ const Wardrobe = () => {
               modalIndex={1}
               activeModalIndex={activeModalIndex}
               setActiveModalIndex={setActiveModalIndex}
-              formData={{ maxTemperature: "" }}
+              formData={{
+                maxTemperature: { initialValue: "", isRequired: true },
+              }}
             >
               {(props) => <JacketsForm {...props} />}
             </WardrobeItem>
