@@ -369,6 +369,7 @@ const OutfitDetails = ({
                             <OutfitItem
                               key={shirt.id}
                               id={shirt.id}
+                              type="shirt"
                               title={shirt.title}
                               description={shirt.description}
                               imageUrl={shirt.imageUrl}
@@ -428,6 +429,7 @@ const OutfitDetails = ({
                             <OutfitItem
                               key={belt.id}
                               id={belt.id}
+                              type="belt"
                               title={belt.title}
                               description={belt.description}
                               imageUrl={belt.imageUrl}
@@ -487,6 +489,7 @@ const OutfitDetails = ({
                             <OutfitItem
                               key={pantsPair.id}
                               id={pantsPair.id}
+                              type="pants"
                               title={pantsPair.title}
                               description={pantsPair.description}
                               imageUrl={pantsPair.imageUrl}
@@ -550,6 +553,7 @@ const OutfitDetails = ({
                             <OutfitItem
                               key={shoesPair.id}
                               id={shoesPair.id}
+                              type="shoes"
                               title={shoesPair.title}
                               description={shoesPair.description}
                               imageUrl={shoesPair.imageUrl}

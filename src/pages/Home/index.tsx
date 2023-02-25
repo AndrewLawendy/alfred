@@ -115,11 +115,13 @@ const Home = () => {
             {activeOutfit.jacket ? (
               <OutfitItem
                 id={activeOutfit.jacket.id}
+                type="jacket"
                 imageUrl={activeOutfit.jacket.imageUrl}
               />
             ) : temperatureJackets.length === 1 ? (
               <OutfitItem
                 id={temperatureJackets[0].id}
+                type="jacket"
                 imageUrl={temperatureJackets[0].imageUrl}
               />
             ) : isJacketPopupOpen ? (
@@ -150,6 +152,7 @@ const Home = () => {
                         <OutfitItem
                           key={jacket.id}
                           id={jacket.id}
+                          type="jacket"
                           imageUrl={jacket.imageUrl}
                           onClick={() =>
                             updateOutfit(activeOutfit.id, {

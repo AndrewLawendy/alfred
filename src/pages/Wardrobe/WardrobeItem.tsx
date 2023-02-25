@@ -17,6 +17,7 @@ import {
   AlertTitle,
   AlertDescription,
   Progress,
+  useDisclosure,
 } from "@chakra-ui/react";
 import { MdCheck, MdArrowBack, MdEdit, MdDeleteForever } from "react-icons/md";
 import omit from "lodash.omit";
@@ -52,28 +53,19 @@ export interface ChildrenProps extends FromReturn<InitialForm> {
 }
 
 interface WardrobeItemPros extends Pick<Item, "type"> {
-  modalIndex: number;
-  activeModalIndex: number | undefined;
-  setActiveModalIndex: (index?: number) => void;
   formData?: FormConfig;
   children?: (props: ChildrenProps) => JSX.Element;
 }
 
-const WardrobeItem = ({
-  type,
-  modalIndex,
-  activeModalIndex,
-  setActiveModalIndex,
-  formData,
-  children,
-}: WardrobeItemPros) => {
+const WardrobeItem = ({ type, formData, children }: WardrobeItemPros) => {
   const [mode, setMode] = useState<"submit" | "view">("view");
   const [currentFile, setCurrentFile] = useState<File>();
+  const { isOpen, onOpen, onClose: onDrawerClose } = useDisclosure();
   const [items, isItemsLoading] = useData<Item>(
     "wardrobe-items",
     where("type", "==", type)
   );
-  const [, params] = useRoute("/:currentItem");
+  const [, params] = useRoute("/:type/:currentItem");
   const [, navigate] = useLocation();
   const currentItem: Item | undefined = useMemo(() => {
     if (items && params?.currentItem) {
@@ -104,7 +96,6 @@ const WardrobeItem = ({
     destroyForm,
   } = requiredFrom;
 
-  const isOpen = activeModalIndex === modalIndex;
   const isView = mode === "view" && currentItem !== undefined;
   const isEdit = mode === "submit" && currentItem !== undefined;
   const isLoading =
@@ -121,7 +112,6 @@ const WardrobeItem = ({
     : `Add new ${type}`;
 
   const onClose = () => {
-    setActiveModalIndex();
     navigate("");
   };
 
@@ -168,20 +158,24 @@ const WardrobeItem = ({
   };
 
   useEffect(() => {
-    if (params?.currentItem) {
-      if (currentItem) {
-        setMode("view");
-        setFormValues(
-          omit(currentItem, ["id", "user", "createdAt", "updatedAt", "type"])
-        );
-        setActiveModalIndex(modalIndex);
+    if (params?.type) {
+      if (params.type === type) {
+        if (params.currentItem === "new") {
+          onOpen();
+        } else if (params.currentItem && currentItem) {
+          setMode("view");
+          setFormValues(
+            omit(currentItem, ["id", "user", "createdAt", "updatedAt", "type"])
+          );
+          onOpen();
+        }
       }
     } else {
-      setActiveModalIndex();
+      onDrawerClose();
       setMode("submit");
       reset();
     }
-  }, [params?.currentItem, currentItem, modalIndex]);
+  }, [params?.currentItem, currentItem]);
 
   if (isItemsLoading || !items) {
     return <Loading message={`Loading your ${type}s, please wait`} />;
@@ -195,10 +189,11 @@ const WardrobeItem = ({
             <OutfitItem
               key={item.id}
               id={item.id}
+              type={type}
               title={item.title}
               description={item.description}
               imageUrl={item.imageUrl}
-              onClick={() => navigate(`/${item.id}`)}
+              onClick={() => navigate(`/${type}/${item.id}`)}
             />
           ))}
         </Grid>

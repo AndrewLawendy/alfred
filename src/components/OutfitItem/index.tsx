@@ -8,8 +8,9 @@ import {
   SkeletonProps,
 } from "@chakra-ui/react";
 import { ReactNode } from "react";
+import { Item } from "utils/types";
 
-interface OutfitItemProps extends SkeletonProps {
+interface OutfitItemProps extends SkeletonProps, Pick<Item, "type"> {
   id: string;
   imageUrl: string;
   title?: string;
@@ -23,13 +24,14 @@ const OutfitItem = ({
   description,
   imageUrl,
   isLoaded = true,
+  type,
   ...props
 }: OutfitItemProps) => {
   const Wrapper = ({ children }: { children: ReactNode }) =>
     props.onClick ? (
       <>{children}</>
     ) : (
-      <Link to={`wardrobe/${id}`}>{children}</Link>
+      <Link to={`wardrobe/${type}/${id}`}>{children}</Link>
     );
 
   return (
