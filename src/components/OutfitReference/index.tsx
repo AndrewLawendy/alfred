@@ -11,7 +11,13 @@ type OutfitReferenceProps = {
 const OutfitReference = ({ reference }: OutfitReferenceProps) => {
   const [item, isItemLoading] = useDocumentData(reference);
   const { imageUrl = "" } = (item as Item) || {};
-  return <OutfitItem imageUrl={imageUrl} isLoaded={!isItemLoading} />;
+  return (
+    <OutfitItem
+      id={reference.id}
+      imageUrl={imageUrl}
+      isLoaded={!isItemLoading}
+    />
+  );
 };
 
 export default OutfitReference;

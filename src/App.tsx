@@ -1,6 +1,7 @@
 import { Route } from "wouter";
 import { ChakraProvider, Box } from "@chakra-ui/react";
 
+import NestedRoute from "components/NestedRoute";
 import Authorized from "components/Authorized";
 import Login from "pages/Login";
 import Home from "pages/Home";
@@ -25,7 +26,9 @@ function App() {
         <Box sx={{ pt: 6, px: 3, pb: 16, flexGrow: 1 }} as="main">
           <Route path="/" component={Home} />
           <Route path="/Outfits" component={Outfits} />
-          <Route path="/wardrobe" component={Wardrobe} />
+          <NestedRoute base="/wardrobe">
+            <Wardrobe />
+          </NestedRoute>
           <Route path="/account" component={Account} />
         </Box>
         <BottomNav />

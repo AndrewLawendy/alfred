@@ -368,6 +368,7 @@ const OutfitDetails = ({
                           {shirts.map((shirt) => (
                             <OutfitItem
                               key={shirt.id}
+                              id={shirt.id}
                               title={shirt.title}
                               description={shirt.description}
                               imageUrl={shirt.imageUrl}
@@ -426,6 +427,7 @@ const OutfitDetails = ({
                           {belts.map((belt) => (
                             <OutfitItem
                               key={belt.id}
+                              id={belt.id}
                               title={belt.title}
                               description={belt.description}
                               imageUrl={belt.imageUrl}
@@ -484,6 +486,7 @@ const OutfitDetails = ({
                           {pants.map((pantsPair) => (
                             <OutfitItem
                               key={pantsPair.id}
+                              id={pantsPair.id}
                               title={pantsPair.title}
                               description={pantsPair.description}
                               imageUrl={pantsPair.imageUrl}
@@ -546,6 +549,7 @@ const OutfitDetails = ({
                           {shoes.map((shoesPair) => (
                             <OutfitItem
                               key={shoesPair.id}
+                              id={shoesPair.id}
                               title={shoesPair.title}
                               description={shoesPair.description}
                               imageUrl={shoesPair.imageUrl}

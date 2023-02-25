@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { where } from "firebase/firestore";
+import { useRoute, useLocation } from "wouter";
 import {
   Grid,
   IconButton,
@@ -65,12 +66,18 @@ const WardrobeItem = ({
   children,
 }: WardrobeItemPros) => {
   const [mode, setMode] = useState<"submit" | "view">("view");
-  const [currentItem, setCurrentItem] = useState<Item>();
   const [currentFile, setCurrentFile] = useState<File>();
   const [items, isItemsLoading] = useData<Item>(
     "wardrobe-items",
     where("type", "==", type)
   );
+  const [, params] = useRoute("/:currentItem");
+  const [, navigate] = useLocation();
+  const currentItem: Item | undefined = useMemo(() => {
+    if (items && params?.currentItem) {
+      return items.find(({ id }) => id === params.currentItem);
+    }
+  }, [items, params?.currentItem]);
   const [addItem, isAddItemLoading] = useAddDocument<Item>("wardrobe-items");
   const [updateItem, isUpdateItemLoading] =
     useUpdateDocument<Item>("wardrobe-items");
@@ -113,11 +120,11 @@ const WardrobeItem = ({
 
   const onClose = () => {
     setActiveModalIndex();
+    navigate("");
   };
 
   const reset = () => {
     destroyForm();
-    setCurrentItem(undefined);
   };
 
   const onSubmit = () => {
@@ -159,12 +166,20 @@ const WardrobeItem = ({
   };
 
   useEffect(() => {
-    if (currentItem) {
-      setMode("view");
+    if (params?.currentItem) {
+      if (currentItem) {
+        setMode("view");
+        setFormValues(
+          omit(currentItem, ["id", "user", "createdAt", "updatedAt", "type"])
+        );
+        setActiveModalIndex(modalIndex);
+      }
     } else {
+      setActiveModalIndex();
       setMode("submit");
+      reset();
     }
-  }, [currentItem]);
+  }, [params?.currentItem, currentItem, modalIndex]);
 
   if (isItemsLoading || !items) {
     return <Loading message={`Loading your ${type}s, please wait`} />;
@@ -177,16 +192,11 @@ const WardrobeItem = ({
           {items.map((item) => (
             <OutfitItem
               key={item.id}
+              id={item.id}
               title={item.title}
               description={item.description}
               imageUrl={item.imageUrl}
-              onClick={() => {
-                setFormValues(
-                  omit(item, ["id", "user", "createdAt", "updatedAt", "type"])
-                );
-                setCurrentItem(item);
-                setActiveModalIndex(modalIndex);
-              }}
+              onClick={() => navigate(`/${item.id}`)}
             />
           ))}
         </Grid>

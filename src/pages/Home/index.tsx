@@ -109,9 +109,12 @@ const Home = () => {
             <OutfitReference reference={activeOutfit.pants} />
             <OutfitReference reference={activeOutfit.shoes} />
             {todayJacket ? (
-              <OutfitItem imageUrl={todayJacket.imageUrl} />
+              <OutfitItem id={todayJacket.id} imageUrl={todayJacket.imageUrl} />
             ) : temperatureJackets.length === 1 ? (
-              <OutfitItem imageUrl={temperatureJackets[0].imageUrl} />
+              <OutfitItem
+                id={temperatureJackets[0].id}
+                imageUrl={temperatureJackets[0].imageUrl}
+              />
             ) : isJacketPopupOpen ? (
               <Drawer
                 isOpen={isJacketPopupOpen}
@@ -138,8 +141,9 @@ const Home = () => {
                     <Grid templateColumns="repeat(2, 1fr)" gap={2} my={3}>
                       {temperatureJackets.map((jacket) => (
                         <OutfitItem
-                          imageUrl={jacket.imageUrl}
                           key={jacket.id}
+                          id={jacket.id}
+                          imageUrl={jacket.imageUrl}
                           onClick={() => setTodayJacket(jacket)}
                         />
                       ))}
