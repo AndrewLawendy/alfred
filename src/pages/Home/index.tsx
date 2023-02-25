@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   Heading,
   Button,
@@ -53,7 +53,6 @@ const Home = () => {
     const [firstOutfit] = outfits || [];
     return outfits?.find(({ active }) => active) || firstOutfit;
   }, [outfits]);
-  const [todayJacket, setTodayJacket] = useState<Jacket>();
   const [jackets] = useData<Jacket>("wardrobe-items");
   const temperatureJackets = useMemo(() => {
     if (jackets && weatherData) {
@@ -64,7 +63,8 @@ const Home = () => {
       return [];
     }
   }, [jackets, weatherData]);
-  const isJacketPopupOpen = !todayJacket && temperatureJackets.length > 1;
+  const isJacketPopupOpen =
+    !activeOutfit?.jacket && temperatureJackets.length > 1;
 
   const onFetchNextOutfit = () => {
     const { order: activeOutfitOrder } = activeOutfit;
@@ -77,7 +77,11 @@ const Home = () => {
     const nextOutfit = outfits[nextOutfitIndex];
 
     updateOutfit(nextOutfit.id, { ...nextOutfit, active: true });
-    updateOutfit(activeOutfit.id, { ...activeOutfit, active: false });
+    updateOutfit(activeOutfit.id, {
+      ...activeOutfit,
+      active: false,
+      jacket: null,
+    });
   };
 
   if (!user) return null;
@@ -108,8 +112,11 @@ const Home = () => {
             <OutfitReference reference={activeOutfit.belt} />
             <OutfitReference reference={activeOutfit.pants} />
             <OutfitReference reference={activeOutfit.shoes} />
-            {todayJacket ? (
-              <OutfitItem id={todayJacket.id} imageUrl={todayJacket.imageUrl} />
+            {activeOutfit.jacket ? (
+              <OutfitItem
+                id={activeOutfit.jacket.id}
+                imageUrl={activeOutfit.jacket.imageUrl}
+              />
             ) : temperatureJackets.length === 1 ? (
               <OutfitItem
                 id={temperatureJackets[0].id}
@@ -144,7 +151,11 @@ const Home = () => {
                           key={jacket.id}
                           id={jacket.id}
                           imageUrl={jacket.imageUrl}
-                          onClick={() => setTodayJacket(jacket)}
+                          onClick={() =>
+                            updateOutfit(activeOutfit.id, {
+                              jacket,
+                            })
+                          }
                         />
                       ))}
                     </Grid>

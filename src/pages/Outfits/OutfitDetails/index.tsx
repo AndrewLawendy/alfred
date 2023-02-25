@@ -59,7 +59,7 @@ type AddOutfitProps = {
 
 type OutfitKeys = keyof Omit<
   Outfit,
-  "id" | "user" | "createdAt" | "updatedAt" | "order" | "active"
+  "id" | "user" | "createdAt" | "updatedAt" | "order" | "active" | "jacket"
 >;
 
 const fields: OutfitKeys[] = ["shirt", "belt", "pants", "shoes"];

@@ -50,6 +50,7 @@ export interface Outfit extends Common {
   belt: DocumentReference<DocumentData>;
   pants: DocumentReference<DocumentData>;
   shoes: DocumentReference<DocumentData>;
+  jacket?: Jacket | null;
   order: number;
   active: boolean;
 }
