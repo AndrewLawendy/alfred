@@ -142,11 +142,11 @@ const Home = () => {
                 type="jacket"
                 imageUrl={temperatureJackets[0].imageUrl}
               />
-            ) : (
+            ) : temperatureJackets.length > 0 ? (
               <Button onClick={onJacketDrawerOpen} height={172}>
                 <Icon as={GiSleevelessJacket} color="gray.400" w={16} h={16} />
               </Button>
-            )}
+            ) : null}
           </Grid>
 
           <Drawer
