@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import {
   Heading,
   Button,
@@ -15,6 +15,7 @@ import {
   DrawerContent,
   Text,
   Link,
+  Icon,
   useDisclosure,
   Popover,
   PopoverAnchor,
@@ -23,6 +24,7 @@ import {
   PopoverHeader,
   PopoverBody,
 } from "@chakra-ui/react";
+import { GiSleevelessJacket } from "react-icons/gi";
 import { orderBy } from "@firebase/firestore";
 import { Link as WouterLink } from "wouter";
 
@@ -41,7 +43,16 @@ import { Jacket, Outfit } from "utils/types";
 
 const Home = () => {
   const [user] = useAuth();
-  const { isOpen, onClose, onOpen } = useDisclosure();
+  const {
+    isOpen: isSingleOutfitOpen,
+    onClose: onSingleOutfitClose,
+    onOpen: onSingleOutfitOpen,
+  } = useDisclosure();
+  const {
+    isOpen: isJacketDrawerOpen,
+    onOpen: onJacketDrawerOpen,
+    onClose: onJacketDrawerClose,
+  } = useDisclosure({ defaultIsOpen: true });
   const { data: weatherData, isLoading: isWeatherLoading } = useWeather();
   const [outfits, isOutfitsLoading] = useData<Outfit>(
     "outfits",
@@ -63,15 +74,18 @@ const Home = () => {
       return [];
     }
   }, [jackets, weatherData]);
+
   const isJacketPopupOpen =
-    !activeOutfit?.jacket && temperatureJackets.length > 1;
+    isJacketDrawerOpen &&
+    !activeOutfit?.jacket &&
+    temperatureJackets.length > 1;
 
   const onFetchNextOutfit = () => {
     const { order: activeOutfitOrder } = activeOutfit;
 
     if (!outfits) return;
 
-    if (outfits.length === 1) return onOpen();
+    if (outfits.length === 1) return onSingleOutfitOpen();
 
     const nextOutfitIndex = (activeOutfitOrder + 1) % outfits.length;
     const nextOutfit = outfits[nextOutfitIndex];
@@ -83,6 +97,10 @@ const Home = () => {
       jacket: null,
     });
   };
+
+  useEffect(() => {
+    onJacketDrawerOpen();
+  }, [activeOutfit, temperatureJackets]);
 
   if (!user) return null;
 
@@ -124,51 +142,57 @@ const Home = () => {
                 type="jacket"
                 imageUrl={temperatureJackets[0].imageUrl}
               />
-            ) : isJacketPopupOpen ? (
-              <Drawer
-                isOpen={isJacketPopupOpen}
-                onClose={() => false}
-                placement="bottom"
-              >
-                <DrawerOverlay />
-                <DrawerContent>
-                  <DrawerHeader
-                    sx={{
-                      boxShadow: "material",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 2,
-                    }}
-                  >
-                    Choose today&apos;s jacket
-                  </DrawerHeader>
-                  <DrawerBody>
-                    <Text>
-                      Several jackets meet the same temperature threshold
-                    </Text>
-                    <Text>Choose the right one to your outfit</Text>
-                    <Grid templateColumns="repeat(2, 1fr)" gap={2} my={3}>
-                      {temperatureJackets.map((jacket) => (
-                        <OutfitItem
-                          key={jacket.id}
-                          id={jacket.id}
-                          type="jacket"
-                          imageUrl={jacket.imageUrl}
-                          onClick={() =>
-                            updateOutfit(activeOutfit.id, {
-                              jacket,
-                            })
-                          }
-                        />
-                      ))}
-                    </Grid>
-                  </DrawerBody>
-                </DrawerContent>
-              </Drawer>
-            ) : null}
+            ) : (
+              <Button onClick={onJacketDrawerOpen} height={172}>
+                <Icon as={GiSleevelessJacket} color="gray.400" w={16} h={16} />
+              </Button>
+            )}
           </Grid>
 
-          <Popover isOpen={isOpen} onClose={onClose} placement="top">
+          <Drawer
+            isOpen={isJacketPopupOpen}
+            onClose={onJacketDrawerClose}
+            placement="bottom"
+          >
+            <DrawerOverlay />
+            <DrawerContent>
+              <DrawerHeader
+                sx={{
+                  boxShadow: "material",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 2,
+                }}
+              >
+                Choose today&apos;s jacket
+              </DrawerHeader>
+              <DrawerBody>
+                <Text>Several jackets meet the same temperature threshold</Text>
+                <Text>Choose the right one to your outfit</Text>
+                <Grid templateColumns="repeat(2, 1fr)" gap={2} my={3}>
+                  {temperatureJackets.map((jacket) => (
+                    <OutfitItem
+                      key={jacket.id}
+                      id={jacket.id}
+                      type="jacket"
+                      imageUrl={jacket.imageUrl}
+                      onClick={() =>
+                        updateOutfit(activeOutfit.id, {
+                          jacket,
+                        })
+                      }
+                    />
+                  ))}
+                </Grid>
+              </DrawerBody>
+            </DrawerContent>
+          </Drawer>
+
+          <Popover
+            isOpen={isSingleOutfitOpen}
+            onClose={onSingleOutfitClose}
+            placement="top"
+          >
             <PopoverAnchor>
               <Button
                 size="lg"
