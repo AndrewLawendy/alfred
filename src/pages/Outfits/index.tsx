@@ -7,6 +7,7 @@ import {
   Stack,
   IconButton,
   Icon,
+  Flex,
   Alert,
   AlertIcon,
   AlertTitle,
@@ -20,6 +21,7 @@ import {
   DropResult,
 } from "react-beautiful-dnd";
 import { MdAdd, MdAutoAwesome } from "react-icons/md";
+import { GrDrag } from "react-icons/gr";
 
 import { Outfit } from "utils/types";
 
@@ -92,7 +94,6 @@ const Outfits = () => {
                         <Box
                           ref={provided.innerRef}
                           {...provided.draggableProps}
-                          {...provided.dragHandleProps}
                           onClick={() => {
                             setCurrentOutfit(outfit);
                             onOpen();
@@ -126,7 +127,17 @@ const Outfits = () => {
                                 #{index + 1}
                               </Heading>
 
-                              {outfit.active && <Icon as={MdAutoAwesome} />}
+                              <Flex sx={{ gap: 2 }}>
+                                {outfit.active && <Icon as={MdAutoAwesome} />}
+
+                                <Box
+                                  as="i"
+                                  sx={{ height: "16px" }}
+                                  {...provided.dragHandleProps}
+                                >
+                                  <Icon as={GrDrag} />
+                                </Box>
+                              </Flex>
                             </Box>
                             {Object.values(outfit).length > 0 && (
                               <Grid
