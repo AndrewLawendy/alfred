@@ -16,6 +16,7 @@ import {
   Text,
   Link,
   Icon,
+  IconButton,
   useDisclosure,
   Popover,
   PopoverAnchor,
@@ -25,6 +26,7 @@ import {
   PopoverBody,
 } from "@chakra-ui/react";
 import { GiSleevelessJacket } from "react-icons/gi";
+import { HiSwitchVertical } from "react-icons/hi";
 import { orderBy } from "@firebase/firestore";
 import { Link as WouterLink } from "wouter";
 
@@ -81,18 +83,39 @@ const Home = () => {
     temperatureJackets.length > 1;
 
   const onFetchNextOutfit = () => {
-    const { order: activeOutfitOrder } = activeOutfit;
-
     if (!outfits) return;
 
     if (outfits.length === 1) return onSingleOutfitOpen();
 
+    const { order: activeOutfitOrder } = activeOutfit;
     const nextOutfitIndex = (activeOutfitOrder + 1) % outfits.length;
     const nextOutfit = outfits[nextOutfitIndex];
 
     updateOutfit(nextOutfit.id, { ...nextOutfit, active: true });
     updateOutfit(activeOutfit.id, {
       ...activeOutfit,
+      active: false,
+      jacket: null,
+    });
+  };
+
+  const onSwitchCurrentOutfit = () => {
+    if (!outfits) return;
+
+    if (outfits.length === 1) return onSingleOutfitOpen();
+
+    const { order: activeOutfitOrder } = activeOutfit;
+    const nextOutfitIndex = (activeOutfitOrder + 1) % outfits.length;
+    const nextOutfit = outfits[nextOutfitIndex];
+
+    updateOutfit(nextOutfit.id, {
+      ...nextOutfit,
+      active: true,
+      order: activeOutfitOrder,
+    });
+    updateOutfit(activeOutfit.id, {
+      ...activeOutfit,
+      order: nextOutfit.order,
       active: false,
       jacket: null,
     });
@@ -194,21 +217,37 @@ const Home = () => {
             placement="top"
           >
             <PopoverAnchor>
-              <Button
-                size="lg"
-                colorScheme="teal"
-                onClick={onFetchNextOutfit}
-                isLoading={isUpdateOutfitLoading}
+              <Flex
                 sx={{
-                  borderRadius: "3xl",
                   position: "fixed",
                   bottom: 16,
-                  left: "50%",
-                  transform: "translate3d(-50%, 0, 0)",
+                  width: "100%",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  gap: 2,
                 }}
               >
-                Fetch Next Outfit
-              </Button>
+                <Button
+                  size="lg"
+                  colorScheme="teal"
+                  onClick={onFetchNextOutfit}
+                  isLoading={isUpdateOutfitLoading}
+                  sx={{
+                    borderRadius: "3xl",
+                  }}
+                >
+                  Fetch Next Outfit
+                </Button>
+
+                <IconButton
+                  size="lg"
+                  borderRadius="full"
+                  colorScheme="teal"
+                  aria-label="outfit switch"
+                  icon={<Icon as={HiSwitchVertical} />}
+                  onClick={onSwitchCurrentOutfit}
+                />
+              </Flex>
             </PopoverAnchor>
             <PopoverContent>
               <PopoverHeader>You only have one outfit!</PopoverHeader>
