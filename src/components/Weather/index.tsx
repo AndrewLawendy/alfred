@@ -64,19 +64,19 @@ const Weather = ({ weatherData, isLoading }: WeatherProps) => {
         pl: 2.5,
         pr: 4,
         borderRadius: "full",
-        backgroundColor: "blue.50",
-        color: "blue.900",
+        backgroundColor: "accent.50",
+        color: "brand.800",
       }}
     >
       <Icon
         as={icons[weather.icon] || WiThermometer}
         aria-hidden
-        sx={{ w: 7, h: 7, color: "blue.500" }}
+        sx={{ w: 7, h: 7, color: "accent.500" }}
       />
       <Text sx={{ fontWeight: "bold" }}>
         {Math.round(weatherData.main.temp)}°
       </Text>
-      <Text sx={{ color: "blue.700", fontSize: "sm" }}>{weather.main}</Text>
+      <Text sx={{ color: "brand.400", fontSize: "sm" }}>{weather.main}</Text>
     </Flex>
   );
 };

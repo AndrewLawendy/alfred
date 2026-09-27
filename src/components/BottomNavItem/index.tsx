@@ -42,7 +42,7 @@ const BottomNavItem = ({
         minHeight: 14,
         fontSize: "xs",
         fontWeight: isActive ? "semibold" : "normal",
-        color: isActive ? "teal.700" : "gray.500",
+        color: isActive ? "brand.700" : "gray.500",
 
         "&:hover": {
           textDecoration: "none",
@@ -56,7 +56,7 @@ const BottomNavItem = ({
           width: 16,
           py: 0.5,
           borderRadius: "full",
-          backgroundColor: isActive ? "teal.100" : "transparent",
+          backgroundColor: isActive ? "accent.100" : "transparent",
           transition: "background-color 0.2s",
         }}
       >

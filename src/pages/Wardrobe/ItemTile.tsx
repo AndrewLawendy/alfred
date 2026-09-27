@@ -43,7 +43,7 @@ const ItemTile = ({ item, onClick }: ItemTileProps) => (
             py: 0.5,
             borderRadius: "full",
             backgroundColor: "whiteAlpha.900",
-            color: "blue.800",
+            color: "brand.800",
             fontSize: "xs",
             fontWeight: "semibold",
           }}

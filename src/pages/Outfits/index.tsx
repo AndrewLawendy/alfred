@@ -122,7 +122,10 @@ const Outfits = () => {
 
                               <Flex sx={{ gap: 2 }}>
                                 {outfit.active && (
-                                  <Badge colorScheme="teal" alignSelf="center">
+                                  <Badge
+                                    colorScheme="accent"
+                                    alignSelf="center"
+                                  >
                                     Today
                                   </Badge>
                                 )}
@@ -176,7 +179,7 @@ const Outfits = () => {
         onClick={onOpen}
         aria-label="Add Outfit"
         size="lg"
-        colorScheme="teal"
+        colorScheme="brand"
         icon={
           <Icon
             as={MdAdd}

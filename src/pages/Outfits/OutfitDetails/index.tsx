@@ -276,7 +276,7 @@ const OutfitDetails = ({
             />
           ) : (
             <IconButton
-              colorScheme="teal"
+              colorScheme="brand"
               onClick={handleSubmit}
               aria-label="Submit New Outfit"
               size="sm"
@@ -410,7 +410,7 @@ const OutfitDetails = ({
                           <AlertDescription maxWidth="sm">
                             Go to{" "}
                             <Link
-                              color="teal.500"
+                              color="accent.700"
                               as={WouterLink}
                               to="/wardrobe"
                             >
@@ -470,7 +470,7 @@ const OutfitDetails = ({
                           <AlertDescription maxWidth="sm">
                             Go to{" "}
                             <Link
-                              color="teal.500"
+                              color="accent.700"
                               as={WouterLink}
                               to="/wardrobe"
                             >
@@ -534,7 +534,7 @@ const OutfitDetails = ({
                           <AlertDescription maxWidth="sm">
                             Go to{" "}
                             <Link
-                              color="teal.500"
+                              color="accent.700"
                               as={WouterLink}
                               to="/wardrobe"
                             >
@@ -598,7 +598,7 @@ const OutfitDetails = ({
                           <AlertDescription maxWidth="sm">
                             Go to{" "}
                             <Link
-                              color="teal.500"
+                              color="accent.700"
                               as={WouterLink}
                               to="/wardrobe"
                             >

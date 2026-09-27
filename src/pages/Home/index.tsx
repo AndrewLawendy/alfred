@@ -253,7 +253,7 @@ const Home = () => {
                 <Button
                   size="lg"
                   variant="outline"
-                  colorScheme="teal"
+                  colorScheme="brand"
                   backgroundColor="white"
                   leftIcon={<Icon as={HiSwitchVertical} />}
                   onClick={onSwitchCurrentOutfit}
@@ -265,7 +265,7 @@ const Home = () => {
 
                 <Button
                   size="lg"
-                  colorScheme="teal"
+                  colorScheme="brand"
                   rightIcon={<Icon as={MdArrowForward} />}
                   onClick={onFetchNextOutfit}
                   isLoading={isUpdateOutfitLoading}
@@ -285,7 +285,7 @@ const Home = () => {
               <PopoverHeader>You only have one outfit!</PopoverHeader>
               <PopoverBody>
                 Go to{" "}
-                <Link color="teal.500" as={WouterLink} to="/outfits">
+                <Link color="accent.700" as={WouterLink} to="/outfits">
                   Outfits
                 </Link>{" "}
                 and start adding

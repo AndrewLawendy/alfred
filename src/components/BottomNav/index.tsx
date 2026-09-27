@@ -21,7 +21,7 @@ const BottomNav = () => {
         bottom: 0,
         left: 0,
         width: "100%",
-        backgroundColor: "white",
+        backgroundColor: "linen",
         boxShadow: "0px -1px var(--chakra-colors-chakra-border-color)",
         pb: "env(safe-area-inset-bottom)",
       }}

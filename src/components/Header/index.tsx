@@ -27,7 +27,7 @@ const Header = () => {
         boxShadow: "material",
         position: "sticky",
         top: 0,
-        backgroundColor: "white",
+        backgroundColor: "linen",
       }}
     >
       <Image src={Logo} alt="" sx={{ maxH: 8 }} />

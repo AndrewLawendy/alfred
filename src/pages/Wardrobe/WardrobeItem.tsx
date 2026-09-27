@@ -280,7 +280,7 @@ const WardrobeItem = ({ type, formData, children }: WardrobeItemPros) => {
                     {uploadSnapshot && (
                       <Progress
                         sx={{ mt: 3 }}
-                        colorScheme="teal"
+                        colorScheme="brand"
                         hasStripe
                         value={
                           (uploadSnapshot.bytesTransferred /
@@ -350,7 +350,7 @@ const WardrobeItem = ({ type, formData, children }: WardrobeItemPros) => {
                 <Button
                   onClick={onSubmit}
                   isLoading={isLoading}
-                  colorScheme="teal"
+                  colorScheme="brand"
                   size="lg"
                   sx={{ w: "100%", borderRadius: "full" }}
                 >

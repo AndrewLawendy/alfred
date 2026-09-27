@@ -35,7 +35,7 @@ const EmptyState = ({
     <Text sx={{ color: "gray.600", maxW: "xs" }}>{description}</Text>
     <Button
       {...(to ? { as: Link, to } : { onClick: onAction })}
-      colorScheme="teal"
+      colorScheme="brand"
       borderRadius="full"
       mt={4}
     >

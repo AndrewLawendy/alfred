@@ -61,8 +61,8 @@ const ItemDetails = ({ item }: { item: Item }) => {
                 gap: 2,
                 p: 3,
                 borderRadius: "xl",
-                backgroundColor: "blue.50",
-                color: "blue.900",
+                backgroundColor: "accent.50",
+                color: "brand.800",
               }}
             >
               <Icon as={WiThermometer} sx={{ w: 7, h: 7 }} />

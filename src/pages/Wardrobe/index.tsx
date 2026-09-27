@@ -60,15 +60,15 @@ const Wardrobe = () => {
                 flexShrink: 0,
                 borderRadius: "full",
                 fontWeight: isActive ? "semibold" : "medium",
-                borderColor: isActive ? "teal.500" : "gray.200",
-                backgroundColor: isActive ? "teal.50" : "white",
-                color: isActive ? "teal.800" : "gray.600",
+                borderColor: isActive ? "accent.400" : "gray.200",
+                backgroundColor: isActive ? "accent.50" : "white",
+                color: isActive ? "brand.800" : "gray.600",
               }}
             >
               {label}
               <Text
                 as="span"
-                sx={{ ml: 1.5, color: isActive ? "teal.500" : "gray.400" }}
+                sx={{ ml: 1.5, color: isActive ? "accent.600" : "gray.400" }}
               >
                 {counts[type] || 0}
               </Text>
@@ -96,7 +96,7 @@ const Wardrobe = () => {
       <Button
         onClick={() => navigate(`/${active.type}/new`)}
         leftIcon={<Icon as={MdAdd} w={6} h={6} />}
-        colorScheme="teal"
+        colorScheme="brand"
         size="lg"
         sx={{
           position: "fixed",

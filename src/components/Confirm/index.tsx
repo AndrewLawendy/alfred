@@ -29,7 +29,7 @@ const Confirm = ({
   message,
   okText = "Confirm",
   cancelText = "Cancel",
-  okType = "blue",
+  okType = "brand",
   onCancel = () => false,
   onConfirm,
 }: ConfirmProps) => {
