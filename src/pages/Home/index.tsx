@@ -114,6 +114,9 @@ const Home = () => {
     });
   };
 
+  // A jacket (chosen, suggested or the chooser) adds a third row of photos
+  const rows = activeOutfit?.jacket || temperatureJackets.length > 0 ? 3 : 2;
+
   // Ask once per outfit; primitive deps so Firestore refreshes don't reopen it
   useEffect(() => {
     if (needsJacketChoice && activeOutfit.id !== dismissedJacketPromptFor) {
@@ -144,7 +147,22 @@ const Home = () => {
         <Loading message="Loading today's outfit" columns={2} />
       ) : activeOutfit ? (
         <>
-          <Grid templateColumns="repeat(2, 1fr)" gap={2} sx={{ mb: 20 }}>
+          <Grid
+            templateColumns="repeat(2, 1fr)"
+            gap={2}
+            // Chakra's sx drops custom properties, so set the variable directly
+            style={
+              {
+                // Fit the whole outfit on screen: 2 rows, or 3 with a jacket.
+                // Space left after the header and greeting (144px), the gap and
+                // action bar (16 + 48px) and the nav, minus row gaps and each
+                // tile's 10px frame; between 120px and the usual 162px.
+                "--outfit-photo-height": `clamp(120px, calc((100dvh - 208px - env(safe-area-inset-top) - var(--chakra-space-nav)) / ${rows} - ${
+                  ((rows - 1) * 8) / rows + 10
+                }px), 162px)`,
+              } as React.CSSProperties
+            }
+          >
             <OutfitReference reference={activeOutfit.shirt} />
             <OutfitReference reference={activeOutfit.belt} />
             <OutfitReference reference={activeOutfit.pants} />
@@ -169,7 +187,7 @@ const Home = () => {
             ) : temperatureJackets.length > 0 ? (
               <Button
                 onClick={onJacketDrawerOpen}
-                height={172}
+                height="calc(var(--outfit-photo-height) + 10px)"
                 flexDirection="column"
                 gap={2}
                 variant="outline"
@@ -232,11 +250,11 @@ const Home = () => {
             <PopoverAnchor>
               <Flex
                 sx={{
-                  position: "fixed",
+                  // Sticky rather than fixed: it takes its own space after the
+                  // outfit (never covering a photo) and stays above the nav
+                  position: "sticky",
                   bottom: "nav",
-                  left: 0,
-                  right: 0,
-                  px: 3,
+                  mt: 4,
                   justifyContent: "center",
                   alignItems: "center",
                   gap: 2,

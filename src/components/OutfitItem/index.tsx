@@ -67,7 +67,8 @@ const OutfitItem = ({
               objectFit: "cover",
               ...(aspectRatio
                 ? { aspectRatio: `${aspectRatio}` }
-                : { height: 162 }),
+                : // A parent (Home) can shrink photos to fit the screen
+                  { height: "var(--outfit-photo-height, 162px)" }),
             }}
           />
         </Box>
