@@ -35,7 +35,12 @@ const OutfitItem = ({
     );
 
   return (
-    <Skeleton isLoaded={isLoaded} {...props}>
+    <Skeleton
+      isLoaded={isLoaded}
+      transition="transform 0.1s"
+      _active={{ transform: "scale(0.97)" }}
+      {...props}
+    >
       <Wrapper>
         <Box
           sx={{

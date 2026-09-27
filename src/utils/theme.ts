@@ -3,6 +3,14 @@ import { extendTheme } from "@chakra-ui/react";
 const theme = extendTheme({
   styles: {
     global: {
+      "html, body": {
+        overscrollBehavior: "none",
+        WebkitTapHighlightColor: "transparent",
+      },
+      "a, button, [role=button], label, footer": {
+        touchAction: "manipulation",
+        userSelect: "none",
+      },
       "#root": {
         display: "flex",
         flexDirection: "column",
@@ -21,6 +29,13 @@ const theme = extendTheme({
   shadows: {
     material: "0 2px 4px var(--chakra-colors-gray-300)",
     "reverse-material": "0 -2px 4px var(--chakra-colors-gray-300)",
+  },
+  components: {
+    Button: {
+      baseStyle: {
+        _active: { transform: "scale(0.97)" },
+      },
+    },
   },
 });
 

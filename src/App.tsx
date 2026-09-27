@@ -1,5 +1,6 @@
-import { Route } from "wouter";
+import { Route, useLocation } from "wouter";
 import { ChakraProvider, Box } from "@chakra-ui/react";
+import { motion, MotionConfig } from "framer-motion";
 
 import NestedRoute from "components/NestedRoute";
 import Authorized from "components/Authorized";
@@ -18,21 +19,33 @@ import "@fontsource/advent-pro";
 import "@fontsource/roboto";
 
 function App() {
+  const [location] = useLocation();
+  const tab = location.split("/")[1].toLowerCase();
+
   return (
     <ChakraProvider theme={theme}>
-      <Route path="/login" component={Login} />
-      <Authorized>
-        <Header />
-        <Box sx={{ pt: 6, px: 3, pb: 16, flexGrow: 1 }} as="main">
-          <Route path="/" component={Home} />
-          <Route path="/Outfits" component={Outfits} />
-          <NestedRoute base="/wardrobe">
-            <Wardrobe />
-          </NestedRoute>
-          <Route path="/account" component={Account} />
-        </Box>
-        <BottomNav />
-      </Authorized>
+      <MotionConfig reducedMotion="user">
+        <Route path="/login" component={Login} />
+        <Authorized>
+          <Header />
+          <Box sx={{ pt: 6, px: 3, pb: "nav", flexGrow: 1 }} as="main">
+            <motion.div
+              key={tab}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Route path="/" component={Home} />
+              <Route path="/Outfits" component={Outfits} />
+              <NestedRoute base="/wardrobe">
+                <Wardrobe />
+              </NestedRoute>
+              <Route path="/account" component={Account} />
+            </motion.div>
+          </Box>
+          <BottomNav />
+        </Authorized>
+      </MotionConfig>
     </ChakraProvider>
   );
 }
