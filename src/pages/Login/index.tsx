@@ -4,6 +4,7 @@ import {
   GoogleAuthProvider,
   FacebookAuthProvider,
   signInWithRedirect,
+  signInWithPopup,
 } from "firebase/auth";
 import {
   Box,
@@ -25,6 +26,11 @@ import { GoogleLogo } from "components/Icons";
 
 const googleAuthProvider = new GoogleAuthProvider();
 const facebookAuthProvider = new FacebookAuthProvider();
+
+// Redirect breaks on localhost: browsers block the third-party storage it relies on
+// https://firebase.google.com/docs/auth/web/redirect-best-practices
+const signIn =
+  process.env.NODE_ENV === "development" ? signInWithPopup : signInWithRedirect;
 
 const container = {
   hidden: { opacity: 0, y: -10 },
@@ -94,7 +100,7 @@ const Login = () => {
             sx={{ width: "100%", boxShadow: "material" }}
             size="lg"
             colorScheme="facebook"
-            onClick={() => signInWithRedirect(auth, facebookAuthProvider)}
+            onClick={() => signIn(auth, facebookAuthProvider)}
             leftIcon={<Icon as={FaFacebookSquare} />}
           >
             Continue with Facebook
@@ -106,7 +112,7 @@ const Login = () => {
             size="lg"
             colorScheme="white"
             variant="outline"
-            onClick={() => signInWithRedirect(auth, googleAuthProvider)}
+            onClick={() => signIn(auth, googleAuthProvider)}
             leftIcon={<Icon as={GoogleLogo} />}
           >
             Continue with Google
