@@ -8,6 +8,7 @@ import {
   IconButton,
   Icon,
   Flex,
+  Text,
 } from "@chakra-ui/react";
 import {
   DragDropContext,
@@ -59,119 +60,128 @@ const Outfits = () => {
         <EmptyState
           icon={MdDryCleaning}
           title="No outfits yet"
-          description="Pick a shirt, belt, pants and shoes to make your first one."
+          description="Put together a shirt, belt, pants and shoes. Each outfit you make joins the rotation."
           actionLabel="Create an outfit"
           onAction={openNewOutfit}
         />
       ) : (
-        <DragDropContext onDragEnd={onDragEnd}>
-          <Droppable droppableId="outfits">
-            {(provided) => (
-              <Stack
-                {...provided.droppableProps}
-                ref={provided.innerRef}
-                sx={{ pb: 14 }}
-              >
-                {outfits.map((outfit, index) => {
-                  return (
-                    <Draggable
-                      key={outfit.id}
-                      draggableId={outfit.id}
-                      index={index}
-                    >
-                      {(provided, snapshot) => (
-                        <Box
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          onClick={() => openOutfit(outfit.id)}
-                        >
+        <>
+          <Text sx={{ mb: 4, color: "gray.600" }}>
+            Alfred lays these out in order, one a day. Drag the handle to change
+            what comes next.
+          </Text>
+          <DragDropContext onDragEnd={onDragEnd}>
+            <Droppable droppableId="outfits">
+              {(provided) => (
+                <Stack
+                  {...provided.droppableProps}
+                  ref={provided.innerRef}
+                  sx={{ pb: 14 }}
+                >
+                  {outfits.map((outfit, index) => {
+                    return (
+                      <Draggable
+                        key={outfit.id}
+                        draggableId={outfit.id}
+                        index={index}
+                      >
+                        {(provided, snapshot) => (
                           <Box
-                            sx={{
-                              borderTopRadius: 6,
-                              transition: "all 0.15s",
-                              transform: snapshot.isDragging
-                                ? "scale(1.01)"
-                                : undefined,
-                              boxShadow: snapshot.isDragging
-                                ? "material"
-                                : undefined,
-                            }}
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            onClick={() => openOutfit(outfit.id)}
                           >
                             <Box
                               sx={{
-                                p: 2,
-                                backgroundColor: "white",
-                                borderTopRadius: 6,
-                                borderTop: "1px solid",
-                                borderX: "1px solid",
-                                borderColor: "gray.100",
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
+                                borderRadius: "xl",
+                                overflow: "hidden",
+                                border: outfit.active
+                                  ? "2px solid"
+                                  : "1px solid",
+                                borderColor: outfit.active
+                                  ? "accent.600"
+                                  : "gray.200",
+                                transition: "all 0.15s",
+                                transform: snapshot.isDragging
+                                  ? "scale(1.01)"
+                                  : undefined,
+                                boxShadow: snapshot.isDragging
+                                  ? "material"
+                                  : undefined,
                               }}
                             >
-                              <Heading as="h6" size="sm">
-                                #{index + 1}
-                              </Heading>
-
-                              <Flex sx={{ gap: 2 }}>
-                                {outfit.active && (
-                                  <Badge
-                                    colorScheme="accent"
-                                    alignSelf="center"
-                                  >
-                                    Today
-                                  </Badge>
-                                )}
-
-                                <Box
-                                  aria-label="Drag to reorder"
-                                  sx={{
-                                    // 44px touch target around a 16px icon
-                                    w: "44px",
-                                    h: "44px",
-                                    m: -2,
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                  }}
-                                  {...provided.dragHandleProps}
-                                >
-                                  <Icon as={GrDrag} />
-                                </Box>
-                              </Flex>
-                            </Box>
-                            {Object.values(outfit).length > 0 && (
-                              <Grid
-                                templateColumns="repeat(4, 1fr)"
-                                sx={{ backgroundColor: "white" }}
-                                pointerEvents="none"
+                              <Box
+                                sx={{
+                                  p: 2,
+                                  backgroundColor: "white",
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  alignItems: "center",
+                                }}
                               >
-                                {fields.map((field) => (
-                                  <OutfitReference
-                                    key={field}
-                                    reference={outfit[field]}
-                                    aspectRatio={1}
-                                  />
-                                ))}
-                              </Grid>
-                            )}
+                                <Heading as="h2" size="md">
+                                  Outfit #{index + 1}
+                                </Heading>
+
+                                <Flex sx={{ gap: 2 }}>
+                                  {outfit.active && (
+                                    <Badge
+                                      colorScheme="accent"
+                                      alignSelf="center"
+                                    >
+                                      Today
+                                    </Badge>
+                                  )}
+
+                                  <Box
+                                    aria-label="Drag to reorder"
+                                    sx={{
+                                      // 44px touch target around a 16px icon
+                                      w: "44px",
+                                      h: "44px",
+                                      m: -2,
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                    }}
+                                    {...provided.dragHandleProps}
+                                  >
+                                    <Icon as={GrDrag} />
+                                  </Box>
+                                </Flex>
+                              </Box>
+                              {Object.values(outfit).length > 0 && (
+                                <Grid
+                                  templateColumns="repeat(4, 1fr)"
+                                  sx={{ backgroundColor: "white" }}
+                                  pointerEvents="none"
+                                >
+                                  {fields.map((field) => (
+                                    <OutfitReference
+                                      key={field}
+                                      reference={outfit[field]}
+                                      aspectRatio={1}
+                                    />
+                                  ))}
+                                </Grid>
+                              )}
+                            </Box>
                           </Box>
-                        </Box>
-                      )}
-                    </Draggable>
-                  );
-                })}
-                {provided.placeholder}
-              </Stack>
-            )}
-          </Droppable>
-        </DragDropContext>
+                        )}
+                      </Draggable>
+                    );
+                  })}
+                  {provided.placeholder}
+                </Stack>
+              )}
+            </Droppable>
+          </DragDropContext>
+        </>
       )}
 
       <IconButton
         onClick={openNewOutfit}
-        aria-label="Add Outfit"
+        aria-label="New outfit"
         size="lg"
         colorScheme="brand"
         icon={

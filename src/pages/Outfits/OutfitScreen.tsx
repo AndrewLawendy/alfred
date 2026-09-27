@@ -12,17 +12,17 @@ import {
   DrawerOverlay,
   Flex,
   Grid,
+  Heading,
   Icon,
   IconButton,
   Image,
   Text,
 } from "@chakra-ui/react";
 import { IconType } from "react-icons";
-import { MdArrowBack, MdCheckCircle } from "react-icons/md";
+import { MdAdd, MdArrowBack, MdCheckCircle } from "react-icons/md";
 import { GiShirt, GiBelt, GiTrousers, GiRunningShoe } from "react-icons/gi";
 
 import Confirm from "components/Confirm";
-import EmptyState from "components/EmptyState";
 import Loading from "components/Loading";
 import Swipeable from "components/Swipeable";
 
@@ -56,23 +56,19 @@ const picksOf = (outfit?: Outfit): Picks =>
     ? Object.fromEntries(slots.map(({ key }) => [key, outfit[key]?.id]))
     : {};
 
-// One piece of the outfit: its photo, or an invitation to choose one
+// One piece of the outfit: its photo, opening the item
 const Slot = ({
   label,
   icon,
   item,
-  onClick,
-  isEditing,
 }: {
   label: string;
   icon: IconType;
   item?: Item;
-  onClick: () => void;
-  isEditing: boolean;
 }) => (
   <Box
     as="button"
-    onClick={onClick}
+    onClick={() => item && openItem(item.id)}
     sx={{
       textAlign: "left",
       minW: 0,
@@ -87,16 +83,8 @@ const Slot = ({
         overflow: "hidden",
         alignItems: "center",
         justifyContent: "center",
-        flexDirection: "column",
-        gap: 2,
         color: "gray.400",
-        ...(item
-          ? { backgroundColor: "gray.100" }
-          : {
-              border: "1.5px dashed",
-              borderColor: "gray.300",
-              backgroundColor: "white",
-            }),
+        backgroundColor: "surface",
       }}
     >
       {item ? (
@@ -106,137 +94,150 @@ const Slot = ({
           sx={{ w: "100%", h: "100%", objectFit: "cover" }}
         />
       ) : (
-        <>
-          <Icon as={icon} sx={{ w: 10, h: 10 }} />
-          <Text sx={{ fontSize: "sm", color: "gray.500" }}>
-            Choose {label.toLowerCase()}
-          </Text>
-        </>
+        <Icon as={icon} sx={{ w: 10, h: 10 }} />
       )}
     </Flex>
-    <Text
-      sx={{
-        pt: 2,
-        fontSize: "xs",
-        fontWeight: "semibold",
-        textTransform: "uppercase",
-        letterSpacing: "wide",
-        color: "gray.500",
-      }}
-    >
-      {label}
-      {isEditing && item && " · change"}
-    </Text>
-    <Text noOfLines={1} sx={{ fontWeight: "semibold", minH: 6 }}>
-      {item?.title}
+    <Text sx={labelStyle}>{label}</Text>
+    <Text noOfLines={1} sx={{ fontWeight: "medium", minH: 6 }}>
+      {item?.title || "Missing"}
     </Text>
   </Box>
 );
 
-// Pick one item of a category for a slot
-const Picker = ({
+const labelStyle = {
+  pt: 2,
+  fontSize: "xs",
+  fontWeight: "semibold",
+  textTransform: "uppercase",
+  letterSpacing: "wider",
+  color: "gray.600",
+} as const;
+
+const tileStyle = {
+  flexShrink: 0,
+  w: "6.5rem",
+  aspectRatio: "4 / 5",
+  borderRadius: "xl",
+  overflow: "hidden",
+  scrollSnapAlign: "start",
+} as const;
+
+// Every item of one category in a row you swipe through; tap one to pick it
+const Carousel = ({
   slot,
   items,
   selectedId,
   onPick,
-  onClose,
 }: {
-  slot: typeof slots[number] | null;
+  slot: typeof slots[number];
   items: Item[];
   selectedId?: string;
   onPick: (id: string) => void;
-  onClose: () => void;
 }) => {
-  useBackToClose(Boolean(slot), onClose);
-  // Focus the title on open, so no focus ring lands on the first choice
-  const titleRef = useRef<HTMLHeadingElement>(null);
-  const choices = slot ? items.filter(({ type }) => type === slot.key) : [];
+  const choices = items.filter(({ type }) => type === slot.key);
+  const selected = choices.find(({ id }) => id === selectedId);
+  const rowRef = useRef<HTMLDivElement>(null);
+
+  // Start with the current pick in view
+  useEffect(() => {
+    // Scroll only the row: scrollIntoView would also scroll the screen
+    const row = rowRef.current;
+    const tile = row?.querySelector<HTMLElement>("[aria-pressed=true]");
+    if (row && tile) {
+      row.scrollLeft =
+        tile.offsetLeft - (row.clientWidth - tile.clientWidth) / 2;
+    }
+  }, []);
 
   return (
-    <Drawer
-      isOpen={Boolean(slot)}
-      onClose={onClose}
-      placement="bottom"
-      initialFocusRef={titleRef}
-    >
-      <DrawerOverlay />
-      <DrawerContent bg="transparent" boxShadow="none">
-        <Swipeable direction="down" onClose={onClose}>
-          {slot && (
-            <>
-              <DrawerHeader
-                ref={titleRef}
-                tabIndex={-1}
-                sx={{ _focus: { outline: "none" } }}
-              >
-                Choose {slot.label.toLowerCase()}
-              </DrawerHeader>
-              <DrawerBody sx={{ maxH: "65dvh", pb: 6 }}>
-                {choices.length ? (
-                  <Grid templateColumns="repeat(3, 1fr)" gap={3}>
-                    {choices.map((item) => {
-                      const isSelected = item.id === selectedId;
-                      return (
-                        <Box
-                          key={item.id}
-                          as="button"
-                          onClick={() => onPick(item.id)}
-                          sx={{ textAlign: "left", minW: 0 }}
-                        >
-                          <Box
-                            sx={{
-                              position: "relative",
-                              aspectRatio: "1",
-                              borderRadius: "lg",
-                              overflow: "hidden",
-                              outline: isSelected ? "3px solid" : "none",
-                              outlineColor: "accent.400",
-                              outlineOffset: "2px",
-                            }}
-                          >
-                            <Image
-                              src={item.imageUrl}
-                              alt={item.title}
-                              sx={{ w: "100%", h: "100%", objectFit: "cover" }}
-                            />
-                            {isSelected && (
-                              <Icon
-                                as={MdCheckCircle}
-                                sx={{
-                                  position: "absolute",
-                                  top: 1,
-                                  right: 1,
-                                  w: 6,
-                                  h: 6,
-                                  color: "accent.400",
-                                  backgroundColor: "white",
-                                  borderRadius: "full",
-                                }}
-                              />
-                            )}
-                          </Box>
-                          <Text noOfLines={1} sx={{ pt: 1, fontSize: "sm" }}>
-                            {item.title}
-                          </Text>
-                        </Box>
-                      );
-                    })}
-                  </Grid>
-                ) : (
-                  <EmptyState
-                    icon={slot.icon}
-                    title={`No ${slot.label.toLowerCase()} yet`}
-                    description="Add one to your wardrobe and it will show up here."
-                    actionLabel={`Add ${slot.label.toLowerCase()}`}
-                    onAction={() => openNewItem(slot.key)}
-                  />
-                )}
-              </DrawerBody>
-            </>
-          )}
-        </Swipeable>
-      </DrawerContent>
-    </Drawer>
+    <Box as="section" aria-label={slot.label} sx={{ mb: 5 }}>
+      <Flex sx={{ alignItems: "baseline", gap: 2, px: 4, mb: 2 }}>
+        <Text sx={{ ...labelStyle, pt: 0 }}>{slot.label}</Text>
+        <Text noOfLines={1} sx={{ fontSize: "sm", color: "gray.600" }}>
+          {selected?.title}
+        </Text>
+      </Flex>
+      <Flex
+        ref={rowRef}
+        sx={{
+          // The offsetParent for centring the current pick
+          position: "relative",
+          gap: 2.5,
+          px: 4,
+          overflowX: "auto",
+          scrollSnapType: "x mandatory",
+          scrollPaddingInline: 4,
+          scrollbarWidth: "none",
+          "::-webkit-scrollbar": { display: "none" },
+        }}
+      >
+        {choices.map((item) => {
+          const isSelected = item.id === selectedId;
+          return (
+            <Box
+              key={item.id}
+              as="button"
+              onClick={() => onPick(item.id)}
+              aria-pressed={isSelected}
+              aria-label={item.title}
+              sx={{
+                ...tileStyle,
+                position: "relative",
+                // Chakra turns outline "none" into a 2px transparent one,
+                // so only colour it when selected
+                ...(isSelected && {
+                  outline: "3px solid",
+                  outlineColor: "accent.600",
+                  outlineOffset: "-3px",
+                }),
+                opacity: selectedId && !isSelected ? 0.7 : 1,
+                transition: "opacity 0.15s, transform 0.1s",
+                _active: { transform: "scale(0.97)" },
+              }}
+            >
+              <Image
+                src={item.imageUrl}
+                alt=""
+                sx={{ w: "100%", h: "100%", objectFit: "cover" }}
+              />
+              {isSelected && (
+                <Icon
+                  as={MdCheckCircle}
+                  sx={{
+                    position: "absolute",
+                    top: 1.5,
+                    right: 1.5,
+                    w: 6,
+                    h: 6,
+                    color: "accent.600",
+                    backgroundColor: "white",
+                    borderRadius: "full",
+                  }}
+                />
+              )}
+            </Box>
+          );
+        })}
+        <Flex
+          as="button"
+          onClick={() => openNewItem(slot.key)}
+          sx={{
+            ...tileStyle,
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 1,
+            border: "1.5px dashed",
+            borderColor: "gray.300",
+            color: "gray.600",
+            fontSize: "sm",
+          }}
+        >
+          <Icon as={MdAdd} sx={{ w: 7, h: 7 }} />
+          Add {slot.label.toLowerCase()}
+        </Flex>
+      </Flex>
+    </Box>
   );
 };
 
@@ -257,7 +258,6 @@ const OutfitEditor = ({
 }: EditorProps) => {
   const [mode, setMode] = useState<"view" | "edit">(outfit ? "view" : "edit");
   const [picks, setPicks] = useState<Picks>(() => picksOf(outfit));
-  const [openSlot, setOpenSlot] = useState<typeof slots[number] | null>(null);
   const [addOutfit, isAdding] = useAddDocument<Outfit>("outfits");
   const [updateOutfit, isUpdating] = useUpdateDocument<Outfit>("outfits");
   const [deleteOutfit, isDeleting] = useDeleteDocument("outfits");
@@ -354,40 +354,41 @@ const OutfitEditor = ({
         )}
       </DrawerHeader>
 
-      <DrawerBody sx={{ py: 5 }}>
-        <Grid templateColumns="repeat(2, 1fr)" columnGap={3} rowGap={4}>
-          {slots.map((slot) => {
-            const item = itemById(picks[slot.key]);
-            return (
+      <DrawerBody sx={{ py: 5, ...(isEditing && { px: 0 }) }}>
+        {isEditing ? (
+          slots.map((slot) => (
+            <Carousel
+              key={slot.key}
+              slot={slot}
+              items={items}
+              selectedId={picks[slot.key]}
+              onPick={(id) => setPicks({ ...picks, [slot.key]: id })}
+            />
+          ))
+        ) : (
+          <Grid templateColumns="repeat(2, 1fr)" columnGap={3} rowGap={4}>
+            {slots.map((slot) => (
               <Slot
                 key={slot.key}
                 label={slot.label}
                 icon={slot.icon}
-                item={item}
-                isEditing={isEditing}
-                onClick={() =>
-                  isEditing ? setOpenSlot(slot) : item && openItem(item.id)
-                }
+                item={itemById(picks[slot.key])}
               />
-            );
-          })}
-        </Grid>
-
-        {isEditing && missing.length > 0 && (
-          <Text sx={{ mt: 5, textAlign: "center", color: "gray.500" }}>
-            Pick {missing.map(({ label }) => label.toLowerCase()).join(", ")} to
-            save this outfit.
-          </Text>
+            ))}
+          </Grid>
         )}
 
         {isEditingExisting && outfit && (
-          <Flex sx={{ justifyContent: "center", mt: 8 }}>
+          <Flex sx={{ justifyContent: "center", mt: 4 }}>
             <Confirm
               message={
                 <>
-                  <Text>Delete this outfit?</Text>
+                  <Heading size="md">Delete Outfit #{number}?</Heading>
+                  <Text sx={{ mt: 1, color: "gray.600" }}>
+                    Its clothes stay in your wardrobe.
+                  </Text>
                   {outfit.active && (
-                    <Text fontSize="sm" color="red.500">
+                    <Text sx={{ mt: 2, color: "red.600" }}>
                       It&apos;s today&apos;s outfit, so the next one in the
                       rotation takes its place.
                     </Text>
@@ -419,8 +420,15 @@ const OutfitEditor = ({
             borderTop: "1px solid",
             borderColor: "gray.100",
             pb: "calc(var(--chakra-space-4) + env(safe-area-inset-bottom))",
+            flexDirection: "column",
           }}
         >
+          {missing.length > 0 && (
+            <Text sx={{ mb: 3, fontSize: "sm", color: "gray.600" }}>
+              Still missing:{" "}
+              {missing.map(({ label }) => label.toLowerCase()).join(", ")}
+            </Text>
+          )}
           <Button
             onClick={onSave}
             isLoading={isLoading}
@@ -429,21 +437,10 @@ const OutfitEditor = ({
             size="lg"
             sx={{ w: "100%", borderRadius: "full" }}
           >
-            Save
+            {outfit ? "Save changes" : "Add to rotation"}
           </Button>
         </DrawerFooter>
       )}
-
-      <Picker
-        slot={openSlot}
-        items={items}
-        selectedId={openSlot ? picks[openSlot.key] : undefined}
-        onPick={(id) => {
-          if (openSlot) setPicks({ ...picks, [openSlot.key]: id });
-          setOpenSlot(null);
-        }}
-        onClose={() => setOpenSlot(null)}
-      />
     </>
   );
 };
@@ -470,7 +467,7 @@ const OutfitPanel = ({
   const index = outfits.findIndex(({ id }) => id === param);
   if (param !== "new" && index === -1) {
     return (
-      <DrawerBody sx={{ pt: 16, textAlign: "center", color: "gray.500" }}>
+      <DrawerBody sx={{ pt: 16, textAlign: "center", color: "gray.600" }}>
         This outfit no longer exists.
       </DrawerBody>
     );
