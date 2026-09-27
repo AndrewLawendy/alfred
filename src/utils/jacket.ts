@@ -29,7 +29,8 @@ export const jacketState = (
     jacket,
     isSkipped,
     hasCard: Boolean(jacket || isSkipped || options.length > 1),
-    // Only prompt when the weather says more than one jacket suits
-    needsChoice: chosen == null && suitable.length > 1,
+    // Ask whenever the weather calls for a jacket and today's outfit has no
+    // decision yet: even a lone suitable jacket may clash with its colours
+    needsChoice: chosen == null && suitable.length > 0,
   };
 };

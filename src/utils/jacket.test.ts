@@ -15,9 +15,9 @@ test("cold with nothing chosen: prompt and offer both", () => {
   expect(state.hasCard).toBe(true);
 });
 
-test("one suits: suggest it, but it can still be changed or skipped", () => {
+test("one suits: suggest it and still ask, since it may clash", () => {
   const state = jacketState(jackets, 15, undefined);
-  expect(state.needsChoice).toBe(false);
+  expect(state.needsChoice).toBe(true);
   expect(state.jacket).toBe(blazer);
   expect(state.options).toEqual([blazer]);
   expect(state.hasCard).toBe(true);
