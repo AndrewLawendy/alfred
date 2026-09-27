@@ -81,57 +81,67 @@ const Login = () => {
   return (
     <Box
       as={motion.div}
-      sx={{ py: 20, px: 3, textAlign: "center" }}
+      sx={{
+        minH: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        px: 4,
+        pt: "calc(var(--chakra-space-20) + env(safe-area-inset-top))",
+        pb: "calc(var(--chakra-space-8) + env(safe-area-inset-bottom))",
+        textAlign: "center",
+      }}
       variants={container}
       initial="hidden"
       animate="show"
     >
-      <motion.div variants={item}>
-        <Image src={Logo} sx={{ maxH: 28, mx: "auto" }} />
-      </motion.div>
-      <motion.div variants={item}>
-        <Heading
-          sx={{
-            mt: 4,
-          }}
-        >
-          Alfred
-        </Heading>
-      </motion.div>
-      <motion.div variants={item}>
-        <Text fontSize="xl">Your own wardrobe stylist</Text>
-      </motion.div>
-
-      <Box sx={{ mt: 32 }}>
+      <Box sx={{ flex: 1 }}>
         <motion.div variants={item}>
-          <Text sx={{ fontSize: "lg", fontWeight: "semibold", mb: 4 }}>
-            Login or create an account
+          <Image src={Logo} alt="" sx={{ maxH: 24, mx: "auto" }} />
+        </motion.div>
+        <motion.div variants={item}>
+          <Heading sx={{ mt: 6, fontSize: "5xl" }}>Alfred</Heading>
+        </motion.div>
+        <motion.div variants={item}>
+          <Text sx={{ mt: 2, fontSize: "lg", color: "gray.600" }}>
+            Your own wardrobe stylist
           </Text>
         </motion.div>
-        <motion.div variants={item}>
-          <Button
-            sx={{ width: "100%", boxShadow: "material" }}
-            size="lg"
-            colorScheme="facebook"
-            onClick={() => onSignIn(facebookAuthProvider)}
-            leftIcon={<Icon as={FaFacebookSquare} />}
-          >
-            Continue with Facebook
-          </Button>
-        </motion.div>
-        <motion.div variants={item}>
-          <Button
-            sx={{ width: "100%", mt: 4, boxShadow: "material" }}
-            size="lg"
-            colorScheme="white"
-            variant="outline"
-            onClick={() => onSignIn(googleAuthProvider)}
-            leftIcon={<Icon as={GoogleLogo} />}
-          >
-            Continue with Google
-          </Button>
-        </motion.div>
       </Box>
+
+      {/* Sign-in sits at the bottom, within thumb reach */}
+      <motion.div variants={item}>
+        <Button
+          sx={{
+            width: "100%",
+            borderRadius: "full",
+            backgroundColor: "white",
+            borderColor: "gray.300",
+            color: "brand.800",
+          }}
+          size="lg"
+          variant="outline"
+          onClick={() => onSignIn(googleAuthProvider)}
+          leftIcon={<Icon as={GoogleLogo} />}
+        >
+          Continue with Google
+        </Button>
+      </motion.div>
+      <motion.div variants={item}>
+        <Button
+          sx={{ width: "100%", mt: 3, borderRadius: "full" }}
+          size="lg"
+          colorScheme="facebook"
+          onClick={() => onSignIn(facebookAuthProvider)}
+          leftIcon={<Icon as={FaFacebookSquare} />}
+        >
+          Continue with Facebook
+        </Button>
+      </motion.div>
+      <motion.div variants={item}>
+        <Text sx={{ mt: 4, fontSize: "sm", color: "gray.500" }}>
+          New here? Signing in creates your account.
+        </Text>
+      </motion.div>
 
       {isLoading && (
         <Box
@@ -141,7 +151,7 @@ const Login = () => {
             left: 0,
             width: "100%",
             height: "100%",
-            backgroundColor: "whiteAlpha.800",
+            backgroundColor: "rgba(250, 248, 245, 0.85)",
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
