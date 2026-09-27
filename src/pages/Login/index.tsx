@@ -29,10 +29,13 @@ import { GoogleLogo } from "components/Icons";
 const googleAuthProvider = new GoogleAuthProvider();
 const facebookAuthProvider = new FacebookAuthProvider();
 
-// Redirect breaks on localhost: browsers block the third-party storage it relies on
+// Redirect only works on the auth domain itself: elsewhere (localhost, web.app,
+// preview channels) browsers block the third-party storage it relies on.
 // https://firebase.google.com/docs/auth/web/redirect-best-practices
 const signIn =
-  process.env.NODE_ENV === "development" ? signInWithPopup : signInWithRedirect;
+  window.location.hostname === auth.config.authDomain
+    ? signInWithRedirect
+    : signInWithPopup;
 
 const container = {
   hidden: { opacity: 0, y: -10 },
