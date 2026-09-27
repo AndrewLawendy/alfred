@@ -38,6 +38,7 @@ import useData from "resources/useData";
 import useUpdateDocument from "resources/useUpdateDocument";
 import useWeather from "resources/useWeather";
 
+import { nextOutfit } from "utils/rotation";
 import { Jacket, Outfit } from "utils/types";
 import Swipeable from "components/Swipeable";
 import useBackToClose from "hooks/useBackToClose";
@@ -93,35 +94,21 @@ const Home = () => {
 
     if (outfits.length === 1) return onSingleOutfitOpen();
 
-    const { order: activeOutfitOrder } = activeOutfit;
-    const nextOutfitIndex = (activeOutfitOrder + 1) % outfits.length;
-    const nextOutfit = outfits[nextOutfitIndex];
-
-    updateOutfit(nextOutfit.id, { ...nextOutfit, active: true });
-    updateOutfit(activeOutfit.id, {
-      ...activeOutfit,
-      active: false,
-      jacket: null,
-    });
+    const next = nextOutfit(outfits, activeOutfit);
+    updateOutfit(next.id, { active: true });
+    updateOutfit(activeOutfit.id, { active: false, jacket: null });
   };
 
+  // Wear the next outfit today and push this one to right after it
   const onSwitchCurrentOutfit = () => {
     if (!outfits) return;
 
     if (outfits.length === 1) return onSingleOutfitOpen();
 
-    const { order: activeOutfitOrder } = activeOutfit;
-    const nextOutfitIndex = (activeOutfitOrder + 1) % outfits.length;
-    const nextOutfit = outfits[nextOutfitIndex];
-
-    updateOutfit(nextOutfit.id, {
-      ...nextOutfit,
-      active: true,
-      order: activeOutfitOrder,
-    });
+    const next = nextOutfit(outfits, activeOutfit);
+    updateOutfit(next.id, { active: true, order: activeOutfit.order });
     updateOutfit(activeOutfit.id, {
-      ...activeOutfit,
-      order: nextOutfit.order,
+      order: next.order,
       active: false,
       jacket: null,
     });
