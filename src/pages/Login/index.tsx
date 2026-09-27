@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useLocation } from "wouter";
 import {
+  AuthProvider,
   GoogleAuthProvider,
   FacebookAuthProvider,
   signInWithRedirect,
@@ -14,6 +15,7 @@ import {
   Text,
   Icon,
   Spinner,
+  useToast,
 } from "@chakra-ui/react";
 import { FaFacebookSquare } from "react-icons/fa";
 import { motion } from "framer-motion";
@@ -57,6 +59,18 @@ const item = {
 const Login = () => {
   const [user, isLoading] = useAuth();
   const [, setLocation] = useLocation();
+  const toast = useToast();
+
+  const onSignIn = (provider: AuthProvider) =>
+    signIn(auth, provider).catch((error) =>
+      toast({
+        status: "error",
+        title: "Couldn't sign you in",
+        // Firebase codes like auth/unauthorized-domain say what went wrong
+        description: error.code || error.message,
+        isClosable: true,
+      })
+    );
 
   useEffect(() => {
     if (user) {
@@ -100,7 +114,7 @@ const Login = () => {
             sx={{ width: "100%", boxShadow: "material" }}
             size="lg"
             colorScheme="facebook"
-            onClick={() => signIn(auth, facebookAuthProvider)}
+            onClick={() => onSignIn(facebookAuthProvider)}
             leftIcon={<Icon as={FaFacebookSquare} />}
           >
             Continue with Facebook
@@ -112,7 +126,7 @@ const Login = () => {
             size="lg"
             colorScheme="white"
             variant="outline"
-            onClick={() => signIn(auth, googleAuthProvider)}
+            onClick={() => onSignIn(googleAuthProvider)}
             leftIcon={<Icon as={GoogleLogo} />}
           >
             Continue with Google
