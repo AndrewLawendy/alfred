@@ -34,34 +34,35 @@ const theme = extendTheme({
   fonts: {
     // The phone's own font (San Francisco on iOS, Roboto on Android)
     body: `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif`,
-    heading: `"Fraunces", Georgia, serif`,
+    heading: `"Instrument Serif", Georgia, serif`,
   },
   colors: {
-    // Tuxedo palette: ink like the logo, brass accents, a warm linen page
-    linen: "#FAF8F5",
+    // Ivory page, ink text, one oxblood accent kept for decisions
+    linen: "#FBFAF6",
+    surface: "#F3F0E9",
     brand: {
-      50: "#F4F2EE",
-      100: "#E4E1DB",
-      200: "#C9C5BD",
-      300: "#A29D94",
-      400: "#6E6A64",
-      500: "#1F2328",
-      600: "#16191D",
-      700: "#0E1013",
-      800: "#08090B",
+      50: "#F3F0E9",
+      100: "#E6E2DA",
+      200: "#CDC8BF",
+      300: "#A6A199",
+      400: "#6F6B65",
+      500: "#1A1B1E",
+      600: "#141518",
+      700: "#0E0F11",
+      800: "#08090A",
       900: "#000000",
     },
     accent: {
-      50: "#FAF5EC",
-      100: "#F1E6D2",
-      200: "#E3CFA8",
-      300: "#D0B37E",
-      400: "#B08D57",
-      500: "#9A7646",
-      600: "#7F6038",
-      700: "#654C2C",
-      800: "#4B3921",
-      900: "#322616",
+      50: "#F8EFED",
+      100: "#EFDCD8",
+      200: "#DDB5AE",
+      300: "#C48A80",
+      400: "#A05A50",
+      500: "#83403A",
+      600: "#6B2B2B",
+      700: "#5A2323",
+      800: "#461B1B",
+      900: "#2F1212",
     },
   },
   space: {
@@ -78,6 +79,11 @@ const theme = extendTheme({
       // taller than the visible screen (address bar). $100vh is --chakra-vh,
       // set to the visible height above.
       baseStyle: ({ isFullHeight }: { isFullHeight?: boolean }) => ({
+        header: {
+          fontFamily: "heading",
+          fontWeight: "normal",
+          fontSize: "2xl",
+        },
         dialog: {
           bg: "linen",
           maxH: "$100vh",
@@ -87,6 +93,14 @@ const theme = extendTheme({
       sizes: {
         full: { dialog: { h: "$100vh" } },
       },
+    },
+    // Instrument Serif has a single weight; a faux bold smudges it
+    Heading: {
+      baseStyle: { fontWeight: "normal", letterSpacing: "-0.01em" },
+    },
+    // red.500 is under 4.5:1 on ivory
+    FormError: {
+      baseStyle: { text: { color: "red.600" } },
     },
     Button: {
       baseStyle: {

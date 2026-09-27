@@ -27,7 +27,7 @@ const Account = () => {
         variant="outline"
         leftIcon={<Icon w={5} h={5} as={MdLogout} />}
       />
-      <Text sx={{ mt: 4, fontSize: "sm", color: "gray.500" }}>
+      <Text sx={{ mt: 4, fontSize: "sm", color: "gray.600" }}>
         Alfred v{process.env.REACT_APP_VERSION}
       </Text>
     </Flex>

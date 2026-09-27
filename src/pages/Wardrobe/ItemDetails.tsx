@@ -18,7 +18,7 @@ const SectionLabel = ({ children }: { children: string }) => (
       fontWeight: "semibold",
       letterSpacing: "wide",
       textTransform: "uppercase",
-      color: "gray.500",
+      color: "gray.600",
     }}
   >
     {children}

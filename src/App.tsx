@@ -18,8 +18,7 @@ import OutfitScreen from "pages/Outfits/OutfitScreen";
 
 import theme from "utils/theme";
 
-import "@fontsource/fraunces/600.css";
-import "@fontsource/fraunces/700.css";
+import "@fontsource/instrument-serif";
 
 function App() {
   const [location] = useLocation();

@@ -43,7 +43,7 @@ const BottomNavItem = ({
         minHeight: 14,
         fontSize: "xs",
         fontWeight: isActive ? "semibold" : "normal",
-        color: isActive ? "brand.700" : "gray.500",
+        color: isActive ? "brand.700" : "gray.600",
 
         "&:hover": {
           textDecoration: "none",

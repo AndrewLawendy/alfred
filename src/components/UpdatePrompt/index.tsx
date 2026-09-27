@@ -48,7 +48,7 @@ const UpdatePrompt = () => {
               onClick={reload}
               sx={{
                 borderRadius: "full",
-                backgroundColor: "accent.300",
+                backgroundColor: "accent.100",
                 color: "brand.800",
               }}
             >

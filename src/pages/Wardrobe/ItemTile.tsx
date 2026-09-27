@@ -55,7 +55,7 @@ const ItemTile = ({ item, onClick }: ItemTileProps) => (
     <Text noOfLines={1} sx={{ pt: 2, fontWeight: "semibold" }}>
       {item.title}
     </Text>
-    <Text noOfLines={1} sx={{ minH: 5, fontSize: "sm", color: "gray.500" }}>
+    <Text noOfLines={1} sx={{ minH: 5, fontSize: "sm", color: "gray.600" }}>
       {item.description}
     </Text>
   </Box>
