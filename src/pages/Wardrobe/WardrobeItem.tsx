@@ -40,6 +40,7 @@ import { Item } from "utils/types";
 
 import ItemTile from "./ItemTile";
 import ItemDetails from "./ItemDetails";
+import Swipeable from "components/Swipeable";
 
 const formBase = {
   title: { initialValue: "", isRequired: true },
@@ -215,150 +216,152 @@ const WardrobeItem = ({ type, formData, children }: WardrobeItemPros) => {
         initialFocusRef={headingRef}
       >
         <DrawerOverlay />
-        <DrawerContent>
-          <DrawerHeader
-            sx={{
-              boxShadow: "material",
-              display: "flex",
-              alignItems: "center",
-              gap: 2,
-              px: 2,
-            }}
-          >
-            <IconButton
-              variant="ghost"
-              onClick={onClose}
-              aria-label="Back"
-              icon={<Icon as={MdArrowBack} sx={{ w: 6, h: 6 }} />}
-            />
-            <Text
-              ref={headingRef}
-              tabIndex={-1}
+        <DrawerContent bg="transparent" boxShadow="none">
+          <Swipeable direction="right" onClose={onClose}>
+            <DrawerHeader
               sx={{
-                flexGrow: 1,
-                textTransform: "capitalize",
-                _focus: { outline: "none" },
+                boxShadow: "material",
+                display: "flex",
+                alignItems: "center",
+                gap: 2,
+                px: 2,
               }}
             >
-              {heading}
-            </Text>
-            {isView && (
-              <Button
-                onClick={() => setMode("submit")}
-                variant="outline"
-                size="sm"
-                sx={{ borderRadius: "full", px: 4 }}
-              >
-                Edit
-              </Button>
-            )}
-          </DrawerHeader>
-
-          {isView ? (
-            <DrawerBody sx={{ p: 0 }}>
-              <ItemDetails item={currentItem} />
-            </DrawerBody>
-          ) : (
-            <>
-              <DrawerBody>
-                <Stack spacing={4} sx={{ py: 4 }}>
-                  <div>
-                    <PhotoInput
-                      name="imageUrl"
-                      initialImageUrl={values.imageUrl}
-                      error={errors.imageUrl}
-                      onChange={(file) => {
-                        const imageUrl = URL.createObjectURL(file);
-                        setFieldValue("imageUrl", imageUrl);
-                        resizeImage(file).then(setCurrentFile);
-                      }}
-                      onBlur={() => {
-                        setFieldTouched("imageUrl");
-                      }}
-                      disabled={isLoading}
-                    />
-                    {uploadSnapshot && (
-                      <Progress
-                        sx={{ mt: 3 }}
-                        colorScheme="brand"
-                        hasStripe
-                        value={
-                          (uploadSnapshot.bytesTransferred /
-                            uploadSnapshot.totalBytes) *
-                          100
-                        }
-                      />
-                    )}
-                  </div>
-
-                  <FormInput
-                    label="Title"
-                    name="title"
-                    value={values.title}
-                    error={errors.title}
-                    onChange={onChange}
-                    onBlur={onBlur}
-                    isReadOnly={isLoading}
-                    isRequired
-                  />
-                  <FormInput
-                    label="Description (Optional)"
-                    name="description"
-                    value={values.description}
-                    error={errors.description}
-                    onChange={onChange}
-                    onBlur={onBlur}
-                    isReadOnly={isLoading}
-                  />
-
-                  {children?.({
-                    mode,
-                    ...requiredFrom,
-                  })}
-
-                  {currentItem && (
-                    // Kept away from Save and Edit so it's never one stray tap away
-                    <Confirm
-                      message={`Are you sure you want to delete ${currentItem.title}?`}
-                      onConfirm={onDelete}
-                      okText="Delete"
-                      okType="red"
-                    >
-                      {({ onOpen }) => (
-                        <Button
-                          onClick={onOpen}
-                          isDisabled={isLoading}
-                          variant="ghost"
-                          colorScheme="red"
-                          sx={{ alignSelf: "center", mt: 6 }}
-                        >
-                          Delete {type}
-                        </Button>
-                      )}
-                    </Confirm>
-                  )}
-                </Stack>
-              </DrawerBody>
-
-              <DrawerFooter
+              <IconButton
+                variant="ghost"
+                onClick={onClose}
+                aria-label="Back"
+                icon={<Icon as={MdArrowBack} sx={{ w: 6, h: 6 }} />}
+              />
+              <Text
+                ref={headingRef}
+                tabIndex={-1}
                 sx={{
-                  borderTop: "1px solid",
-                  borderColor: "gray.100",
-                  pb: "calc(var(--chakra-space-4) + env(safe-area-inset-bottom))",
+                  flexGrow: 1,
+                  textTransform: "capitalize",
+                  _focus: { outline: "none" },
                 }}
               >
+                {heading}
+              </Text>
+              {isView && (
                 <Button
-                  onClick={onSubmit}
-                  isLoading={isLoading}
-                  colorScheme="brand"
-                  size="lg"
-                  sx={{ w: "100%", borderRadius: "full" }}
+                  onClick={() => setMode("submit")}
+                  variant="outline"
+                  size="sm"
+                  sx={{ borderRadius: "full", px: 4 }}
                 >
-                  Save
+                  Edit
                 </Button>
-              </DrawerFooter>
-            </>
-          )}
+              )}
+            </DrawerHeader>
+
+            {isView ? (
+              <DrawerBody sx={{ p: 0 }}>
+                <ItemDetails item={currentItem} />
+              </DrawerBody>
+            ) : (
+              <>
+                <DrawerBody>
+                  <Stack spacing={4} sx={{ py: 4 }}>
+                    <div>
+                      <PhotoInput
+                        name="imageUrl"
+                        initialImageUrl={values.imageUrl}
+                        error={errors.imageUrl}
+                        onChange={(file) => {
+                          const imageUrl = URL.createObjectURL(file);
+                          setFieldValue("imageUrl", imageUrl);
+                          resizeImage(file).then(setCurrentFile);
+                        }}
+                        onBlur={() => {
+                          setFieldTouched("imageUrl");
+                        }}
+                        disabled={isLoading}
+                      />
+                      {uploadSnapshot && (
+                        <Progress
+                          sx={{ mt: 3 }}
+                          colorScheme="brand"
+                          hasStripe
+                          value={
+                            (uploadSnapshot.bytesTransferred /
+                              uploadSnapshot.totalBytes) *
+                            100
+                          }
+                        />
+                      )}
+                    </div>
+
+                    <FormInput
+                      label="Title"
+                      name="title"
+                      value={values.title}
+                      error={errors.title}
+                      onChange={onChange}
+                      onBlur={onBlur}
+                      isReadOnly={isLoading}
+                      isRequired
+                    />
+                    <FormInput
+                      label="Description (Optional)"
+                      name="description"
+                      value={values.description}
+                      error={errors.description}
+                      onChange={onChange}
+                      onBlur={onBlur}
+                      isReadOnly={isLoading}
+                    />
+
+                    {children?.({
+                      mode,
+                      ...requiredFrom,
+                    })}
+
+                    {currentItem && (
+                      // Kept away from Save and Edit so it's never one stray tap away
+                      <Confirm
+                        message={`Are you sure you want to delete ${currentItem.title}?`}
+                        onConfirm={onDelete}
+                        okText="Delete"
+                        okType="red"
+                      >
+                        {({ onOpen }) => (
+                          <Button
+                            onClick={onOpen}
+                            isDisabled={isLoading}
+                            variant="ghost"
+                            colorScheme="red"
+                            sx={{ alignSelf: "center", mt: 6 }}
+                          >
+                            Delete {type}
+                          </Button>
+                        )}
+                      </Confirm>
+                    )}
+                  </Stack>
+                </DrawerBody>
+
+                <DrawerFooter
+                  sx={{
+                    borderTop: "1px solid",
+                    borderColor: "gray.100",
+                    pb: "calc(var(--chakra-space-4) + env(safe-area-inset-bottom))",
+                  }}
+                >
+                  <Button
+                    onClick={onSubmit}
+                    isLoading={isLoading}
+                    colorScheme="brand"
+                    size="lg"
+                    sx={{ w: "100%", borderRadius: "full" }}
+                  >
+                    Save
+                  </Button>
+                </DrawerFooter>
+              </>
+            )}
+          </Swipeable>
         </DrawerContent>
       </Drawer>
     </>

@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import {
+  Box,
   Button,
   Drawer,
   DrawerBody,
@@ -9,6 +10,7 @@ import {
   useDisclosure,
   ThemingProps,
 } from "@chakra-ui/react";
+import Swipeable from "components/Swipeable";
 
 type ChildrenProps = {
   onOpen: () => void;
@@ -35,6 +37,10 @@ const Confirm = ({
 }: ConfirmProps) => {
   const confirmDrawerRef = useRef(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const cancel = () => {
+    onCancel();
+    onClose();
+  };
 
   return (
     <>
@@ -43,37 +49,31 @@ const Confirm = ({
       <Drawer
         isOpen={isOpen}
         placement="bottom"
-        onClose={() => {
-          onCancel();
-          onClose();
-        }}
+        onClose={cancel}
         portalProps={{ containerRef: confirmDrawerRef }}
       >
         <DrawerOverlay />
-        <DrawerContent sx={{ pt: 4, pb: 2 }}>
-          <DrawerBody>{message}</DrawerBody>
+        <DrawerContent bg="transparent" boxShadow="none">
+          <Swipeable direction="down" onClose={cancel}>
+            <Box sx={{ pt: 2, pb: 2 }}>
+              <DrawerBody>{message}</DrawerBody>
 
-          <DrawerFooter>
-            <Button
-              variant="outline"
-              mr={3}
-              onClick={() => {
-                onCancel();
-                onClose();
-              }}
-            >
-              {cancelText}
-            </Button>
-            <Button
-              colorScheme={okType}
-              onClick={() => {
-                onConfirm();
-                onClose();
-              }}
-            >
-              {okText}
-            </Button>
-          </DrawerFooter>
+              <DrawerFooter>
+                <Button variant="outline" mr={3} onClick={cancel}>
+                  {cancelText}
+                </Button>
+                <Button
+                  colorScheme={okType}
+                  onClick={() => {
+                    onConfirm();
+                    onClose();
+                  }}
+                >
+                  {okText}
+                </Button>
+              </DrawerFooter>
+            </Box>
+          </Swipeable>
         </DrawerContent>
       </Drawer>
     </>

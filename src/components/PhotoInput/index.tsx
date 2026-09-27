@@ -20,6 +20,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { BsCameraFill } from "react-icons/bs";
 import { MdAddAPhoto } from "react-icons/md";
 import { GrGallery } from "react-icons/gr";
+import Swipeable from "components/Swipeable";
 
 interface PhotoInputProps extends Omit<InputProps, "onChange"> {
   onChange: (file: File) => void;
@@ -120,63 +121,65 @@ const PhotoInput = ({
           onCloseComplete={onBlur}
         >
           <DrawerOverlay />
-          <DrawerContent>
-            <DrawerBody>
-              <Grid templateColumns="repeat(2, 1fr)" gap={6}>
-                <GridItem sx={{ height: "40vw" }}>
-                  <Input
-                    {...props}
-                    sx={{ display: "none" }}
-                    id="take-shot"
-                    accept="image/*"
-                    type="file"
-                    capture="environment"
-                    onChange={handleChange}
-                  />
-                  <FormLabel
-                    htmlFor="take-shot"
-                    sx={{
-                      m: 0,
-                      width: "100%",
-                      height: "100%",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <Icon w={8} h={8} mb={4} as={BsCameraFill} />
-                    <Text>Take a photo</Text>
-                  </FormLabel>
-                </GridItem>
+          <DrawerContent bg="transparent" boxShadow="none">
+            <Swipeable direction="down" onClose={onClose}>
+              <DrawerBody>
+                <Grid templateColumns="repeat(2, 1fr)" gap={6}>
+                  <GridItem sx={{ height: "40vw" }}>
+                    <Input
+                      {...props}
+                      sx={{ display: "none" }}
+                      id="take-shot"
+                      accept="image/*"
+                      type="file"
+                      capture="environment"
+                      onChange={handleChange}
+                    />
+                    <FormLabel
+                      htmlFor="take-shot"
+                      sx={{
+                        m: 0,
+                        width: "100%",
+                        height: "100%",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Icon w={8} h={8} mb={4} as={BsCameraFill} />
+                      <Text>Take a photo</Text>
+                    </FormLabel>
+                  </GridItem>
 
-                <GridItem sx={{ height: "40vw" }}>
-                  <Input
-                    {...props}
-                    sx={{ display: "none" }}
-                    id="upload-shot"
-                    accept="image/*"
-                    type="file"
-                    onChange={handleChange}
-                  />
-                  <FormLabel
-                    htmlFor="upload-shot"
-                    sx={{
-                      m: 0,
-                      width: "100%",
-                      height: "100%",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <Icon w={8} h={8} mb={4} as={GrGallery} />
-                    <Text>Upload from gallery</Text>
-                  </FormLabel>
-                </GridItem>
-              </Grid>
-            </DrawerBody>
+                  <GridItem sx={{ height: "40vw" }}>
+                    <Input
+                      {...props}
+                      sx={{ display: "none" }}
+                      id="upload-shot"
+                      accept="image/*"
+                      type="file"
+                      onChange={handleChange}
+                    />
+                    <FormLabel
+                      htmlFor="upload-shot"
+                      sx={{
+                        m: 0,
+                        width: "100%",
+                        height: "100%",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Icon w={8} h={8} mb={4} as={GrGallery} />
+                      <Text>Upload from gallery</Text>
+                    </FormLabel>
+                  </GridItem>
+                </Grid>
+              </DrawerBody>
+            </Swipeable>
           </DrawerContent>
         </Drawer>
       </Box>

@@ -39,6 +39,7 @@ import useUpdateDocument from "resources/useUpdateDocument";
 import useWeather from "resources/useWeather";
 
 import { Jacket, Outfit } from "utils/types";
+import Swipeable from "components/Swipeable";
 
 // Outfit whose jacket prompt was dismissed; survives tab switches, resets on reload
 let dismissedJacketPromptFor: string | undefined;
@@ -198,37 +199,39 @@ const Home = () => {
             placement="bottom"
           >
             <DrawerOverlay />
-            <DrawerContent>
-              <DrawerHeader
-                sx={{
-                  boxShadow: "material",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 2,
-                }}
-              >
-                Choose today&apos;s jacket
-              </DrawerHeader>
-              <DrawerBody>
-                <Text sx={{ color: "gray.600" }}>
-                  {temperatureJackets.length} jackets suit today&apos;s weather.
-                  Pick one for this outfit.
-                </Text>
-                <Grid templateColumns="repeat(2, 1fr)" gap={2} my={3}>
-                  {temperatureJackets.map((jacket) => (
-                    <OutfitItem
-                      key={jacket.id}
-                      id={jacket.id}
-                      type="jacket"
-                      imageUrl={jacket.imageUrl}
-                      onClick={() => {
-                        updateOutfit(activeOutfit.id, { jacket });
-                        onJacketDrawerClose();
-                      }}
-                    />
-                  ))}
-                </Grid>
-              </DrawerBody>
+            <DrawerContent bg="transparent" boxShadow="none">
+              <Swipeable direction="down" onClose={onJacketPromptDismiss}>
+                <DrawerHeader
+                  sx={{
+                    boxShadow: "material",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 2,
+                  }}
+                >
+                  Choose today&apos;s jacket
+                </DrawerHeader>
+                <DrawerBody>
+                  <Text sx={{ color: "gray.600" }}>
+                    {temperatureJackets.length} jackets suit today&apos;s
+                    weather. Pick one for this outfit.
+                  </Text>
+                  <Grid templateColumns="repeat(2, 1fr)" gap={2} my={3}>
+                    {temperatureJackets.map((jacket) => (
+                      <OutfitItem
+                        key={jacket.id}
+                        id={jacket.id}
+                        type="jacket"
+                        imageUrl={jacket.imageUrl}
+                        onClick={() => {
+                          updateOutfit(activeOutfit.id, { jacket });
+                          onJacketDrawerClose();
+                        }}
+                      />
+                    ))}
+                  </Grid>
+                </DrawerBody>
+              </Swipeable>
             </DrawerContent>
           </Drawer>
 

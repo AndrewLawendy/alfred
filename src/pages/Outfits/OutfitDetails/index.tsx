@@ -44,6 +44,7 @@ import OutfitItem from "components/OutfitItem";
 import OutfitReference from "components/OutfitReference";
 import Confirm from "components/Confirm";
 import Loading from "components/Loading";
+import Swipeable from "components/Swipeable";
 
 import useData from "resources/useData";
 import useAddDocument from "resources/useAddDocument";
@@ -197,75 +198,24 @@ const OutfitDetails = ({
       onCloseComplete={reset}
     >
       <DrawerOverlay />
-      <DrawerContent>
-        <DrawerHeader
-          sx={{
-            boxShadow: "material",
-            display: "flex",
-            alignItems: "center",
-            gap: 2,
-          }}
-        >
-          <IconButton
-            colorScheme="whiteAlpha"
-            onClick={onClose}
-            aria-label="Back to outfits"
-            size="sm"
-            icon={
-              <Icon
-                as={MdArrowBack}
-                sx={{
-                  width: 5,
-                  height: 5,
-                  color: "black",
-                }}
-              />
-            }
-          />
-          <Text
-            ref={headingRef}
-            tabIndex={-1}
-            sx={{ flexGrow: 1, _focus: { outline: "none" } }}
+      <DrawerContent bg="transparent" boxShadow="none">
+        <Swipeable direction="right" onClose={onClose}>
+          <DrawerHeader
+            sx={{
+              boxShadow: "material",
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
+            }}
           >
-            {heading}
-          </Text>
-          {currentOutfit && (
-            <Confirm
-              message={
-                <>
-                  <Text>Are you sure you want to delete this outfit?</Text>
-                  {currentOutfit.active && (
-                    <Text fontSize="sm" color="red.500">
-                      Please not that this outfit is today&apos;s outfit
-                    </Text>
-                  )}
-                </>
-              }
-              onConfirm={handleDelete}
-              okText="Delete"
-              okType="red"
-            >
-              {({ onOpen }) => (
-                <IconButton
-                  isLoading={isLoading}
-                  onClick={onOpen}
-                  aria-label="Delete outfit"
-                  size="sm"
-                  colorScheme="red"
-                  icon={<Icon w={5} h={5} as={MdDeleteForever} />}
-                />
-              )}
-            </Confirm>
-          )}
-          {isView ? (
             <IconButton
               colorScheme="whiteAlpha"
-              onClick={() => setMode("submit")}
-              aria-label="Edit outfit"
+              onClick={onClose}
+              aria-label="Back to outfits"
               size="sm"
               icon={
                 <Icon
-                  as={MdEdit}
+                  as={MdArrowBack}
                   sx={{
                     width: 5,
                     height: 5,
@@ -274,347 +224,400 @@ const OutfitDetails = ({
                 />
               }
             />
-          ) : (
-            <IconButton
-              colorScheme="brand"
-              onClick={handleSubmit}
-              aria-label="Submit New Outfit"
-              size="sm"
-              isLoading={isLoading}
-              icon={
-                <Icon
-                  as={MdCheck}
+            <Text
+              ref={headingRef}
+              tabIndex={-1}
+              sx={{ flexGrow: 1, _focus: { outline: "none" } }}
+            >
+              {heading}
+            </Text>
+            {currentOutfit && (
+              <Confirm
+                message={
+                  <>
+                    <Text>Are you sure you want to delete this outfit?</Text>
+                    {currentOutfit.active && (
+                      <Text fontSize="sm" color="red.500">
+                        Please not that this outfit is today&apos;s outfit
+                      </Text>
+                    )}
+                  </>
+                }
+                onConfirm={handleDelete}
+                okText="Delete"
+                okType="red"
+              >
+                {({ onOpen }) => (
+                  <IconButton
+                    isLoading={isLoading}
+                    onClick={onOpen}
+                    aria-label="Delete outfit"
+                    size="sm"
+                    colorScheme="red"
+                    icon={<Icon w={5} h={5} as={MdDeleteForever} />}
+                  />
+                )}
+              </Confirm>
+            )}
+            {isView ? (
+              <IconButton
+                colorScheme="whiteAlpha"
+                onClick={() => setMode("submit")}
+                aria-label="Edit outfit"
+                size="sm"
+                icon={
+                  <Icon
+                    as={MdEdit}
+                    sx={{
+                      width: 5,
+                      height: 5,
+                      color: "black",
+                    }}
+                  />
+                }
+              />
+            ) : (
+              <IconButton
+                colorScheme="brand"
+                onClick={handleSubmit}
+                aria-label="Submit New Outfit"
+                size="sm"
+                isLoading={isLoading}
+                icon={
+                  <Icon
+                    as={MdCheck}
+                    sx={{
+                      width: 5,
+                      height: 5,
+                    }}
+                  />
+                }
+              />
+            )}
+          </DrawerHeader>
+
+          <DrawerBody>
+            {Object.values(outfit).length > 0 && (
+              <Grid templateColumns="repeat(2, 1fr)" gap={2}>
+                {outfit.shirt && <OutfitReference reference={outfit.shirt} />}
+                {outfit.belt && <OutfitReference reference={outfit.belt} />}
+                {outfit.pants && <OutfitReference reference={outfit.pants} />}
+                {outfit.shoes && <OutfitReference reference={outfit.shoes} />}
+              </Grid>
+            )}
+
+            {(isAdd || isEdit) && (
+              <Box
+                ref={closetContainerRef}
+                sx={{
+                  height: 389,
+
+                  ".chakra-modal__content-container": {
+                    position: "static",
+                  },
+                }}
+              />
+            )}
+
+            <Drawer
+              placement="bottom"
+              onClose={onClose}
+              isOpen={isOpen}
+              portalProps={{ containerRef: closetContainerRef }}
+              closeOnOverlayClick={false}
+              autoFocus={false}
+              trapFocus={false}
+              blockScrollOnMount={false}
+            >
+              <DrawerContent>
+                <DrawerHeader
                   sx={{
-                    width: 5,
-                    height: 5,
+                    boxShadow: "reverse-material",
+                    borderBottomWidth: "1px",
+                    display: "flex",
                   }}
-                />
-              }
-            />
-          )}
-        </DrawerHeader>
-
-        <DrawerBody>
-          {Object.values(outfit).length > 0 && (
-            <Grid templateColumns="repeat(2, 1fr)" gap={2}>
-              {outfit.shirt && <OutfitReference reference={outfit.shirt} />}
-              {outfit.belt && <OutfitReference reference={outfit.belt} />}
-              {outfit.pants && <OutfitReference reference={outfit.pants} />}
-              {outfit.shoes && <OutfitReference reference={outfit.shoes} />}
-            </Grid>
-          )}
-
-          {(isAdd || isEdit) && (
-            <Box
-              ref={closetContainerRef}
-              sx={{
-                height: 389,
-
-                ".chakra-modal__content-container": {
-                  position: "static",
-                },
-              }}
-            />
-          )}
-
-          <Drawer
-            placement="bottom"
-            onClose={onClose}
-            isOpen={isOpen}
-            portalProps={{ containerRef: closetContainerRef }}
-            closeOnOverlayClick={false}
-            autoFocus={false}
-            trapFocus={false}
-            blockScrollOnMount={false}
-          >
-            <DrawerContent>
-              <DrawerHeader
-                sx={{
-                  boxShadow: "reverse-material",
-                  borderBottomWidth: "1px",
-                  display: "flex",
-                }}
-              >
-                <Text sx={{ flexGrow: 1 }}>Build your outfit</Text>
-                <IconButton
-                  colorScheme="whiteAlpha"
-                  onClick={() => {
-                    setClosetExpanded(!closetExpanded);
+                >
+                  <Text sx={{ flexGrow: 1 }}>Build your outfit</Text>
+                  <IconButton
+                    colorScheme="whiteAlpha"
+                    onClick={() => {
+                      setClosetExpanded(!closetExpanded);
+                    }}
+                    aria-label="Back to outfits"
+                    size="sm"
+                    icon={
+                      <Icon
+                        as={closetExpanded ? MdCompress : MdExpand}
+                        sx={{
+                          width: 5,
+                          height: 5,
+                          color: "black",
+                        }}
+                      />
+                    }
+                  />
+                </DrawerHeader>
+                <DrawerBody
+                  sx={{
+                    p: 0,
+                    maxHeight: closetExpanded ? "calc(100vh - 128px)" : 300,
+                    transition: "max-height 0.3s",
                   }}
-                  aria-label="Back to outfits"
-                  size="sm"
-                  icon={
-                    <Icon
-                      as={closetExpanded ? MdCompress : MdExpand}
-                      sx={{
-                        width: 5,
-                        height: 5,
-                        color: "black",
-                      }}
-                    />
-                  }
-                />
-              </DrawerHeader>
-              <DrawerBody
-                sx={{
-                  p: 0,
-                  maxHeight: closetExpanded ? "calc(100vh - 128px)" : 300,
-                  transition: "max-height 0.3s",
-                }}
-              >
-                <Accordion index={activeDrawer}>
-                  <AccordionItem>
-                    <AccordionButton onClick={() => pickActiveDrawer(0)}>
-                      <Heading as="h5" size="md" flex="1" textAlign="left">
-                        Shirts
-                      </Heading>
-                      <AccordionIcon />
-                    </AccordionButton>
+                >
+                  <Accordion index={activeDrawer}>
+                    <AccordionItem>
+                      <AccordionButton onClick={() => pickActiveDrawer(0)}>
+                        <Heading as="h5" size="md" flex="1" textAlign="left">
+                          Shirts
+                        </Heading>
+                        <AccordionIcon />
+                      </AccordionButton>
 
-                    <AccordionPanel>
-                      {isShirtLoading || !shirts ? (
-                        <Loading message="Loading your shirts" />
-                      ) : shirts.length > 0 ? (
-                        <Grid templateColumns="repeat(3, 1fr)" gap={2}>
-                          {shirts.map((shirt) => (
-                            <OutfitItem
-                              key={shirt.id}
-                              id={shirt.id}
-                              type="shirt"
-                              title={shirt.title}
-                              description={shirt.description}
-                              imageUrl={shirt.imageUrl}
-                              cursor="pointer"
-                              onClick={() => {
-                                setOutfit({
-                                  ...outfit,
-                                  shirt: doc(db, "wardrobe-items", shirt.id),
-                                });
-                                setActiveDrawer((activeDrawer as number) + 1);
-                              }}
-                            />
-                          ))}
-                        </Grid>
-                      ) : (
-                        <Alert
-                          status="warning"
-                          flexDirection="column"
-                          alignItems="center"
-                          justifyContent="center"
-                          textAlign="center"
-                        >
-                          <AlertIcon boxSize="30px" mr={0} />
-                          <AlertTitle mt={4} mb={1} fontSize="lg">
-                            No shirts
-                          </AlertTitle>
-                          <AlertDescription maxWidth="sm">
-                            Go to{" "}
-                            <Link
-                              color="accent.700"
-                              as={WouterLink}
-                              to="/wardrobe"
-                            >
-                              Wardrobe
-                            </Link>{" "}
-                            and start adding
-                          </AlertDescription>
-                        </Alert>
-                      )}
-                    </AccordionPanel>
-                  </AccordionItem>
+                      <AccordionPanel>
+                        {isShirtLoading || !shirts ? (
+                          <Loading message="Loading your shirts" />
+                        ) : shirts.length > 0 ? (
+                          <Grid templateColumns="repeat(3, 1fr)" gap={2}>
+                            {shirts.map((shirt) => (
+                              <OutfitItem
+                                key={shirt.id}
+                                id={shirt.id}
+                                type="shirt"
+                                title={shirt.title}
+                                description={shirt.description}
+                                imageUrl={shirt.imageUrl}
+                                cursor="pointer"
+                                onClick={() => {
+                                  setOutfit({
+                                    ...outfit,
+                                    shirt: doc(db, "wardrobe-items", shirt.id),
+                                  });
+                                  setActiveDrawer((activeDrawer as number) + 1);
+                                }}
+                              />
+                            ))}
+                          </Grid>
+                        ) : (
+                          <Alert
+                            status="warning"
+                            flexDirection="column"
+                            alignItems="center"
+                            justifyContent="center"
+                            textAlign="center"
+                          >
+                            <AlertIcon boxSize="30px" mr={0} />
+                            <AlertTitle mt={4} mb={1} fontSize="lg">
+                              No shirts
+                            </AlertTitle>
+                            <AlertDescription maxWidth="sm">
+                              Go to{" "}
+                              <Link
+                                color="accent.700"
+                                as={WouterLink}
+                                to="/wardrobe"
+                              >
+                                Wardrobe
+                              </Link>{" "}
+                              and start adding
+                            </AlertDescription>
+                          </Alert>
+                        )}
+                      </AccordionPanel>
+                    </AccordionItem>
 
-                  <AccordionItem>
-                    <AccordionButton onClick={() => pickActiveDrawer(1)}>
-                      <Heading as="h5" size="md" flex="1" textAlign="left">
-                        Belts
-                      </Heading>
-                      <AccordionIcon />
-                    </AccordionButton>
+                    <AccordionItem>
+                      <AccordionButton onClick={() => pickActiveDrawer(1)}>
+                        <Heading as="h5" size="md" flex="1" textAlign="left">
+                          Belts
+                        </Heading>
+                        <AccordionIcon />
+                      </AccordionButton>
 
-                    <AccordionPanel>
-                      {isBeltsLoading || !belts ? (
-                        <Loading message="Loading your belts" />
-                      ) : belts.length > 0 ? (
-                        <Grid templateColumns="repeat(3, 1fr)" gap={2}>
-                          {belts.map((belt) => (
-                            <OutfitItem
-                              key={belt.id}
-                              id={belt.id}
-                              type="belt"
-                              title={belt.title}
-                              description={belt.description}
-                              imageUrl={belt.imageUrl}
-                              cursor="pointer"
-                              onClick={() => {
-                                setOutfit({
-                                  ...outfit,
-                                  belt: doc(db, "wardrobe-items", belt.id),
-                                });
-                                setActiveDrawer((activeDrawer as number) + 1);
-                              }}
-                            />
-                          ))}
-                        </Grid>
-                      ) : (
-                        <Alert
-                          status="warning"
-                          flexDirection="column"
-                          alignItems="center"
-                          justifyContent="center"
-                          textAlign="center"
-                        >
-                          <AlertIcon boxSize="30px" mr={0} />
-                          <AlertTitle mt={4} mb={1} fontSize="lg">
-                            No belts
-                          </AlertTitle>
-                          <AlertDescription maxWidth="sm">
-                            Go to{" "}
-                            <Link
-                              color="accent.700"
-                              as={WouterLink}
-                              to="/wardrobe"
-                            >
-                              Wardrobe
-                            </Link>{" "}
-                            and start adding
-                          </AlertDescription>
-                        </Alert>
-                      )}
-                    </AccordionPanel>
-                  </AccordionItem>
+                      <AccordionPanel>
+                        {isBeltsLoading || !belts ? (
+                          <Loading message="Loading your belts" />
+                        ) : belts.length > 0 ? (
+                          <Grid templateColumns="repeat(3, 1fr)" gap={2}>
+                            {belts.map((belt) => (
+                              <OutfitItem
+                                key={belt.id}
+                                id={belt.id}
+                                type="belt"
+                                title={belt.title}
+                                description={belt.description}
+                                imageUrl={belt.imageUrl}
+                                cursor="pointer"
+                                onClick={() => {
+                                  setOutfit({
+                                    ...outfit,
+                                    belt: doc(db, "wardrobe-items", belt.id),
+                                  });
+                                  setActiveDrawer((activeDrawer as number) + 1);
+                                }}
+                              />
+                            ))}
+                          </Grid>
+                        ) : (
+                          <Alert
+                            status="warning"
+                            flexDirection="column"
+                            alignItems="center"
+                            justifyContent="center"
+                            textAlign="center"
+                          >
+                            <AlertIcon boxSize="30px" mr={0} />
+                            <AlertTitle mt={4} mb={1} fontSize="lg">
+                              No belts
+                            </AlertTitle>
+                            <AlertDescription maxWidth="sm">
+                              Go to{" "}
+                              <Link
+                                color="accent.700"
+                                as={WouterLink}
+                                to="/wardrobe"
+                              >
+                                Wardrobe
+                              </Link>{" "}
+                              and start adding
+                            </AlertDescription>
+                          </Alert>
+                        )}
+                      </AccordionPanel>
+                    </AccordionItem>
 
-                  <AccordionItem>
-                    <AccordionButton onClick={() => pickActiveDrawer(2)}>
-                      <Heading as="h5" size="md" flex="1" textAlign="left">
-                        Pants
-                      </Heading>
-                      <AccordionIcon />
-                    </AccordionButton>
+                    <AccordionItem>
+                      <AccordionButton onClick={() => pickActiveDrawer(2)}>
+                        <Heading as="h5" size="md" flex="1" textAlign="left">
+                          Pants
+                        </Heading>
+                        <AccordionIcon />
+                      </AccordionButton>
 
-                    <AccordionPanel>
-                      {isPantsLoading || !pants ? (
-                        <Loading message="Loading your pants" />
-                      ) : pants.length > 0 ? (
-                        <Grid templateColumns="repeat(3, 1fr)" gap={2}>
-                          {pants.map((pantsPair) => (
-                            <OutfitItem
-                              key={pantsPair.id}
-                              id={pantsPair.id}
-                              type="pants"
-                              title={pantsPair.title}
-                              description={pantsPair.description}
-                              imageUrl={pantsPair.imageUrl}
-                              cursor="pointer"
-                              onClick={() => {
-                                setOutfit({
-                                  ...outfit,
-                                  pants: doc(
-                                    db,
-                                    "wardrobe-items",
-                                    pantsPair.id
-                                  ),
-                                });
-                                setActiveDrawer((activeDrawer as number) + 1);
-                              }}
-                            />
-                          ))}
-                        </Grid>
-                      ) : (
-                        <Alert
-                          status="warning"
-                          flexDirection="column"
-                          alignItems="center"
-                          justifyContent="center"
-                          textAlign="center"
-                        >
-                          <AlertIcon boxSize="30px" mr={0} />
-                          <AlertTitle mt={4} mb={1} fontSize="lg">
-                            No pants
-                          </AlertTitle>
-                          <AlertDescription maxWidth="sm">
-                            Go to{" "}
-                            <Link
-                              color="accent.700"
-                              as={WouterLink}
-                              to="/wardrobe"
-                            >
-                              Wardrobe
-                            </Link>{" "}
-                            and start adding
-                          </AlertDescription>
-                        </Alert>
-                      )}
-                    </AccordionPanel>
-                  </AccordionItem>
+                      <AccordionPanel>
+                        {isPantsLoading || !pants ? (
+                          <Loading message="Loading your pants" />
+                        ) : pants.length > 0 ? (
+                          <Grid templateColumns="repeat(3, 1fr)" gap={2}>
+                            {pants.map((pantsPair) => (
+                              <OutfitItem
+                                key={pantsPair.id}
+                                id={pantsPair.id}
+                                type="pants"
+                                title={pantsPair.title}
+                                description={pantsPair.description}
+                                imageUrl={pantsPair.imageUrl}
+                                cursor="pointer"
+                                onClick={() => {
+                                  setOutfit({
+                                    ...outfit,
+                                    pants: doc(
+                                      db,
+                                      "wardrobe-items",
+                                      pantsPair.id
+                                    ),
+                                  });
+                                  setActiveDrawer((activeDrawer as number) + 1);
+                                }}
+                              />
+                            ))}
+                          </Grid>
+                        ) : (
+                          <Alert
+                            status="warning"
+                            flexDirection="column"
+                            alignItems="center"
+                            justifyContent="center"
+                            textAlign="center"
+                          >
+                            <AlertIcon boxSize="30px" mr={0} />
+                            <AlertTitle mt={4} mb={1} fontSize="lg">
+                              No pants
+                            </AlertTitle>
+                            <AlertDescription maxWidth="sm">
+                              Go to{" "}
+                              <Link
+                                color="accent.700"
+                                as={WouterLink}
+                                to="/wardrobe"
+                              >
+                                Wardrobe
+                              </Link>{" "}
+                              and start adding
+                            </AlertDescription>
+                          </Alert>
+                        )}
+                      </AccordionPanel>
+                    </AccordionItem>
 
-                  <AccordionItem>
-                    <AccordionButton onClick={() => pickActiveDrawer(3)}>
-                      <Heading as="h5" size="md" flex="1" textAlign="left">
-                        Shoes
-                      </Heading>
-                      <AccordionIcon />
-                    </AccordionButton>
+                    <AccordionItem>
+                      <AccordionButton onClick={() => pickActiveDrawer(3)}>
+                        <Heading as="h5" size="md" flex="1" textAlign="left">
+                          Shoes
+                        </Heading>
+                        <AccordionIcon />
+                      </AccordionButton>
 
-                    <AccordionPanel>
-                      {isShoesLoading || !shoes ? (
-                        <Loading message="Loading your shoes" />
-                      ) : shoes.length > 0 ? (
-                        <Grid templateColumns="repeat(3, 1fr)" gap={2}>
-                          {shoes.map((shoesPair) => (
-                            <OutfitItem
-                              key={shoesPair.id}
-                              id={shoesPair.id}
-                              type="shoes"
-                              title={shoesPair.title}
-                              description={shoesPair.description}
-                              imageUrl={shoesPair.imageUrl}
-                              cursor="pointer"
-                              onClick={() => {
-                                setOutfit({
-                                  ...outfit,
-                                  shoes: doc(
-                                    db,
-                                    "wardrobe-items",
-                                    shoesPair.id
-                                  ),
-                                });
-                                setClosetExpanded(false);
-                              }}
-                            />
-                          ))}
-                        </Grid>
-                      ) : (
-                        <Alert
-                          status="warning"
-                          flexDirection="column"
-                          alignItems="center"
-                          justifyContent="center"
-                          textAlign="center"
-                        >
-                          <AlertIcon boxSize="30px" mr={0} />
-                          <AlertTitle mt={4} mb={1} fontSize="lg">
-                            No shoes
-                          </AlertTitle>
-                          <AlertDescription maxWidth="sm">
-                            Go to{" "}
-                            <Link
-                              color="accent.700"
-                              as={WouterLink}
-                              to="/wardrobe"
-                            >
-                              Wardrobe
-                            </Link>{" "}
-                            and start adding
-                          </AlertDescription>
-                        </Alert>
-                      )}
-                    </AccordionPanel>
-                  </AccordionItem>
-                </Accordion>
-              </DrawerBody>
-            </DrawerContent>
-          </Drawer>
-        </DrawerBody>
+                      <AccordionPanel>
+                        {isShoesLoading || !shoes ? (
+                          <Loading message="Loading your shoes" />
+                        ) : shoes.length > 0 ? (
+                          <Grid templateColumns="repeat(3, 1fr)" gap={2}>
+                            {shoes.map((shoesPair) => (
+                              <OutfitItem
+                                key={shoesPair.id}
+                                id={shoesPair.id}
+                                type="shoes"
+                                title={shoesPair.title}
+                                description={shoesPair.description}
+                                imageUrl={shoesPair.imageUrl}
+                                cursor="pointer"
+                                onClick={() => {
+                                  setOutfit({
+                                    ...outfit,
+                                    shoes: doc(
+                                      db,
+                                      "wardrobe-items",
+                                      shoesPair.id
+                                    ),
+                                  });
+                                  setClosetExpanded(false);
+                                }}
+                              />
+                            ))}
+                          </Grid>
+                        ) : (
+                          <Alert
+                            status="warning"
+                            flexDirection="column"
+                            alignItems="center"
+                            justifyContent="center"
+                            textAlign="center"
+                          >
+                            <AlertIcon boxSize="30px" mr={0} />
+                            <AlertTitle mt={4} mb={1} fontSize="lg">
+                              No shoes
+                            </AlertTitle>
+                            <AlertDescription maxWidth="sm">
+                              Go to{" "}
+                              <Link
+                                color="accent.700"
+                                as={WouterLink}
+                                to="/wardrobe"
+                              >
+                                Wardrobe
+                              </Link>{" "}
+                              and start adding
+                            </AlertDescription>
+                          </Alert>
+                        )}
+                      </AccordionPanel>
+                    </AccordionItem>
+                  </Accordion>
+                </DrawerBody>
+              </DrawerContent>
+            </Drawer>
+          </DrawerBody>
+        </Swipeable>
       </DrawerContent>
     </Drawer>
   );
