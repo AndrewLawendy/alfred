@@ -1,5 +1,7 @@
 import {
   Input,
+  InputGroup,
+  InputRightAddon,
   InputProps,
   FormControl,
   FormLabel,
@@ -10,13 +12,17 @@ import { motion, AnimatePresence } from "framer-motion";
 interface FormInputProps extends InputProps {
   label: string;
   error?: string | null;
+  suffix?: string;
 }
 
-const FormInput = ({ label, error, ...props }: FormInputProps) => {
+const FormInput = ({ label, error, suffix, ...props }: FormInputProps) => {
   return (
     <FormControl isInvalid={error !== null}>
       <FormLabel>{label}</FormLabel>
-      <Input {...props} />
+      <InputGroup>
+        <Input {...props} />
+        {suffix && <InputRightAddon>{suffix}</InputRightAddon>}
+      </InputGroup>
       <AnimatePresence>
         {error && (
           <motion.div

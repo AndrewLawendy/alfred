@@ -2,12 +2,14 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { where } from "firebase/firestore";
 import { useRoute, useLocation } from "wouter";
 import {
+  Button,
   Grid,
   IconButton,
   Icon,
   Text,
   Drawer,
   DrawerBody,
+  DrawerFooter,
   DrawerHeader,
   DrawerOverlay,
   DrawerContent,
@@ -15,13 +17,7 @@ import {
   Progress,
   useDisclosure,
 } from "@chakra-ui/react";
-import {
-  MdCheck,
-  MdArrowBack,
-  MdEdit,
-  MdDeleteForever,
-  MdCheckroom,
-} from "react-icons/md";
+import { MdArrowBack, MdCheckroom } from "react-icons/md";
 import omit from "lodash.omit";
 
 import FormInput from "components/FormInput";
@@ -43,6 +39,7 @@ import resizeImage from "utils/resizeImage";
 import { Item } from "utils/types";
 
 import ItemTile from "./ItemTile";
+import ItemDetails from "./ItemDetails";
 
 const formBase = {
   title: { initialValue: "", isRequired: true },
@@ -111,15 +108,14 @@ const WardrobeItem = ({ type, formData, children }: WardrobeItemPros) => {
     isDeletingItem ||
     isUpdateItemLoading;
 
-  const heading = isView
-    ? `View your ${type}`
-    : isEdit
-    ? `Edit your ${type}`
-    : `Add new ${type}`;
+  const heading = isView ? type : isEdit ? `Edit ${type}` : `Add ${type}`;
 
   const onClose = () => {
     navigate(`/${type}`);
   };
+
+  // After editing, show the updated item rather than dropping back to the list
+  const onEditSaved = () => setMode("view");
 
   const reset = () => {
     destroyForm();
@@ -130,7 +126,7 @@ const WardrobeItem = ({ type, formData, children }: WardrobeItemPros) => {
       if (currentItem) {
         const isSameImage = currentItem.imageUrl === values.imageUrl;
         if (isSameImage) {
-          updateItem(currentItem.id, { ...values }).then(onClose);
+          updateItem(currentItem.id, { ...values }).then(onEditSaved);
         } else if (currentFile) {
           uploadItemImage(currentFile, currentItem.imageUrl).then(
             async (response) => {
@@ -138,7 +134,7 @@ const WardrobeItem = ({ type, formData, children }: WardrobeItemPros) => {
               updateItem(currentItem.id, {
                 ...values,
                 imageUrl,
-              }).then(onClose);
+              }).then(onEditSaved);
             }
           );
         }
@@ -226,145 +222,143 @@ const WardrobeItem = ({ type, formData, children }: WardrobeItemPros) => {
               display: "flex",
               alignItems: "center",
               gap: 2,
+              px: 2,
             }}
           >
             <IconButton
-              colorScheme="whiteAlpha"
+              variant="ghost"
               onClick={onClose}
-              aria-label="Back to outfits"
-              size="sm"
-              icon={
-                <Icon
-                  as={MdArrowBack}
-                  sx={{
-                    width: 5,
-                    height: 5,
-                    color: "black",
-                  }}
-                />
-              }
+              aria-label="Back"
+              icon={<Icon as={MdArrowBack} sx={{ w: 6, h: 6 }} />}
             />
             <Text
               ref={headingRef}
               tabIndex={-1}
-              sx={{ flexGrow: 1, _focus: { outline: "none" } }}
+              sx={{
+                flexGrow: 1,
+                textTransform: "capitalize",
+                _focus: { outline: "none" },
+              }}
             >
               {heading}
             </Text>
-            {currentItem && (
-              <Confirm
-                message={`Are you sure you want to delete ${currentItem.title}?`}
-                onConfirm={onDelete}
-                okText="Delete"
-                okType="red"
-              >
-                {({ onOpen }) => (
-                  <IconButton
-                    isLoading={isLoading}
-                    onClick={onOpen}
-                    aria-label={`Delete ${type}`}
-                    size="sm"
-                    colorScheme="red"
-                    icon={<Icon w={5} h={5} as={MdDeleteForever} />}
-                  />
-                )}
-              </Confirm>
-            )}
-
-            {isView ? (
-              <IconButton
-                colorScheme="whiteAlpha"
+            {isView && (
+              <Button
                 onClick={() => setMode("submit")}
-                aria-label={`Edit ${type}`}
+                variant="outline"
                 size="sm"
-                icon={
-                  <Icon
-                    as={MdEdit}
-                    sx={{
-                      width: 5,
-                      height: 5,
-                      color: "black",
-                    }}
-                  />
-                }
-              />
-            ) : (
-              <IconButton
-                colorScheme="teal"
-                onClick={onSubmit}
-                aria-label={`Submit new ${type}`}
-                size="sm"
-                isLoading={isLoading}
-                icon={
-                  <Icon
-                    as={MdCheck}
-                    sx={{
-                      width: 5,
-                      height: 5,
-                    }}
-                  />
-                }
-              />
+                sx={{ borderRadius: "full", px: 4 }}
+              >
+                Edit
+              </Button>
             )}
           </DrawerHeader>
 
-          <DrawerBody>
-            <Stack spacing={4} sx={{ py: 4 }}>
-              <div>
-                <PhotoInput
-                  name="imageUrl"
-                  initialImageUrl={values.imageUrl}
-                  error={errors.imageUrl}
-                  onChange={(file) => {
-                    const imageUrl = URL.createObjectURL(file);
-                    setFieldValue("imageUrl", imageUrl);
-                    resizeImage(file).then(setCurrentFile);
-                  }}
-                  onBlur={() => {
-                    setFieldTouched("imageUrl");
-                  }}
-                  disabled={isLoading || mode === "view"}
-                />
-                {uploadSnapshot && (
-                  <Progress
-                    sx={{ mt: 3 }}
-                    colorScheme="teal"
-                    hasStripe
-                    value={
-                      (uploadSnapshot.bytesTransferred /
-                        uploadSnapshot.totalBytes) *
-                      100
-                    }
+          {isView ? (
+            <DrawerBody sx={{ p: 0 }}>
+              <ItemDetails item={currentItem} />
+            </DrawerBody>
+          ) : (
+            <>
+              <DrawerBody>
+                <Stack spacing={4} sx={{ py: 4 }}>
+                  <div>
+                    <PhotoInput
+                      name="imageUrl"
+                      initialImageUrl={values.imageUrl}
+                      error={errors.imageUrl}
+                      onChange={(file) => {
+                        const imageUrl = URL.createObjectURL(file);
+                        setFieldValue("imageUrl", imageUrl);
+                        resizeImage(file).then(setCurrentFile);
+                      }}
+                      onBlur={() => {
+                        setFieldTouched("imageUrl");
+                      }}
+                      disabled={isLoading}
+                    />
+                    {uploadSnapshot && (
+                      <Progress
+                        sx={{ mt: 3 }}
+                        colorScheme="teal"
+                        hasStripe
+                        value={
+                          (uploadSnapshot.bytesTransferred /
+                            uploadSnapshot.totalBytes) *
+                          100
+                        }
+                      />
+                    )}
+                  </div>
+
+                  <FormInput
+                    label="Title"
+                    name="title"
+                    value={values.title}
+                    error={errors.title}
+                    onChange={onChange}
+                    onBlur={onBlur}
+                    isReadOnly={isLoading}
+                    isRequired
                   />
-                )}
-              </div>
+                  <FormInput
+                    label="Description (Optional)"
+                    name="description"
+                    value={values.description}
+                    error={errors.description}
+                    onChange={onChange}
+                    onBlur={onBlur}
+                    isReadOnly={isLoading}
+                  />
 
-              <FormInput
-                label="Title"
-                name="title"
-                value={values.title}
-                error={errors.title}
-                onChange={onChange}
-                onBlur={onBlur}
-                isReadOnly={isLoading || mode === "view"}
-                isRequired
-              />
-              <FormInput
-                label="Description (Optional)"
-                name="description"
-                value={values.description}
-                error={errors.description}
-                onChange={onChange}
-                onBlur={onBlur}
-                isReadOnly={isLoading || mode === "view"}
-              />
+                  {children?.({
+                    mode,
+                    ...requiredFrom,
+                  })}
 
-              {children?.({
-                mode,
-                ...requiredFrom,
-              })}
-            </Stack>
-          </DrawerBody>
+                  {currentItem && (
+                    // Kept away from Save and Edit so it's never one stray tap away
+                    <Confirm
+                      message={`Are you sure you want to delete ${currentItem.title}?`}
+                      onConfirm={onDelete}
+                      okText="Delete"
+                      okType="red"
+                    >
+                      {({ onOpen }) => (
+                        <Button
+                          onClick={onOpen}
+                          isDisabled={isLoading}
+                          variant="ghost"
+                          colorScheme="red"
+                          sx={{ alignSelf: "center", mt: 6 }}
+                        >
+                          Delete {type}
+                        </Button>
+                      )}
+                    </Confirm>
+                  )}
+                </Stack>
+              </DrawerBody>
+
+              <DrawerFooter
+                sx={{
+                  borderTop: "1px solid",
+                  borderColor: "gray.100",
+                  pb: "calc(var(--chakra-space-4) + env(safe-area-inset-bottom))",
+                }}
+              >
+                <Button
+                  onClick={onSubmit}
+                  isLoading={isLoading}
+                  colorScheme="teal"
+                  size="lg"
+                  sx={{ w: "100%", borderRadius: "full" }}
+                >
+                  Save
+                </Button>
+              </DrawerFooter>
+            </>
+          )}
         </DrawerContent>
       </Drawer>
     </>

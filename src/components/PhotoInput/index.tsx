@@ -4,6 +4,7 @@ import {
   InputProps,
   Image,
   Box,
+  Flex,
   Text,
   Icon,
   FormLabel,
@@ -17,6 +18,7 @@ import {
 } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BsCameraFill } from "react-icons/bs";
+import { MdAddAPhoto } from "react-icons/md";
 import { GrGallery } from "react-icons/gr";
 
 interface PhotoInputProps extends Omit<InputProps, "onChange"> {
@@ -57,7 +59,8 @@ const PhotoInput = ({
           onClick={onOpen}
           disabled={disabled}
           sx={{
-            width: "80vw",
+            width: "100%",
+            overflow: "hidden",
             border: "1px solid",
             borderRadius: "md",
             borderColor: error ? "red.500" : "gray.200",
@@ -69,9 +72,19 @@ const PhotoInput = ({
           {imgSrc ? (
             <Image src={imgSrc} w="100%" />
           ) : (
-            <Text sx={{ height: "80vw", lineHeight: "80vw" }}>
-              Tap to add a photo
-            </Text>
+            <Flex
+              sx={{
+                aspectRatio: "1",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 2,
+                color: "gray.500",
+              }}
+            >
+              <Icon as={MdAddAPhoto} w={10} h={10} />
+              <Text>Tap to add a photo</Text>
+            </Flex>
           )}
         </Box>
 

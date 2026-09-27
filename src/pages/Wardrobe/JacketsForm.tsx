@@ -11,13 +11,15 @@ const JacketsForm = ({
 }: ChildrenProps) => {
   return (
     <FormInput
-      label="Maximum Temperature in Celsius"
+      label="Suggest when it's this cool or cooler"
       name="maxTemperature"
       value={values.maxTemperature}
       error={errors.maxTemperature}
       onChange={onChange}
       onBlur={onBlur}
       type="number"
+      inputMode="numeric"
+      suffix="°C"
       isReadOnly={mode === "view"}
     />
   );
