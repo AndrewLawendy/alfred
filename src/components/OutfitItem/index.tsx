@@ -1,4 +1,3 @@
-import { Link } from "wouter";
 import {
   Box,
   Image,
@@ -8,6 +7,7 @@ import {
   SkeletonProps,
 } from "@chakra-ui/react";
 import { ReactNode } from "react";
+import { openItem } from "utils/history";
 import { Item } from "utils/types";
 
 interface OutfitItemProps extends SkeletonProps, Pick<Item, "type"> {
@@ -34,7 +34,13 @@ const OutfitItem = ({
     props.onClick ? (
       <>{children}</>
     ) : (
-      <Link to={`wardrobe/${type}/${id}`}>{children}</Link>
+      <Box
+        as="button"
+        onClick={() => openItem(id)}
+        sx={{ display: "block", w: "100%", textAlign: "left" }}
+      >
+        {children}
+      </Box>
     );
 
   return (

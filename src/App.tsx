@@ -13,6 +13,7 @@ import Account from "pages/Account";
 import Header from "components/Header";
 import BottomNav from "components/BottomNav";
 import UpdatePrompt from "components/UpdatePrompt";
+import ItemScreen from "pages/Wardrobe/ItemScreen";
 
 import theme from "utils/theme";
 
@@ -46,6 +47,7 @@ function App() {
             </motion.div>
           </Box>
           <BottomNav />
+          <ItemScreen />
         </Authorized>
       </MotionConfig>
     </ChakraProvider>

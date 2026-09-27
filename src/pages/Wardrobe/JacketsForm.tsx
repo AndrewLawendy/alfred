@@ -1,6 +1,6 @@
 import FormInput from "components/FormInput";
 
-import { ChildrenProps } from "./WardrobeItem";
+import { ChildrenProps } from "./ItemScreen";
 
 const JacketsForm = ({
   mode,

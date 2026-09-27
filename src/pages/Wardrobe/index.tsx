@@ -1,13 +1,13 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useLocation, useRoute } from "wouter";
 import { Box, Button, Flex, Icon, Text } from "@chakra-ui/react";
 import { MdAdd } from "react-icons/md";
 
 import useData from "resources/useData";
+import { openNewItem } from "utils/history";
 import { Item } from "utils/types";
 
 import WardrobeItem from "./WardrobeItem";
-import JacketsForm from "./JacketsForm";
 
 const tabs: { type: Item["type"]; label: string; singular: string }[] = [
   { type: "shirt", label: "Shirts", singular: "shirt" },
@@ -22,6 +22,16 @@ const Wardrobe = () => {
   // The tab lives in the URL (/wardrobe/:type/...), so deep links open the right one
   const [, params] = useRoute("/:type/:rest*");
   const active = tabs.find(({ type }) => type === params?.type) || tabs[0];
+  // Old item links (/wardrobe/<type>/<id> or /new) now open the item on top of the tab
+  const [isOldItemLink, oldLink] = useRoute("/:type/:item");
+  useEffect(() => {
+    if (!isOldItemLink || !oldLink) return;
+    const query =
+      oldLink.item === "new"
+        ? `new=${oldLink.type}`
+        : `item=${encodeURIComponent(oldLink.item)}`;
+    navigate(`/${oldLink.type}?${query}`, { replace: true });
+  }, [isOldItemLink, oldLink?.type, oldLink?.item]);
   const [allItems] = useData<Item>("wardrobe-items");
   const counts = useMemo(
     () =>
@@ -78,23 +88,11 @@ const Wardrobe = () => {
       </Flex>
 
       <Box role="tabpanel">
-        {active.type === "jacket" ? (
-          <WardrobeItem
-            key="jacket"
-            type="jacket"
-            formData={{
-              maxTemperature: { initialValue: "", isRequired: true },
-            }}
-          >
-            {(props) => <JacketsForm {...props} />}
-          </WardrobeItem>
-        ) : (
-          <WardrobeItem key={active.type} type={active.type} />
-        )}
+        <WardrobeItem key={active.type} type={active.type} />
       </Box>
 
       <Button
-        onClick={() => navigate(`/${active.type}/new`)}
+        onClick={() => openNewItem(active.type)}
         leftIcon={<Icon as={MdAdd} w={6} h={6} />}
         colorScheme="brand"
         size="lg"
