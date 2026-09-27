@@ -12,20 +12,23 @@ import {
   DrawerOverlay,
   DrawerContent,
   Stack,
-  Alert,
-  AlertIcon,
-  AlertTitle,
-  AlertDescription,
   Progress,
   useDisclosure,
 } from "@chakra-ui/react";
-import { MdCheck, MdArrowBack, MdEdit, MdDeleteForever } from "react-icons/md";
+import {
+  MdCheck,
+  MdArrowBack,
+  MdEdit,
+  MdDeleteForever,
+  MdCheckroom,
+} from "react-icons/md";
 import omit from "lodash.omit";
 
 import OutfitItem from "components/OutfitItem";
 import FormInput from "components/FormInput";
 import PhotoInput from "components/PhotoInput";
 import Loading from "components/Loading";
+import EmptyState from "components/EmptyState";
 import Confirm from "components/Confirm";
 
 import useForm, { FromReturn, FormConfig } from "hooks/useForm";
@@ -200,21 +203,13 @@ const WardrobeItem = ({ type, formData, children }: WardrobeItemPros) => {
           ))}
         </Grid>
       ) : (
-        <Alert
-          status="warning"
-          flexDirection="column"
-          alignItems="center"
-          justifyContent="center"
-          textAlign="center"
-        >
-          <AlertIcon boxSize="30px" mr={0} />
-          <AlertTitle mt={4} mb={1} fontSize="lg">
-            No {type}s
-          </AlertTitle>
-          <AlertDescription maxWidth="sm">
-            Click on Add and choose {type}s to add
-          </AlertDescription>
-        </Alert>
+        <EmptyState
+          icon={MdCheckroom}
+          title={`No ${type}s yet`}
+          description={`Add your first ${type} with a photo and a title.`}
+          actionLabel={`Add ${type}`}
+          onAction={() => navigate(`/${type}/new`)}
+        />
       )}
 
       <Drawer

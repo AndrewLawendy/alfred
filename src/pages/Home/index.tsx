@@ -4,10 +4,6 @@ import {
   Button,
   Flex,
   Grid,
-  Alert,
-  AlertIcon,
-  AlertTitle,
-  AlertDescription,
   Drawer,
   DrawerBody,
   DrawerHeader,
@@ -27,10 +23,12 @@ import {
 } from "@chakra-ui/react";
 import { GiSleevelessJacket } from "react-icons/gi";
 import { HiSwitchVertical } from "react-icons/hi";
+import { MdCheckroom, MdDryCleaning } from "react-icons/md";
 import { orderBy } from "@firebase/firestore";
 import { Link as WouterLink } from "wouter";
 
 import Weather from "components/Weather";
+import EmptyState from "components/EmptyState";
 import Loading from "components/Loading";
 import OutfitReference from "components/OutfitReference";
 import OutfitItem from "components/OutfitItem";
@@ -133,12 +131,12 @@ const Home = () => {
         sx={{
           justifyContent: "space-between",
           alignItems: "center",
-          height: 12,
+          gap: 3,
           mb: 4,
         }}
       >
-        <Heading sx={{ fontFamily: "advent" }} noOfLines={1}>
-          Hi, {user.displayName}
+        <Heading size="lg" noOfLines={1}>
+          Hi, {user.displayName?.split(" ")[0]}
         </Heading>
 
         <Weather weatherData={weatherData} isLoading={isWeatherLoading} />
@@ -263,25 +261,24 @@ const Home = () => {
           </Popover>
         </>
       ) : (
-        <Alert
-          status="warning"
-          flexDirection="column"
-          alignItems="center"
-          justifyContent="center"
-          textAlign="center"
-        >
-          <AlertIcon boxSize="30px" mr={0} />
-          <AlertTitle mt={4} mb={1} fontSize="lg">
-            No outfits
-          </AlertTitle>
-          <AlertDescription maxWidth="sm">
-            Go to{" "}
-            <Link color="teal.500" as={WouterLink} to="/outfits">
-              Outfits
-            </Link>{" "}
-            and start adding
-          </AlertDescription>
-        </Alert>
+        <EmptyState
+          {...(jackets?.length
+            ? {
+                icon: MdDryCleaning,
+                title: "Build your first outfit",
+                description:
+                  "Pick a shirt, belt, pants and shoes from your wardrobe.",
+                actionLabel: "Create an outfit",
+                to: "/outfits",
+              }
+            : {
+                icon: MdCheckroom,
+                title: "Start with your wardrobe",
+                description: "Add a few shirts, belts, pants and shoes first.",
+                actionLabel: "Open wardrobe",
+                to: "/wardrobe",
+              })}
+        />
       )}
     </>
   );

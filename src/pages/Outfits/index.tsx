@@ -8,10 +8,6 @@ import {
   IconButton,
   Icon,
   Flex,
-  Alert,
-  AlertIcon,
-  AlertTitle,
-  AlertDescription,
   useDisclosure,
 } from "@chakra-ui/react";
 import {
@@ -20,13 +16,14 @@ import {
   Draggable,
   DropResult,
 } from "react-beautiful-dnd";
-import { MdAdd, MdAutoAwesome } from "react-icons/md";
+import { MdAdd, MdAutoAwesome, MdDryCleaning } from "react-icons/md";
 import { GrDrag } from "react-icons/gr";
 
 import { Outfit } from "utils/types";
 
 import OutfitReference from "components/OutfitReference";
 import Loading from "components/Loading";
+import EmptyState from "components/EmptyState";
 
 import useData from "resources/useData";
 import useUpdateDocument from "resources/useUpdateDocument";
@@ -59,21 +56,13 @@ const Outfits = () => {
       {isOutfitsLoading || !outfits ? (
         <Loading message="Loading your outfits" columns={1} />
       ) : outfits.length === 0 ? (
-        <Alert
-          status="warning"
-          flexDirection="column"
-          alignItems="center"
-          justifyContent="center"
-          textAlign="center"
-        >
-          <AlertIcon boxSize="30px" mr={0} />
-          <AlertTitle mt={4} mb={1} fontSize="lg">
-            No outfits
-          </AlertTitle>
-          <AlertDescription maxWidth="sm">
-            Click on Add and gather your outfit
-          </AlertDescription>
-        </Alert>
+        <EmptyState
+          icon={MdDryCleaning}
+          title="No outfits yet"
+          description="Pick a shirt, belt, pants and shoes to make your first one."
+          actionLabel="Create an outfit"
+          onAction={onOpen}
+        />
       ) : (
         <DragDropContext onDragEnd={onDragEnd}>
           <Droppable droppableId="outfits">
