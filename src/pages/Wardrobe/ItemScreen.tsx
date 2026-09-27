@@ -52,14 +52,23 @@ export interface ChildrenProps extends FromReturn<ItemForm> {
 }
 
 const formFor = (type: Item["type"], item?: Item): ItemForm => ({
-  title: { initialValue: item?.title || "", isRequired: true },
+  title: {
+    initialValue: item?.title || "",
+    isRequired: true,
+    requiredMessage: "Give it a name",
+  },
   description: { initialValue: item?.description || "" },
-  imageUrl: { initialValue: item?.imageUrl || "", isRequired: true },
+  imageUrl: {
+    initialValue: item?.imageUrl || "",
+    isRequired: true,
+    requiredMessage: "Add a photo",
+  },
   ...(type === "jacket" && {
     maxTemperature: {
       initialValue:
         item?.type === "jacket" ? String(item.maxTemperature ?? "") : "",
       isRequired: true,
+      requiredMessage: "Set the temperature to suggest it at",
     },
   }),
 });
