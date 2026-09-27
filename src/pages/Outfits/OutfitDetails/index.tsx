@@ -77,6 +77,8 @@ const OutfitDetails = ({
   outfits = [],
 }: AddOutfitProps) => {
   const closetContainerRef = useRef(null);
+  // Focus the title on open, so no focus ring lands on the back button
+  const headingRef = useRef<HTMLParagraphElement>(null);
   const [closetExpanded, setClosetExpanded] = useState(false);
   const [outfit, setOutfit] = useState<Partial<Outfit>>({});
   const [activeDrawer, setActiveDrawer] = useState<ExpandedIndex>(0);
@@ -190,6 +192,7 @@ const OutfitDetails = ({
       isOpen={isOpen}
       placement="right"
       size="full"
+      initialFocusRef={headingRef}
       onClose={onClose}
       onCloseComplete={reset}
     >
@@ -219,7 +222,13 @@ const OutfitDetails = ({
               />
             }
           />
-          <Text sx={{ flexGrow: 1 }}>{heading}</Text>
+          <Text
+            ref={headingRef}
+            tabIndex={-1}
+            sx={{ flexGrow: 1, _focus: { outline: "none" } }}
+          >
+            {heading}
+          </Text>
           {currentOutfit && (
             <Confirm
               message={
@@ -314,6 +323,8 @@ const OutfitDetails = ({
             isOpen={isOpen}
             portalProps={{ containerRef: closetContainerRef }}
             closeOnOverlayClick={false}
+            autoFocus={false}
+            trapFocus={false}
             blockScrollOnMount={false}
           >
             <DrawerContent>

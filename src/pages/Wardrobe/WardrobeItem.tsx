@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { where } from "firebase/firestore";
 import { useRoute, useLocation } from "wouter";
 import {
@@ -59,6 +59,8 @@ interface WardrobeItemPros extends Pick<Item, "type"> {
 
 const WardrobeItem = ({ type, formData, children }: WardrobeItemPros) => {
   const [mode, setMode] = useState<"submit" | "view">("view");
+  // Focus the title on open, so no focus ring lands on the back button
+  const headingRef = useRef<HTMLParagraphElement>(null);
   const [currentFile, setCurrentFile] = useState<File>();
   const { isOpen, onOpen, onClose: onDrawerClose } = useDisclosure();
   const [items, isItemsLoading] = useData<Item>(
@@ -221,6 +223,7 @@ const WardrobeItem = ({ type, formData, children }: WardrobeItemPros) => {
         onCloseComplete={reset}
         placement="right"
         size="full"
+        initialFocusRef={headingRef}
       >
         <DrawerOverlay />
         <DrawerContent>
@@ -248,7 +251,13 @@ const WardrobeItem = ({ type, formData, children }: WardrobeItemPros) => {
                 />
               }
             />
-            <Text sx={{ flexGrow: 1 }}>{heading}</Text>
+            <Text
+              ref={headingRef}
+              tabIndex={-1}
+              sx={{ flexGrow: 1, _focus: { outline: "none" } }}
+            >
+              {heading}
+            </Text>
             {currentItem && (
               <Confirm
                 message={`Are you sure you want to delete ${currentItem.title}?`}
