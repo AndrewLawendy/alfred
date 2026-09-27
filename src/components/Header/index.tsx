@@ -27,6 +27,8 @@ const Header = () => {
         boxShadow: "material",
         position: "sticky",
         top: 0,
+        // Keep scrolling content (chips, tiles with badges) underneath the header
+        zIndex: "sticky",
         backgroundColor: "linen",
       }}
     >
