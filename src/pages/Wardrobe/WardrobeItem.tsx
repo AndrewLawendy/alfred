@@ -166,6 +166,7 @@ const WardrobeItem = ({ type, formData, children }: WardrobeItemPros) => {
     if (params?.type) {
       if (params.type === type) {
         if (params.currentItem === "new") {
+          setMode("submit");
           onOpen();
         } else if (params.currentItem && currentItem) {
           setMode("view");
