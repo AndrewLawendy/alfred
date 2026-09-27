@@ -31,7 +31,7 @@ const Header = () => {
       }}
     >
       <Image src={Logo} alt="" sx={{ maxH: 8 }} />
-      <Heading as="h1" sx={{ fontFamily: "advent", fontSize: "3xl" }}>
+      <Heading as="h1" sx={{ fontSize: "3xl", fontWeight: "semibold" }}>
         {title}
       </Heading>
     </Flex>

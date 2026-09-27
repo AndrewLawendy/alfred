@@ -19,8 +19,9 @@ const theme = extendTheme({
     },
   },
   fonts: {
-    body: `"Roboto", sans-serif`,
-    advent: `"Advent Pro", sans-serif`,
+    // The phone's own font (San Francisco on iOS, Roboto on Android)
+    body: `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif`,
+    heading: `"Fraunces", Georgia, serif`,
   },
   space: {
     // Bottom nav height plus the iPhone home indicator

@@ -93,7 +93,6 @@ const Login = () => {
         <Heading
           sx={{
             mt: 4,
-            fontFamily: "advent",
           }}
         >
           Alfred

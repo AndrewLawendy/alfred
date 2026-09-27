@@ -15,8 +15,8 @@ import BottomNav from "components/BottomNav";
 
 import theme from "utils/theme";
 
-import "@fontsource/advent-pro";
-import "@fontsource/roboto";
+import "@fontsource/fraunces/600.css";
+import "@fontsource/fraunces/700.css";
 
 function App() {
   const [location] = useLocation();
