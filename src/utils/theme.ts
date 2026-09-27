@@ -3,6 +3,13 @@ import { extendTheme } from "@chakra-ui/react";
 const theme = extendTheme({
   styles: {
     global: {
+      // Chakra sizes drawers and modals with --chakra-vh, which its reset sets
+      // to 100lvh: the height with the browser's address bar hidden. That hid
+      // the bottom of every sheet and screen (Save buttons included) behind the
+      // bar. dvh is the visible height. html:root outranks the reset's :root.
+      "@supports (height: 100dvh)": {
+        "html:root": { "--chakra-vh": "100dvh" },
+      },
       "html, body": {
         overscrollBehavior: "none",
         WebkitTapHighlightColor: "transparent",
