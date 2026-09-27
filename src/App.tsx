@@ -12,6 +12,7 @@ import Account from "pages/Account";
 
 import Header from "components/Header";
 import BottomNav from "components/BottomNav";
+import UpdatePrompt from "components/UpdatePrompt";
 
 import theme from "utils/theme";
 
@@ -25,6 +26,7 @@ function App() {
   return (
     <ChakraProvider theme={theme}>
       <MotionConfig reducedMotion="user">
+        <UpdatePrompt />
         <Route path="/login" component={Login} />
         <Authorized>
           <Header />
