@@ -1,17 +1,19 @@
-import { Link } from "wouter";
-import {
-  Flex,
-  IconButton,
-  Image,
-  Text,
-  Link as ChakraLink,
-  Icon,
-} from "@chakra-ui/react";
-import { IoMdNotifications } from "react-icons/io";
+import { useLocation } from "wouter";
+import { Flex, Image, Heading } from "@chakra-ui/react";
 
 import Logo from "assets/logo.png";
 
+const titles: Record<string, string> = {
+  "": "Today",
+  outfits: "Outfits",
+  wardrobe: "Wardrobe",
+  account: "Account",
+};
+
 const Header = () => {
+  const [location] = useLocation();
+  const title = titles[location.split("/")[1].toLowerCase()];
+
   return (
     <Flex
       as="header"
@@ -19,7 +21,8 @@ const Header = () => {
         minHeight: 16,
         p: 2,
         pt: "calc(var(--chakra-space-2) + env(safe-area-inset-top))",
-        justifyContent: "space-between",
+        px: 3,
+        gap: 3,
         alignItems: "center",
         boxShadow: "material",
         position: "sticky",
@@ -27,31 +30,10 @@ const Header = () => {
         backgroundColor: "white",
       }}
     >
-      <ChakraLink
-        as={Link}
-        to="/"
-        sx={{ display: "flex", alignItems: "center", gap: 3 }}
-      >
-        <Image src={Logo} sx={{ maxH: 9 }} />
-        <Text
-          sx={{
-            fontFamily: "advent",
-            fontSize: "2xl",
-            lineHeight: 6,
-          }}
-        >
-          Alfred{" "}
-          <Text as="span" fontSize="md">
-            v{process.env.REACT_APP_VERSION}
-          </Text>
-        </Text>
-      </ChakraLink>
-
-      <IconButton
-        aria-label="Open Notification"
-        icon={<Icon as={IoMdNotifications} w={6} h={6} />}
-        variant="ghost"
-      />
+      <Image src={Logo} alt="" sx={{ maxH: 8 }} />
+      <Heading as="h1" sx={{ fontFamily: "advent", fontSize: "3xl" }}>
+        {title}
+      </Heading>
     </Flex>
   );
 };

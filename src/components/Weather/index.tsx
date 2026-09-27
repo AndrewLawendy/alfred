@@ -1,4 +1,4 @@
-import { Flex, Box, Image, Skeleton, Text } from "@chakra-ui/react";
+import { Flex, Image, Skeleton, Text } from "@chakra-ui/react";
 
 import { WeatherResponse } from "resources/useWeather";
 
@@ -11,24 +11,33 @@ const Weather = ({ weatherData, isLoading }: WeatherProps) => {
   const [weather] = weatherData?.weather || [];
 
   if (isLoading) {
-    return <Skeleton height={12} width={36} borderRadius="md" />;
+    return <Skeleton height={10} width={32} borderRadius="full" />;
   }
 
   if (!weatherData || !weather) return null;
 
   return (
-    <Flex sx={{ alignItems: "center" }}>
+    <Flex
+      sx={{
+        flexShrink: 0,
+        alignItems: "center",
+        gap: 1,
+        pr: 3,
+        borderRadius: "full",
+        backgroundColor: "gray.100",
+      }}
+    >
       <Image
-        alt="Weather Icon"
+        alt=""
         src={`https://openweathermap.org/img/wn/${weather.icon}@2x.png`}
-        sx={{ height: 12, width: 24, objectFit: "cover" }}
+        // Render nothing instead of a broken image while loading or on error
+        fallback={<></>}
+        sx={{ height: 10, width: 10 }}
       />
-      <Box>
-        <Text sx={{ fontWeight: "semibold" }}>
-          {Math.trunc(weatherData.main.temp)}°C
-        </Text>
-        <Text fontSize="sm">{weather.main}</Text>
-      </Box>
+      <Text sx={{ fontWeight: "semibold" }}>
+        {Math.trunc(weatherData.main.temp)}°C
+      </Text>
+      <Text sx={{ color: "gray.600" }}>· {weather.main}</Text>
     </Flex>
   );
 };
