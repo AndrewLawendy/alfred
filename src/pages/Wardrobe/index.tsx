@@ -32,7 +32,7 @@ export interface AddOption extends Pick<Item, "type"> {
 const addOptions: AddOption[] = [
   { label: "Add Shirt", type: "shirt", icon: RiShirtFill },
   { label: "Add Jacket", type: "jacket", icon: GiSleevelessJacket },
-  { label: "Add Bel", type: "belt", icon: GiBelt },
+  { label: "Add Belt", type: "belt", icon: GiBelt },
   { label: "Add Pants", type: "pants", icon: GiTrousers },
   { label: "Add Shoes", type: "shoes", icon: GiRunningShoe },
 ];
