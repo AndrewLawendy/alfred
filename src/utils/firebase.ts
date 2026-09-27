@@ -4,7 +4,10 @@ import {
   setPersistence,
   browserLocalPersistence,
 } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import {
+  getFirestore,
+  enableMultiTabIndexedDbPersistence,
+} from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 const app = initializeApp({
@@ -22,5 +25,8 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 
 setPersistence(auth, browserLocalPersistence);
+// Serve Firestore data from IndexedDB first so screens open instantly.
+// Rejects on browsers without IndexedDB; the app then stays online-only.
+enableMultiTabIndexedDbPersistence(db).catch(() => undefined);
 
 export { auth, db, storage };
