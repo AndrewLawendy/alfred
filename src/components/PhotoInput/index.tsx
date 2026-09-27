@@ -21,6 +21,7 @@ import { BsCameraFill } from "react-icons/bs";
 import { MdAddAPhoto } from "react-icons/md";
 import { GrGallery } from "react-icons/gr";
 import Swipeable from "components/Swipeable";
+import useBackToClose from "hooks/useBackToClose";
 
 interface PhotoInputProps extends Omit<InputProps, "onChange"> {
   onChange: (file: File) => void;
@@ -41,6 +42,7 @@ const PhotoInput = ({
   const photoDrawerRef = useRef(null);
   const [imgSrc, setImgSrc] = useState<string>(initialImageUrl);
   const { isOpen, onOpen, onClose } = useDisclosure();
+  useBackToClose(isOpen, onClose);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {

@@ -11,6 +11,7 @@ import {
   ThemingProps,
 } from "@chakra-ui/react";
 import Swipeable from "components/Swipeable";
+import useBackToClose from "hooks/useBackToClose";
 
 type ChildrenProps = {
   onOpen: () => void;
@@ -41,6 +42,7 @@ const Confirm = ({
     onCancel();
     onClose();
   };
+  useBackToClose(isOpen, cancel);
 
   return (
     <>

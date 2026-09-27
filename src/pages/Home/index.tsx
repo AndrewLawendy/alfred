@@ -40,6 +40,7 @@ import useWeather from "resources/useWeather";
 
 import { Jacket, Outfit } from "utils/types";
 import Swipeable from "components/Swipeable";
+import useBackToClose from "hooks/useBackToClose";
 
 // Outfit whose jacket prompt was dismissed; survives tab switches, resets on reload
 let dismissedJacketPromptFor: string | undefined;
@@ -85,6 +86,7 @@ const Home = () => {
     dismissedJacketPromptFor = activeOutfit?.id;
     onJacketDrawerClose();
   };
+  useBackToClose(isJacketDrawerOpen, onJacketPromptDismiss);
 
   const onFetchNextOutfit = () => {
     if (!outfits) return;

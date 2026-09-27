@@ -45,6 +45,7 @@ import OutfitReference from "components/OutfitReference";
 import Confirm from "components/Confirm";
 import Loading from "components/Loading";
 import Swipeable from "components/Swipeable";
+import useBackToClose from "hooks/useBackToClose";
 
 import useData from "resources/useData";
 import useAddDocument from "resources/useAddDocument";
@@ -85,6 +86,8 @@ const OutfitDetails = ({
   const [activeDrawer, setActiveDrawer] = useState<ExpandedIndex>(0);
   const [mode, setMode] = useState<"submit" | "view">("view");
   const toastId = "validation-toast";
+  // Back (gesture or button) closes the outfit instead of leaving the page
+  useBackToClose(isOpen, onClose);
   const toast = useToast();
   const [shirts, isShirtLoading] = useData<Shirt>(
     "wardrobe-items",
