@@ -74,8 +74,18 @@ const theme = extendTheme({
   },
   components: {
     Drawer: {
-      baseStyle: {
-        dialog: { bg: "linen" },
+      // Chakra hard-codes 100vh for drawer heights, which in a browser tab is
+      // taller than the visible screen (address bar). $100vh is --chakra-vh,
+      // set to the visible height above.
+      baseStyle: ({ isFullHeight }: { isFullHeight?: boolean }) => ({
+        dialog: {
+          bg: "linen",
+          maxH: "$100vh",
+          ...(isFullHeight && { height: "$100vh" }),
+        },
+      }),
+      sizes: {
+        full: { dialog: { h: "$100vh" } },
       },
     },
     Button: {
