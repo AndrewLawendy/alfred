@@ -362,7 +362,7 @@ const OutfitDetails = ({
 
                     <AccordionPanel>
                       {isShirtLoading || !shirts ? (
-                        <Loading message="Loading your shirts, please wait" />
+                        <Loading message="Loading your shirts" />
                       ) : shirts.length > 0 ? (
                         <Grid templateColumns="repeat(3, 1fr)" gap={2}>
                           {shirts.map((shirt) => (
@@ -422,7 +422,7 @@ const OutfitDetails = ({
 
                     <AccordionPanel>
                       {isBeltsLoading || !belts ? (
-                        <Loading message="Loading your belts, please wait" />
+                        <Loading message="Loading your belts" />
                       ) : belts.length > 0 ? (
                         <Grid templateColumns="repeat(3, 1fr)" gap={2}>
                           {belts.map((belt) => (
@@ -482,7 +482,7 @@ const OutfitDetails = ({
 
                     <AccordionPanel>
                       {isPantsLoading || !pants ? (
-                        <Loading message="Loading your pants, please wait" />
+                        <Loading message="Loading your pants" />
                       ) : pants.length > 0 ? (
                         <Grid templateColumns="repeat(3, 1fr)" gap={2}>
                           {pants.map((pantsPair) => (
@@ -546,7 +546,7 @@ const OutfitDetails = ({
 
                     <AccordionPanel>
                       {isShoesLoading || !shoes ? (
-                        <Loading message="Loading our shoes, please wait" />
+                        <Loading message="Loading your shoes" />
                       ) : shoes.length > 0 ? (
                         <Grid templateColumns="repeat(3, 1fr)" gap={2}>
                           {shoes.map((shoesPair) => (

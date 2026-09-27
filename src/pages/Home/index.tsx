@@ -145,7 +145,7 @@ const Home = () => {
       </Flex>
 
       {isOutfitsLoading ? (
-        <Loading message="Loading today's outfit, please wait" />
+        <Loading message="Loading today's outfit" columns={2} />
       ) : activeOutfit ? (
         <>
           <Grid templateColumns="repeat(2, 1fr)" gap={2} sx={{ mb: 20 }}>

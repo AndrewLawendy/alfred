@@ -1,20 +1,16 @@
-import { Box, Spinner, Text } from "@chakra-ui/react";
+import { SimpleGrid, Skeleton } from "@chakra-ui/react";
 
 type LoadingProps = {
   message: string;
+  columns?: number;
 };
 
-const Loading = ({ message }: LoadingProps) => (
-  <Box sx={{ textAlign: "center", p: 2 }}>
-    <Spinner
-      thickness="4px"
-      speed="0.65s"
-      emptyColor="gray.200"
-      color="teal.500"
-      size="lg"
-    />
-    <Text>{message}</Text>
-  </Box>
+const Loading = ({ message, columns = 3 }: LoadingProps) => (
+  <SimpleGrid role="status" aria-label={message} columns={columns} spacing={2}>
+    {Array.from({ length: columns * 2 }, (_, index) => (
+      <Skeleton key={index} height="170px" borderRadius="md" />
+    ))}
+  </SimpleGrid>
 );
 
 export default Loading;

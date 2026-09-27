@@ -57,7 +57,7 @@ const Outfits = () => {
   return (
     <>
       {isOutfitsLoading || !outfits ? (
-        <Loading message="Loading your outfits, please wait" />
+        <Loading message="Loading your outfits" columns={1} />
       ) : outfits.length === 0 ? (
         <Alert
           status="warning"

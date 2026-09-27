@@ -178,7 +178,7 @@ const WardrobeItem = ({ type, formData, children }: WardrobeItemPros) => {
   }, [params?.currentItem, currentItem]);
 
   if (isItemsLoading || !items) {
-    return <Loading message={`Loading your ${type}s, please wait`} />;
+    return <Loading message={`Loading your ${type}s`} />;
   }
 
   return (
