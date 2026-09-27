@@ -12,7 +12,6 @@ import {
   Text,
   Link,
   Icon,
-  IconButton,
   useDisclosure,
   Popover,
   PopoverAnchor,
@@ -23,7 +22,7 @@ import {
 } from "@chakra-ui/react";
 import { GiSleevelessJacket } from "react-icons/gi";
 import { HiSwitchVertical } from "react-icons/hi";
-import { MdCheckroom, MdDryCleaning } from "react-icons/md";
+import { MdArrowForward, MdCheckroom, MdDryCleaning } from "react-icons/md";
 import { orderBy } from "@firebase/firestore";
 import { Link as WouterLink } from "wouter";
 
@@ -41,6 +40,9 @@ import useWeather from "resources/useWeather";
 
 import { Jacket, Outfit } from "utils/types";
 
+// Outfit whose jacket prompt was dismissed; survives tab switches, resets on reload
+let dismissedJacketPromptFor: string | undefined;
+
 const Home = () => {
   const [user] = useAuth();
   const {
@@ -52,7 +54,7 @@ const Home = () => {
     isOpen: isJacketDrawerOpen,
     onOpen: onJacketDrawerOpen,
     onClose: onJacketDrawerClose,
-  } = useDisclosure({ defaultIsOpen: true });
+  } = useDisclosure();
   const { data: weatherData, isLoading: isWeatherLoading } = useWeather();
   const [outfits, isOutfitsLoading] = useData<Outfit>(
     "outfits",
@@ -75,10 +77,13 @@ const Home = () => {
     }
   }, [jackets, weatherData]);
 
-  const isJacketPopupOpen =
-    isJacketDrawerOpen &&
-    !activeOutfit?.jacket &&
-    temperatureJackets.length > 1;
+  const needsJacketChoice =
+    !!activeOutfit && !activeOutfit.jacket && temperatureJackets.length > 1;
+
+  const onJacketPromptDismiss = () => {
+    dismissedJacketPromptFor = activeOutfit?.id;
+    onJacketDrawerClose();
+  };
 
   const onFetchNextOutfit = () => {
     if (!outfits) return;
@@ -119,9 +124,12 @@ const Home = () => {
     });
   };
 
+  // Ask once per outfit; primitive deps so Firestore refreshes don't reopen it
   useEffect(() => {
-    onJacketDrawerOpen();
-  }, [activeOutfit, temperatureJackets]);
+    if (needsJacketChoice && activeOutfit.id !== dismissedJacketPromptFor) {
+      onJacketDrawerOpen();
+    }
+  }, [needsJacketChoice, activeOutfit?.id]);
 
   if (!user) return null;
 
@@ -156,6 +164,11 @@ const Home = () => {
                 id={activeOutfit.jacket.id}
                 type="jacket"
                 imageUrl={activeOutfit.jacket.imageUrl}
+                // Tap to change it when there's more than one option
+                {...(temperatureJackets.length > 1 && {
+                  onClick: onJacketDrawerOpen,
+                  cursor: "pointer",
+                })}
               />
             ) : temperatureJackets.length === 1 ? (
               <OutfitItem
@@ -164,15 +177,24 @@ const Home = () => {
                 imageUrl={temperatureJackets[0].imageUrl}
               />
             ) : temperatureJackets.length > 0 ? (
-              <Button onClick={onJacketDrawerOpen} height={172}>
-                <Icon as={GiSleevelessJacket} color="gray.400" w={16} h={16} />
+              <Button
+                onClick={onJacketDrawerOpen}
+                height={172}
+                flexDirection="column"
+                gap={2}
+                variant="outline"
+                borderStyle="dashed"
+                color="gray.600"
+              >
+                <Icon as={GiSleevelessJacket} color="gray.400" w={12} h={12} />
+                Choose a jacket
               </Button>
             ) : null}
           </Grid>
 
           <Drawer
-            isOpen={isJacketPopupOpen}
-            onClose={onJacketDrawerClose}
+            isOpen={isJacketDrawerOpen}
+            onClose={onJacketPromptDismiss}
             placement="bottom"
           >
             <DrawerOverlay />
@@ -188,8 +210,10 @@ const Home = () => {
                 Choose today&apos;s jacket
               </DrawerHeader>
               <DrawerBody>
-                <Text>Several jackets meet the same temperature threshold</Text>
-                <Text>Choose the right one to your outfit</Text>
+                <Text sx={{ color: "gray.600" }}>
+                  {temperatureJackets.length} jackets suit today&apos;s weather.
+                  Pick one for this outfit.
+                </Text>
                 <Grid templateColumns="repeat(2, 1fr)" gap={2} my={3}>
                   {temperatureJackets.map((jacket) => (
                     <OutfitItem
@@ -197,11 +221,10 @@ const Home = () => {
                       id={jacket.id}
                       type="jacket"
                       imageUrl={jacket.imageUrl}
-                      onClick={() =>
-                        updateOutfit(activeOutfit.id, {
-                          jacket,
-                        })
-                      }
+                      onClick={() => {
+                        updateOutfit(activeOutfit.id, { jacket });
+                        onJacketDrawerClose();
+                      }}
                     />
                   ))}
                 </Grid>
@@ -219,7 +242,9 @@ const Home = () => {
                 sx={{
                   position: "fixed",
                   bottom: "nav",
-                  width: "100%",
+                  left: 0,
+                  right: 0,
+                  px: 3,
                   justifyContent: "center",
                   alignItems: "center",
                   gap: 2,
@@ -227,24 +252,33 @@ const Home = () => {
               >
                 <Button
                   size="lg"
+                  variant="outline"
                   colorScheme="teal"
+                  backgroundColor="white"
+                  leftIcon={<Icon as={HiSwitchVertical} />}
+                  onClick={onSwitchCurrentOutfit}
+                  isDisabled={isUpdateOutfitLoading}
+                  sx={{ flex: 1, px: 4, fontSize: "md", borderRadius: "full" }}
+                >
+                  Swap with next
+                </Button>
+
+                <Button
+                  size="lg"
+                  colorScheme="teal"
+                  rightIcon={<Icon as={MdArrowForward} />}
                   onClick={onFetchNextOutfit}
                   isLoading={isUpdateOutfitLoading}
                   sx={{
-                    borderRadius: "3xl",
+                    flex: 1,
+                    px: 4,
+                    fontSize: "md",
+                    borderRadius: "full",
+                    boxShadow: "material",
                   }}
                 >
-                  Fetch Next Outfit
+                  Next outfit
                 </Button>
-
-                <IconButton
-                  size="lg"
-                  borderRadius="full"
-                  colorScheme="teal"
-                  aria-label="outfit switch"
-                  icon={<Icon as={HiSwitchVertical} />}
-                  onClick={onSwitchCurrentOutfit}
-                />
               </Flex>
             </PopoverAnchor>
             <PopoverContent>
