@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { ReactNode, useEffect, useMemo, useRef } from "react";
 import {
   Box,
   Button,
@@ -50,6 +50,7 @@ import useUpdateDocument from "resources/useUpdateDocument";
 import useWeather from "resources/useWeather";
 
 import { openItem, openNewOutfit, openOutfit } from "utils/history";
+import { jacketState } from "utils/jacket";
 import { nextOutfit } from "utils/rotation";
 import { Item, Jacket, Outfit } from "utils/types";
 
@@ -111,6 +112,72 @@ const Swatch = ({ reference }: { reference: Outfit["shirt"] }) => {
   );
 };
 
+// Outfit whose jacket prompt was shown; survives tab switches, resets on reload
+let promptedFor: string | undefined;
+
+// One row in the jacket sheet
+const Choice = ({
+  isChosen,
+  onClick,
+  picture,
+  title,
+  detail,
+}: {
+  isChosen: boolean;
+  onClick: () => void;
+  picture: ReactNode;
+  title: string;
+  detail: string;
+}) => (
+  <Flex
+    as="button"
+    role="radio"
+    aria-checked={isChosen}
+    onClick={onClick}
+    sx={{
+      w: "100%",
+      alignItems: "center",
+      gap: 3,
+      p: 2,
+      mb: 2,
+      textAlign: "left",
+      borderRadius: "xl",
+      border: "2px solid",
+      borderColor: isChosen ? "accent.600" : "gray.200",
+      backgroundColor: "white",
+    }}
+  >
+    {picture}
+    <Box sx={{ flex: 1, minW: 0 }}>
+      <Text noOfLines={1} sx={{ fontWeight: "medium" }}>
+        {title}
+      </Text>
+      <Text sx={{ fontSize: "sm", color: "gray.600" }}>{detail}</Text>
+    </Box>
+    <Icon
+      as={isChosen ? MdRadioButtonChecked : MdRadioButtonUnchecked}
+      sx={{ w: 6, h: 6, color: isChosen ? "accent.600" : "gray.400" }}
+    />
+  </Flex>
+);
+
+const JacketIcon = () => (
+  <Flex
+    sx={{
+      w: 12,
+      h: 12,
+      flexShrink: 0,
+      borderRadius: "lg",
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "accent.50",
+      color: "accent.600",
+    }}
+  >
+    <Icon as={GiSleevelessJacket} sx={{ w: 7, h: 7 }} />
+  </Flex>
+);
+
 const Home = () => {
   const [user] = useAuth();
   const {
@@ -145,15 +212,16 @@ const Home = () => {
       (items || []).filter((item): item is Jacket => item.type === "jacket"),
     [items]
   );
-  const temperatureJackets = useMemo(
-    () =>
-      weatherData
-        ? jackets.filter(
-            ({ maxTemperature }) => maxTemperature >= weatherData.main.temp
-          )
-        : [],
-    [jackets, weatherData]
-  );
+  const chosen = activeOutfit?.jacket;
+  const {
+    suitable: temperatureJackets,
+    options,
+    jacket,
+    isSkipped,
+    hasCard: hasJacketCard,
+    needsChoice,
+  } = jacketState(jackets, weatherData?.main.temp, chosen);
+  const needsJacketChoice = !!activeOutfit && needsChoice;
 
   // Without any jackets we can't tell whether one is needed, so say nothing
   const verdict = !jackets.length
@@ -164,11 +232,19 @@ const Home = () => {
     ? `Your ${temperatureJackets[0].title} would suit`
     : `${count(temperatureJackets.length)} jackets would suit`;
 
-  // The chosen jacket, or the only one that suits
-  const jacket =
-    activeOutfit?.jacket ||
-    (temperatureJackets.length === 1 ? temperatureJackets[0] : undefined);
-  const hasJacketCard = Boolean(jacket || temperatureJackets.length > 1);
+  // Ask once per outfit when it becomes today's (on opening Home, Next or
+  // Swap); primitive deps so Firestore refreshes don't reopen it
+  useEffect(() => {
+    if (needsJacketChoice && activeOutfit.id !== promptedFor) {
+      promptedFor = activeOutfit.id;
+      onJacketSheetOpen();
+    }
+  }, [needsJacketChoice, activeOutfit?.id]);
+
+  const onPickJacket = (pick: Jacket | false) => {
+    updateOutfit(activeOutfit.id, { jacket: pick });
+    onJacketSheetClose();
+  };
 
   const onFetchNextOutfit = () => {
     if (!outfits) return;
@@ -247,7 +323,7 @@ const Home = () => {
                 p: 2,
                 borderRadius: "xl",
                 border: "1px solid",
-                borderColor: jacket ? "gray.200" : "accent.200",
+                borderColor: jacket || isSkipped ? "gray.200" : "accent.200",
                 backgroundColor: "white",
               }}
             >
@@ -270,39 +346,28 @@ const Home = () => {
                   />
                 </Box>
               ) : (
-                <Flex
-                  sx={{
-                    w: 12,
-                    h: 12,
-                    flexShrink: 0,
-                    borderRadius: "lg",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    backgroundColor: "accent.50",
-                    color: "accent.600",
-                  }}
-                >
-                  <Icon as={GiSleevelessJacket} sx={{ w: 7, h: 7 }} />
-                </Flex>
+                <JacketIcon />
               )}
               <Box sx={{ flex: 1, minW: 0 }}>
                 <Eyebrow>Today&apos;s jacket</Eyebrow>
                 <Text noOfLines={1} sx={{ fontWeight: "medium" }}>
-                  {jacket ? jacket.title : "Which one today?"}
+                  {jacket
+                    ? jacket.title
+                    : isSkipped
+                    ? "No jacket today"
+                    : "Which one today?"}
                 </Text>
               </Box>
-              {temperatureJackets.length > 1 && (
-                <Button
-                  onClick={onJacketSheetOpen}
-                  size="md"
-                  {...(jacket
-                    ? { variant: "ghost" }
-                    : { colorScheme: "accent", bg: "accent.600" })}
-                  sx={{ minH: "44px", px: 5, borderRadius: "full" }}
-                >
-                  {jacket ? "Change" : "Choose"}
-                </Button>
-              )}
+              <Button
+                onClick={onJacketSheetOpen}
+                size="md"
+                {...(jacket || isSkipped
+                  ? { variant: "ghost" }
+                  : { colorScheme: "accent", bg: "accent.600" })}
+                sx={{ minH: "44px", px: 5, borderRadius: "full" }}
+              >
+                {jacket || isSkipped ? "Change" : "Choose"}
+              </Button>
             </Flex>
           )}
 
@@ -351,80 +416,51 @@ const Home = () => {
                   {weatherData && (
                     <Text sx={{ color: "gray.600", mb: 3 }}>
                       It&apos;s {Math.round(weatherData.main.temp)}° with{" "}
-                      {weatherData.weather[0]?.description}. Each of these suits
-                      the weather.
+                      {weatherData.weather[0]?.description}.
+                      {temperatureJackets.length > 0 &&
+                        " These suit the weather."}
                     </Text>
                   )}
-                  {temperatureJackets.map((option) => {
-                    const isChosen = option.id === activeOutfit.jacket?.id;
-                    return (
-                      <Flex
-                        key={option.id}
-                        as="button"
-                        role="radio"
-                        aria-checked={isChosen}
-                        onClick={() => {
-                          updateOutfit(activeOutfit.id, { jacket: option });
-                          onJacketSheetClose();
-                        }}
-                        sx={{
-                          w: "100%",
-                          alignItems: "center",
-                          gap: 3,
-                          p: 2,
-                          mb: 2,
-                          textAlign: "left",
-                          borderRadius: "xl",
-                          border: "2px solid",
-                          borderColor: isChosen ? "accent.600" : "gray.200",
-                          backgroundColor: "white",
-                        }}
-                      >
+                  {options.map((option) => (
+                    <Choice
+                      key={option.id}
+                      isChosen={chosen ? option.id === chosen.id : false}
+                      onClick={() => onPickJacket(option)}
+                      picture={
                         <Image
                           src={option.imageUrl}
                           alt=""
                           sx={{
-                            w: 14,
-                            h: 14,
+                            w: 12,
+                            h: 12,
                             borderRadius: "lg",
                             objectFit: "cover",
                           }}
                         />
-                        <Box sx={{ flex: 1, minW: 0 }}>
-                          <Text noOfLines={1} sx={{ fontWeight: "medium" }}>
-                            {option.title}
-                          </Text>
-                          <Text sx={{ fontSize: "sm", color: "gray.600" }}>
-                            For {option.maxTemperature}° or cooler
-                          </Text>
-                        </Box>
-                        <Icon
-                          as={
-                            isChosen
-                              ? MdRadioButtonChecked
-                              : MdRadioButtonUnchecked
-                          }
-                          sx={{
-                            w: 6,
-                            h: 6,
-                            color: isChosen ? "accent.600" : "gray.400",
-                          }}
-                        />
-                      </Flex>
-                    );
-                  })}
+                      }
+                      title={option.title}
+                      detail={`For ${option.maxTemperature}° or cooler`}
+                    />
+                  ))}
+                  <Choice
+                    isChosen={isSkipped}
+                    onClick={() => onPickJacket(false)}
+                    picture={<JacketIcon />}
+                    title="No jacket today"
+                    detail="Go without one"
+                  />
                 </DrawerBody>
-                <DrawerFooter sx={{ pt: 0 }}>
-                  <Button
-                    variant="ghost"
-                    onClick={onJacketSheetClose}
-                    sx={{ w: "100%", borderRadius: "full" }}
-                  >
-                    {activeOutfit.jacket
-                      ? `Keep the ${activeOutfit.jacket.title}`
-                      : "Decide later"}
-                  </Button>
-                </DrawerFooter>
+                {chosen == null && (
+                  <DrawerFooter sx={{ pt: 0 }}>
+                    <Button
+                      variant="ghost"
+                      onClick={onJacketSheetClose}
+                      sx={{ w: "100%", borderRadius: "full" }}
+                    >
+                      Decide later
+                    </Button>
+                  </DrawerFooter>
+                )}
               </Swipeable>
             </DrawerContent>
           </Drawer>
