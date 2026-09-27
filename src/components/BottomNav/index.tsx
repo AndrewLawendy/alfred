@@ -1,7 +1,14 @@
 import { Box, Flex } from "@chakra-ui/react";
-import { MdHome } from "react-icons/md";
-import { GiClothes } from "react-icons/gi";
-import { FaTshirt, FaUser } from "react-icons/fa";
+import {
+  MdHome,
+  MdOutlineHome,
+  MdDryCleaning,
+  MdOutlineDryCleaning,
+  MdCheckroom,
+  MdOutlineCheckroom,
+  MdPerson,
+  MdPersonOutline,
+} from "react-icons/md";
 
 import BottomNavItem from "components/BottomNavItem";
 
@@ -19,11 +26,31 @@ const BottomNav = () => {
         pb: "env(safe-area-inset-bottom)",
       }}
     >
-      <Flex as="nav" justify="space-between" sx={{ p: 1 }}>
-        <BottomNavItem to="/" label="Home" icon={MdHome} />
-        <BottomNavItem to="/outfits" label="Outfits" icon={FaTshirt} />
-        <BottomNavItem to="/wardrobe" label="Wardrobe" icon={GiClothes} />
-        <BottomNavItem to="/account" label="Account" icon={FaUser} />
+      <Flex as="nav">
+        <BottomNavItem
+          to="/"
+          label="Home"
+          icon={MdOutlineHome}
+          activeIcon={MdHome}
+        />
+        <BottomNavItem
+          to="/outfits"
+          label="Outfits"
+          icon={MdOutlineDryCleaning}
+          activeIcon={MdDryCleaning}
+        />
+        <BottomNavItem
+          to="/wardrobe"
+          label="Wardrobe"
+          icon={MdOutlineCheckroom}
+          activeIcon={MdCheckroom}
+        />
+        <BottomNavItem
+          to="/account"
+          label="Account"
+          icon={MdPersonOutline}
+          activeIcon={MdPerson}
+        />
       </Flex>
     </Box>
   );

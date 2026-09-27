@@ -24,7 +24,7 @@ const theme = extendTheme({
   },
   space: {
     // Bottom nav height plus the iPhone home indicator
-    nav: "calc(4rem + env(safe-area-inset-bottom))",
+    nav: "calc(4.75rem + env(safe-area-inset-bottom))",
   },
   shadows: {
     material: "0 2px 4px var(--chakra-colors-gray-300)",
