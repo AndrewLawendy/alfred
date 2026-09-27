@@ -9,10 +9,11 @@
 // service worker, and the Workbox build step will be skipped.
 
 import { clientsClaim } from "workbox-core";
+import { CacheableResponsePlugin } from "workbox-cacheable-response";
 import { ExpirationPlugin } from "workbox-expiration";
 import { precacheAndRoute, createHandlerBoundToURL } from "workbox-precaching";
 import { registerRoute } from "workbox-routing";
-import { StaleWhileRevalidate } from "workbox-strategies";
+import { CacheFirst, StaleWhileRevalidate } from "workbox-strategies";
 
 declare const self: ServiceWorkerGlobalScope;
 
@@ -66,6 +67,27 @@ registerRoute(
       // Ensure that once this runtime cache reaches a maximum size the
       // least-recently used images are removed.
       new ExpirationPlugin({ maxEntries: 50 }),
+    ],
+  })
+);
+
+// Wardrobe photos from Firebase Storage, so outfits still show offline.
+// A photo's URL changes when it is replaced, so cache-first never goes stale.
+registerRoute(
+  ({ url, request }) =>
+    url.hostname === "firebasestorage.googleapis.com" &&
+    request.destination === "image",
+  new CacheFirst({
+    cacheName: "wardrobe-photos",
+    plugins: [
+      // <img> requests are cross-origin without CORS, so responses are opaque (status 0)
+      new CacheableResponsePlugin({ statuses: [0, 200] }),
+      // Opaque responses count heavily against storage quota: keep the cache bounded
+      new ExpirationPlugin({
+        maxEntries: 150,
+        maxAgeSeconds: 60 * 24 * 60 * 60,
+        purgeOnQuotaError: true,
+      }),
     ],
   })
 );
