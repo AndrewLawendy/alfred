@@ -16,6 +16,7 @@ const BottomNav = () => {
         width: "100%",
         backgroundColor: "white",
         boxShadow: "0px -1px var(--chakra-colors-chakra-border-color)",
+        pb: "env(safe-area-inset-bottom)",
       }}
     >
       <Flex as="nav" justify="space-between" sx={{ p: 1 }}>

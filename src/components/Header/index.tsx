@@ -16,8 +16,9 @@ const Header = () => {
     <Flex
       as="header"
       sx={{
-        height: 16,
+        minHeight: 16,
         p: 2,
+        pt: "calc(var(--chakra-space-2) + env(safe-area-inset-top))",
         justifyContent: "space-between",
         alignItems: "center",
         boxShadow: "material",

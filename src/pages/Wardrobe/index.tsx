@@ -140,7 +140,7 @@ const Wardrobe = () => {
       </Accordion>
 
       <AddItemsBtn
-        sx={{ position: "fixed", bottom: 16, right: 3 }}
+        sx={{ position: "fixed", bottom: "nav", right: 3 }}
         addOptions={addOptions}
       />
     </>

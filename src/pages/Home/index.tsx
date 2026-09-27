@@ -220,7 +220,7 @@ const Home = () => {
               <Flex
                 sx={{
                   position: "fixed",
-                  bottom: 16,
+                  bottom: "nav",
                   width: "100%",
                   justifyContent: "center",
                   alignItems: "center",
