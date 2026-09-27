@@ -1,4 +1,4 @@
-import { Flex, Box, Image, Spinner, Text } from "@chakra-ui/react";
+import { Flex, Box, Image, Skeleton, Text } from "@chakra-ui/react";
 
 import { WeatherResponse } from "resources/useWeather";
 
@@ -10,15 +10,17 @@ type WeatherProps = {
 const Weather = ({ weatherData, isLoading }: WeatherProps) => {
   const [weather] = weatherData?.weather || [];
 
-  if (isLoading || !weatherData) {
-    return <Spinner speed="0.65s" emptyColor="gray.200" color="teal.500" />;
+  if (isLoading) {
+    return <Skeleton height={12} width={36} borderRadius="md" />;
   }
+
+  if (!weatherData || !weather) return null;
 
   return (
     <Flex sx={{ alignItems: "center" }}>
       <Image
         alt="Weather Icon"
-        src={`http://openweathermap.org/img/wn/${weather.icon}@2x.png`}
+        src={`https://openweathermap.org/img/wn/${weather.icon}@2x.png`}
         sx={{ height: 12, width: 24, objectFit: "cover" }}
       />
       <Box>
