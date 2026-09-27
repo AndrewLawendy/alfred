@@ -1,7 +1,6 @@
 import { useMemo, useRef } from "react";
 import {
   Box,
-  Heading,
   Button,
   Flex,
   Grid,
@@ -36,6 +35,7 @@ import { orderBy } from "@firebase/firestore";
 import { useDocumentData } from "react-firebase-hooks/firestore";
 import { Link as WouterLink } from "wouter";
 
+import PageHeader from "components/PageHeader";
 import Weather from "components/Weather";
 import EmptyState from "components/EmptyState";
 import Loading from "components/Loading";
@@ -57,6 +57,14 @@ const slots = ["shirt", "belt", "pants", "shoes"] as const;
 
 const numbers = ["No", "One", "Two", "Three", "Four", "Five", "Six"];
 const count = (n: number) => numbers[n] || String(n);
+
+// e.g. "Mon 28 Sept"
+const today = () =>
+  new Date().toLocaleDateString("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  });
 
 const greeting = () => {
   const hour = new Date().getHours();
@@ -187,17 +195,18 @@ const Home = () => {
     });
   };
 
-  // Height taken by everything but the photos: header and greeting (144px),
+  // Height taken by everything but the photos: date and greeting (114px),
   // weather card (68), action bar (64), plus the jacket card and up-next row
-  const fixedHeight = 276 + (hasJacketCard ? 72 : 0) + (upNext ? 56 : 0);
+  const fixedHeight = 246 + (hasJacketCard ? 72 : 0) + (upNext ? 56 : 0);
 
   if (!user) return null;
 
   return (
     <>
-      <Heading size="lg" noOfLines={1} sx={{ mb: 3 }}>
-        {greeting()}, {user.displayName?.split(" ")[0]}.
-      </Heading>
+      <PageHeader
+        eyebrow={`Today · ${today()}`}
+        title={`${greeting()}, ${user.displayName?.split(" ")[0]}.`}
+      />
       <Box sx={{ mb: 3 }}>
         <Weather
           weatherData={weatherData}

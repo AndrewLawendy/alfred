@@ -3,6 +3,7 @@ import { useLocation, useRoute } from "wouter";
 import { Box, Button, Flex, Icon, Text } from "@chakra-ui/react";
 import { MdAdd } from "react-icons/md";
 
+import PageHeader from "components/PageHeader";
 import useData from "resources/useData";
 import { openNewItem } from "utils/history";
 import { Item } from "utils/types";
@@ -44,6 +45,14 @@ const Wardrobe = () => {
 
   return (
     <>
+      <PageHeader
+        title="Wardrobe"
+        subtitle={
+          allItems
+            ? `${allItems.length} piece${allItems.length === 1 ? "" : "s"}`
+            : undefined
+        }
+      />
       <Flex
         role="tablist"
         sx={{

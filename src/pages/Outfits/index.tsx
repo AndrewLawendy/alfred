@@ -5,10 +5,9 @@ import {
   Grid,
   Heading,
   Stack,
-  IconButton,
+  Button,
   Icon,
   Flex,
-  Text,
 } from "@chakra-ui/react";
 import {
   DragDropContext,
@@ -24,6 +23,7 @@ import { Outfit } from "utils/types";
 
 import OutfitReference from "components/OutfitReference";
 import Loading from "components/Loading";
+import PageHeader from "components/PageHeader";
 import EmptyState from "components/EmptyState";
 
 import useData from "resources/useData";
@@ -54,6 +54,20 @@ const Outfits = () => {
 
   return (
     <>
+      <PageHeader
+        title="Outfits"
+        subtitle="Worn in order, one a day. Drag to reorder."
+        action={
+          <Button
+            onClick={openNewOutfit}
+            leftIcon={<Icon as={MdAdd} sx={{ w: 5, h: 5 }} />}
+            colorScheme="brand"
+            sx={{ minH: "44px", borderRadius: "full", flexShrink: 0 }}
+          >
+            New
+          </Button>
+        }
+      />
       {isOutfitsLoading || !outfits ? (
         <Loading message="Loading your outfits" columns={1} />
       ) : outfits.length === 0 ? (
@@ -66,17 +80,13 @@ const Outfits = () => {
         />
       ) : (
         <>
-          <Text sx={{ mb: 4, color: "gray.600" }}>
-            Alfred lays these out in order, one a day. Drag the handle to change
-            what comes next.
-          </Text>
           <DragDropContext onDragEnd={onDragEnd}>
             <Droppable droppableId="outfits">
               {(provided) => (
                 <Stack
                   {...provided.droppableProps}
                   ref={provided.innerRef}
-                  sx={{ pb: 14 }}
+                  sx={{ pb: 4 }}
                 >
                   {outfits.map((outfit, index) => {
                     return (
@@ -178,30 +188,6 @@ const Outfits = () => {
           </DragDropContext>
         </>
       )}
-
-      <IconButton
-        onClick={openNewOutfit}
-        aria-label="New outfit"
-        size="lg"
-        colorScheme="brand"
-        icon={
-          <Icon
-            as={MdAdd}
-            color="white"
-            sx={{
-              width: 7,
-              height: 7,
-            }}
-          />
-        }
-        sx={{
-          boxShadow: "material",
-          position: "fixed",
-          bottom: "nav",
-          right: 3,
-          borderRadius: "full",
-        }}
-      />
     </>
   );
 };
