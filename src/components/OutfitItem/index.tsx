@@ -16,6 +16,8 @@ interface OutfitItemProps extends SkeletonProps, Pick<Item, "type"> {
   title?: string;
   description?: string;
   isLoaded?: boolean;
+  // Crop the photo to this ratio instead of the default 162px height
+  aspectRatio?: number;
 }
 
 const OutfitItem = ({
@@ -25,6 +27,7 @@ const OutfitItem = ({
   imageUrl,
   isLoaded = true,
   type,
+  aspectRatio,
   ...props
 }: OutfitItemProps) => {
   const Wrapper = ({ children }: { children: ReactNode }) =>
@@ -53,7 +56,13 @@ const OutfitItem = ({
           <Image
             alt={title}
             src={imageUrl}
-            sx={{ width: "100%", height: 162, objectFit: "cover" }}
+            sx={{
+              width: "100%",
+              objectFit: "cover",
+              ...(aspectRatio
+                ? { aspectRatio: `${aspectRatio}` }
+                : { height: 162 }),
+            }}
           />
         </Box>
         {title && (

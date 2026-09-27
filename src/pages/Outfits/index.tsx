@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { orderBy } from "@firebase/firestore";
 import {
+  Badge,
   Box,
   Grid,
   Heading,
@@ -16,7 +17,7 @@ import {
   Draggable,
   DropResult,
 } from "react-beautiful-dnd";
-import { MdAdd, MdAutoAwesome, MdDryCleaning } from "react-icons/md";
+import { MdAdd, MdDryCleaning } from "react-icons/md";
 import { GrDrag } from "react-icons/gr";
 
 import { Outfit } from "utils/types";
@@ -29,6 +30,8 @@ import useData from "resources/useData";
 import useUpdateDocument from "resources/useUpdateDocument";
 
 import OutfitDetails from "./OutfitDetails";
+
+const fields = ["shirt", "belt", "pants", "shoes"] as const;
 
 const Outfits = () => {
   const [currentOutfit, setCurrentOutfit] = useState<Outfit>();
@@ -110,6 +113,7 @@ const Outfits = () => {
                                 borderColor: "gray.100",
                                 display: "flex",
                                 justifyContent: "space-between",
+                                alignItems: "center",
                               }}
                             >
                               <Heading as="h6" size="sm">
@@ -117,11 +121,23 @@ const Outfits = () => {
                               </Heading>
 
                               <Flex sx={{ gap: 2 }}>
-                                {outfit.active && <Icon as={MdAutoAwesome} />}
+                                {outfit.active && (
+                                  <Badge colorScheme="teal" alignSelf="center">
+                                    Today
+                                  </Badge>
+                                )}
 
                                 <Box
-                                  as="i"
-                                  sx={{ height: "16px" }}
+                                  aria-label="Drag to reorder"
+                                  sx={{
+                                    // 44px touch target around a 16px icon
+                                    w: "44px",
+                                    h: "44px",
+                                    m: -2,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                  }}
                                   {...provided.dragHandleProps}
                                 >
                                   <Icon as={GrDrag} />
@@ -134,10 +150,13 @@ const Outfits = () => {
                                 sx={{ backgroundColor: "white" }}
                                 pointerEvents="none"
                               >
-                                <OutfitReference reference={outfit.shirt} />
-                                <OutfitReference reference={outfit.belt} />
-                                <OutfitReference reference={outfit.pants} />
-                                <OutfitReference reference={outfit.shoes} />
+                                {fields.map((field) => (
+                                  <OutfitReference
+                                    key={field}
+                                    reference={outfit[field]}
+                                    aspectRatio={1}
+                                  />
+                                ))}
                               </Grid>
                             )}
                           </Box>
