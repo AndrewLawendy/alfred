@@ -24,7 +24,6 @@ import {
 } from "react-icons/md";
 import omit from "lodash.omit";
 
-import OutfitItem from "components/OutfitItem";
 import FormInput from "components/FormInput";
 import PhotoInput from "components/PhotoInput";
 import Loading from "components/Loading";
@@ -42,6 +41,8 @@ import geFileURL from "utils/geFileURL";
 import resizeImage from "utils/resizeImage";
 
 import { Item } from "utils/types";
+
+import ItemTile from "./ItemTile";
 
 const formBase = {
   title: { initialValue: "", isRequired: true },
@@ -117,7 +118,7 @@ const WardrobeItem = ({ type, formData, children }: WardrobeItemPros) => {
     : `Add new ${type}`;
 
   const onClose = () => {
-    navigate("");
+    navigate(`/${type}`);
   };
 
   const reset = () => {
@@ -190,15 +191,11 @@ const WardrobeItem = ({ type, formData, children }: WardrobeItemPros) => {
   return (
     <>
       {items.length > 0 ? (
-        <Grid templateColumns="repeat(3, 1fr)" gap={2}>
+        <Grid templateColumns="repeat(2, 1fr)" columnGap={3} rowGap={4}>
           {items.map((item) => (
-            <OutfitItem
+            <ItemTile
               key={item.id}
-              id={item.id}
-              type={type}
-              title={item.title}
-              description={item.description}
-              imageUrl={item.imageUrl}
+              item={item}
               onClick={() => navigate(`/${type}/${item.id}`)}
             />
           ))}
