@@ -20,6 +20,7 @@ const JacketsForm = ({
       type="number"
       inputMode="numeric"
       suffix="°C"
+      placeholder="e.g. 18"
       isReadOnly={mode === "view"}
     />
   );

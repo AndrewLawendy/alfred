@@ -37,6 +37,21 @@ const signIn =
     ? signInWithRedirect
     : signInWithPopup;
 
+// Plain words for the errors people actually run into
+const friendlyError = (code?: string) =>
+  ({
+    "auth/popup-closed-by-user":
+      "The sign-in window was closed before sign-in finished. Please try again.",
+    "auth/cancelled-popup-request":
+      "The sign-in window was closed before sign-in finished. Please try again.",
+    "auth/popup-blocked":
+      "Your browser blocked the sign-in window. Allow pop-ups for Alfred and try again.",
+    "auth/network-request-failed":
+      "Alfred couldn't reach the internet. Check your connection and try again.",
+    "auth/account-exists-with-different-credential":
+      "This email already signs in another way. Try the other button.",
+  }[code || ""]);
+
 const container = {
   hidden: { opacity: 0, y: -10 },
   show: {
@@ -69,8 +84,7 @@ const Login = () => {
       toast({
         status: "error",
         title: "Couldn't sign you in",
-        // Firebase codes like auth/unauthorized-domain say what went wrong
-        description: error.code || error.message,
+        description: friendlyError(error.code) || error.code || error.message,
         isClosable: true,
       })
     );
@@ -142,7 +156,7 @@ const Login = () => {
         </Button>
       </motion.div>
       <motion.div variants={item}>
-        <Text sx={{ mt: 4, fontSize: "sm", color: "gray.500" }}>
+        <Text sx={{ mt: 4, fontSize: "sm", color: "gray.600" }}>
           New here? Signing in creates your account.
         </Text>
       </motion.div>
@@ -155,7 +169,7 @@ const Login = () => {
             left: 0,
             width: "100%",
             height: "100%",
-            backgroundColor: "rgba(250, 248, 245, 0.85)",
+            backgroundColor: "rgba(251, 250, 246, 0.85)",
             display: "flex",
             justifyContent: "center",
             alignItems: "center",

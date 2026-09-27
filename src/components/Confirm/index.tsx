@@ -31,7 +31,7 @@ const Confirm = ({
   children,
   message,
   okText = "Confirm",
-  cancelText = "Cancel",
+  cancelText = "Keep it",
   okType = "brand",
   onCancel = () => false,
   onConfirm,
@@ -60,12 +60,19 @@ const Confirm = ({
             <Box sx={{ pt: 2, pb: 2 }}>
               <DrawerBody>{message}</DrawerBody>
 
-              <DrawerFooter>
-                <Button variant="outline" mr={3} onClick={cancel}>
+              <DrawerFooter sx={{ gap: 3 }}>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={cancel}
+                  sx={{ flex: 1, borderRadius: "full" }}
+                >
                   {cancelText}
                 </Button>
                 <Button
                   colorScheme={okType}
+                  size="lg"
+                  sx={{ flex: 1, borderRadius: "full" }}
                   onClick={() => {
                     onConfirm();
                     onClose();

@@ -6,6 +6,7 @@ import {
   IconButton,
   Icon,
   Text,
+  Heading,
   Drawer,
   DrawerBody,
   DrawerFooter,
@@ -50,6 +51,14 @@ type ItemForm = FormConfig & {
 export interface ChildrenProps extends FromReturn<ItemForm> {
   mode: "submit" | "view";
 }
+
+const examples: Record<Item["type"], string> = {
+  shirt: "e.g. White oxford",
+  belt: "e.g. Brown leather",
+  pants: "e.g. Navy chinos",
+  shoes: "e.g. Tan loafers",
+  jacket: "e.g. Grey wool overcoat",
+};
 
 const formFor = (type: Item["type"], item?: Item): ItemForm => ({
   title: {
@@ -236,6 +245,7 @@ const ItemEditor = ({ type, item, headingRef }: EditorProps) => {
                 onBlur={onBlur}
                 isReadOnly={isLoading}
                 isRequired
+                placeholder={examples[type]}
               />
               <FormInput
                 label="Description (Optional)"
@@ -245,6 +255,7 @@ const ItemEditor = ({ type, item, headingRef }: EditorProps) => {
                 onChange={onChange}
                 onBlur={onBlur}
                 isReadOnly={isLoading}
+                placeholder="e.g. Slim fit, goes with anything"
               />
 
               {type === "jacket" && <JacketsForm mode={mode} {...form} />}
@@ -252,7 +263,14 @@ const ItemEditor = ({ type, item, headingRef }: EditorProps) => {
               {item && (
                 // Kept away from Save and Edit so it's never one stray tap away
                 <Confirm
-                  message={`Are you sure you want to delete ${item.title}?`}
+                  message={
+                    <>
+                      <Heading size="md">Delete {item.title}?</Heading>
+                      <Text sx={{ mt: 1, color: "gray.600" }}>
+                        Its photo goes too. You can&apos;t undo this.
+                      </Text>
+                    </>
+                  }
                   onConfirm={onDelete}
                   okText="Delete"
                   okType="red"
@@ -321,7 +339,7 @@ const ItemPanel = ({
   }
   if (!item) {
     return (
-      <DrawerBody sx={{ pt: 16, textAlign: "center", color: "gray.500" }}>
+      <DrawerBody sx={{ pt: 16, textAlign: "center", color: "gray.600" }}>
         This item no longer exists.
       </DrawerBody>
     );
