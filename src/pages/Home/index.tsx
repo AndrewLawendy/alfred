@@ -1,17 +1,20 @@
-import { useEffect, useMemo } from "react";
+import { useMemo, useRef } from "react";
 import {
+  Box,
   Heading,
   Button,
   Flex,
   Grid,
   Drawer,
   DrawerBody,
+  DrawerFooter,
   DrawerHeader,
   DrawerOverlay,
   DrawerContent,
   Text,
   Link,
   Icon,
+  Image,
   useDisclosure,
   Popover,
   PopoverAnchor,
@@ -22,29 +25,83 @@ import {
 } from "@chakra-ui/react";
 import { GiSleevelessJacket } from "react-icons/gi";
 import { HiSwitchVertical } from "react-icons/hi";
-import { MdArrowForward, MdCheckroom, MdDryCleaning } from "react-icons/md";
+import {
+  MdArrowForward,
+  MdCheckroom,
+  MdDryCleaning,
+  MdRadioButtonChecked,
+  MdRadioButtonUnchecked,
+} from "react-icons/md";
 import { orderBy } from "@firebase/firestore";
+import { useDocumentData } from "react-firebase-hooks/firestore";
 import { Link as WouterLink } from "wouter";
 
 import Weather from "components/Weather";
 import EmptyState from "components/EmptyState";
 import Loading from "components/Loading";
 import OutfitReference from "components/OutfitReference";
-import OutfitItem from "components/OutfitItem";
+import Swipeable from "components/Swipeable";
 
 import useAuth from "hooks/useAuth";
+import useBackToClose from "hooks/useBackToClose";
 
 import useData from "resources/useData";
 import useUpdateDocument from "resources/useUpdateDocument";
 import useWeather from "resources/useWeather";
 
+import { openItem, openNewOutfit, openOutfit } from "utils/history";
 import { nextOutfit } from "utils/rotation";
-import { Jacket, Outfit } from "utils/types";
-import Swipeable from "components/Swipeable";
-import useBackToClose from "hooks/useBackToClose";
+import { Item, Jacket, Outfit } from "utils/types";
 
-// Outfit whose jacket prompt was dismissed; survives tab switches, resets on reload
-let dismissedJacketPromptFor: string | undefined;
+const slots = ["shirt", "belt", "pants", "shoes"] as const;
+
+const numbers = ["No", "One", "Two", "Three", "Four", "Five", "Six"];
+const count = (n: number) => numbers[n] || String(n);
+
+const greeting = () => {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
+};
+
+// Small label above a section, e.g. "UP NEXT"
+const Eyebrow = ({ children }: { children: string }) => (
+  <Text
+    sx={{
+      fontSize: "xs",
+      fontWeight: "semibold",
+      letterSpacing: "wider",
+      textTransform: "uppercase",
+      color: "gray.600",
+    }}
+  >
+    {children}
+  </Text>
+);
+
+const Swatch = ({ reference }: { reference: Outfit["shirt"] }) => {
+  const [item] = useDocumentData(reference);
+  return (
+    <Box
+      sx={{
+        w: 9,
+        h: 9,
+        borderRadius: "md",
+        overflow: "hidden",
+        backgroundColor: "surface",
+      }}
+    >
+      {item && (
+        <Image
+          src={(item as Item).imageUrl}
+          alt=""
+          sx={{ w: "100%", h: "100%", objectFit: "cover" }}
+        />
+      )}
+    </Box>
+  );
+};
 
 const Home = () => {
   const [user] = useAuth();
@@ -54,10 +111,13 @@ const Home = () => {
     onOpen: onSingleOutfitOpen,
   } = useDisclosure();
   const {
-    isOpen: isJacketDrawerOpen,
-    onOpen: onJacketDrawerOpen,
-    onClose: onJacketDrawerClose,
+    isOpen: isJacketSheetOpen,
+    onOpen: onJacketSheetOpen,
+    onClose: onJacketSheetClose,
   } = useDisclosure();
+  useBackToClose(isJacketSheetOpen, onJacketSheetClose);
+  // Focus the title on open, so no focus ring lands on the first jacket
+  const sheetTitleRef = useRef<HTMLElement>(null);
   const { data: weatherData, isLoading: isWeatherLoading } = useWeather();
   const [outfits, isOutfitsLoading] = useData<Outfit>(
     "outfits",
@@ -69,25 +129,38 @@ const Home = () => {
     const [firstOutfit] = outfits || [];
     return outfits?.find(({ active }) => active) || firstOutfit;
   }, [outfits]);
-  const [jackets] = useData<Jacket>("wardrobe-items");
-  const temperatureJackets = useMemo(() => {
-    if (jackets && weatherData) {
-      return jackets.filter(
-        ({ maxTemperature }) => maxTemperature >= weatherData.main.temp
-      );
-    } else {
-      return [];
-    }
-  }, [jackets, weatherData]);
+  const upNext =
+    outfits && outfits.length > 1 ? nextOutfit(outfits, activeOutfit) : null;
+  const [items] = useData<Item>("wardrobe-items");
+  const jackets = useMemo(
+    () =>
+      (items || []).filter((item): item is Jacket => item.type === "jacket"),
+    [items]
+  );
+  const temperatureJackets = useMemo(
+    () =>
+      weatherData
+        ? jackets.filter(
+            ({ maxTemperature }) => maxTemperature >= weatherData.main.temp
+          )
+        : [],
+    [jackets, weatherData]
+  );
 
-  const needsJacketChoice =
-    !!activeOutfit && !activeOutfit.jacket && temperatureJackets.length > 1;
+  // Without any jackets we can't tell whether one is needed, so say nothing
+  const verdict = !jackets.length
+    ? undefined
+    : temperatureJackets.length === 0
+    ? "No jacket needed"
+    : temperatureJackets.length === 1
+    ? `Your ${temperatureJackets[0].title} would suit`
+    : `${count(temperatureJackets.length)} jackets would suit`;
 
-  const onJacketPromptDismiss = () => {
-    dismissedJacketPromptFor = activeOutfit?.id;
-    onJacketDrawerClose();
-  };
-  useBackToClose(isJacketDrawerOpen, onJacketPromptDismiss);
+  // The chosen jacket, or the only one that suits
+  const jacket =
+    activeOutfit?.jacket ||
+    (temperatureJackets.length === 1 ? temperatureJackets[0] : undefined);
+  const hasJacketCard = Boolean(jacket || temperatureJackets.length > 1);
 
   const onFetchNextOutfit = () => {
     if (!outfits) return;
@@ -114,37 +187,27 @@ const Home = () => {
     });
   };
 
-  // A jacket (chosen, suggested or the chooser) adds a third row of photos
-  const rows = activeOutfit?.jacket || temperatureJackets.length > 0 ? 3 : 2;
-
-  // Ask once per outfit; primitive deps so Firestore refreshes don't reopen it
-  useEffect(() => {
-    if (needsJacketChoice && activeOutfit.id !== dismissedJacketPromptFor) {
-      onJacketDrawerOpen();
-    }
-  }, [needsJacketChoice, activeOutfit?.id]);
+  // Height taken by everything but the photos: header and greeting (144px),
+  // weather card (68), action bar (64), plus the jacket card and up-next row
+  const fixedHeight = 276 + (hasJacketCard ? 72 : 0) + (upNext ? 56 : 0);
 
   if (!user) return null;
 
   return (
     <>
-      <Flex
-        sx={{
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: 3,
-          mb: 4,
-        }}
-      >
-        <Heading size="lg" noOfLines={1}>
-          Hi, {user.displayName?.split(" ")[0]}
-        </Heading>
-
-        <Weather weatherData={weatherData} isLoading={isWeatherLoading} />
-      </Flex>
+      <Heading size="lg" noOfLines={1} sx={{ mb: 3 }}>
+        {greeting()}, {user.displayName?.split(" ")[0]}.
+      </Heading>
+      <Box sx={{ mb: 3 }}>
+        <Weather
+          weatherData={weatherData}
+          isLoading={isWeatherLoading}
+          verdict={activeOutfit ? verdict : undefined}
+        />
+      </Box>
 
       {isOutfitsLoading ? (
-        <Loading message="Loading today's outfit" columns={2} />
+        <Loading message="Laying out today's clothes" columns={2} />
       ) : activeOutfit ? (
         <>
           <Grid
@@ -153,91 +216,206 @@ const Home = () => {
             // Chakra's sx drops custom properties, so set the variable directly
             style={
               {
-                // Fit the whole outfit on screen: 2 rows, or 3 with a jacket.
-                // Space left after the header and greeting (144px), the gap and
-                // action bar (16 + 48px) and the nav, minus row gaps and each
-                // tile's 10px frame; between 120px and the usual 162px.
-                "--outfit-photo-height": `clamp(120px, calc((100dvh - 208px - env(safe-area-inset-top) - var(--chakra-space-nav)) / ${rows} - ${
-                  ((rows - 1) * 8) / rows + 10
-                }px), 162px)`,
+                // Fit the whole outfit on screen: what's left after the rest
+                // of the page and the nav, over two rows (8px gap, 10px frame
+                // each); between 110px and the usual 162px
+                "--outfit-photo-height": `clamp(110px, calc((100dvh - ${fixedHeight}px - env(safe-area-inset-top) - var(--chakra-space-nav)) / 2 - 14px), 162px)`,
               } as React.CSSProperties
             }
           >
-            <OutfitReference reference={activeOutfit.shirt} />
-            <OutfitReference reference={activeOutfit.belt} />
-            <OutfitReference reference={activeOutfit.pants} />
-            <OutfitReference reference={activeOutfit.shoes} />
-            {activeOutfit.jacket ? (
-              <OutfitItem
-                id={activeOutfit.jacket.id}
-                type="jacket"
-                imageUrl={activeOutfit.jacket.imageUrl}
-                // Tap to change it when there's more than one option
-                {...(temperatureJackets.length > 1 && {
-                  onClick: onJacketDrawerOpen,
-                  cursor: "pointer",
-                })}
-              />
-            ) : temperatureJackets.length === 1 ? (
-              <OutfitItem
-                id={temperatureJackets[0].id}
-                type="jacket"
-                imageUrl={temperatureJackets[0].imageUrl}
-              />
-            ) : temperatureJackets.length > 0 ? (
-              <Button
-                onClick={onJacketDrawerOpen}
-                height="calc(var(--outfit-photo-height) + 10px)"
-                flexDirection="column"
-                gap={2}
-                variant="outline"
-                borderStyle="dashed"
-                color="gray.600"
-              >
-                <Icon as={GiSleevelessJacket} color="gray.400" w={12} h={12} />
-                Choose a jacket
-              </Button>
-            ) : null}
+            {slots.map((slot) => (
+              <OutfitReference key={slot} reference={activeOutfit[slot]} />
+            ))}
           </Grid>
 
+          {hasJacketCard && (
+            <Flex
+              sx={{
+                mt: 2,
+                minH: 16,
+                alignItems: "center",
+                gap: 3,
+                p: 2,
+                borderRadius: "xl",
+                border: "1px solid",
+                borderColor: jacket ? "gray.200" : "accent.200",
+                backgroundColor: "white",
+              }}
+            >
+              {jacket ? (
+                <Box
+                  as="button"
+                  onClick={() => openItem(jacket.id)}
+                  aria-label={`Open ${jacket.title}`}
+                  sx={{ flexShrink: 0 }}
+                >
+                  <Image
+                    src={jacket.imageUrl}
+                    alt=""
+                    sx={{
+                      w: 12,
+                      h: 12,
+                      borderRadius: "lg",
+                      objectFit: "cover",
+                    }}
+                  />
+                </Box>
+              ) : (
+                <Flex
+                  sx={{
+                    w: 12,
+                    h: 12,
+                    flexShrink: 0,
+                    borderRadius: "lg",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: "accent.50",
+                    color: "accent.600",
+                  }}
+                >
+                  <Icon as={GiSleevelessJacket} sx={{ w: 7, h: 7 }} />
+                </Flex>
+              )}
+              <Box sx={{ flex: 1, minW: 0 }}>
+                <Eyebrow>Today&apos;s jacket</Eyebrow>
+                <Text noOfLines={1} sx={{ fontWeight: "medium" }}>
+                  {jacket ? jacket.title : "Which one today?"}
+                </Text>
+              </Box>
+              {temperatureJackets.length > 1 && (
+                <Button
+                  onClick={onJacketSheetOpen}
+                  size="md"
+                  {...(jacket
+                    ? { variant: "ghost" }
+                    : { colorScheme: "accent", bg: "accent.600" })}
+                  sx={{ minH: "44px", px: 5, borderRadius: "full" }}
+                >
+                  {jacket ? "Change" : "Choose"}
+                </Button>
+              )}
+            </Flex>
+          )}
+
+          {upNext && (
+            <Flex
+              as="button"
+              onClick={() => openOutfit(upNext.id)}
+              aria-label="Open the next outfit"
+              sx={{
+                mt: 2,
+                w: "100%",
+                minH: 12,
+                alignItems: "center",
+                gap: 3,
+                px: 2,
+                transition: "transform 0.1s",
+                _active: { transform: "scale(0.98)" },
+              }}
+            >
+              <Eyebrow>Up next</Eyebrow>
+              <Flex sx={{ gap: 1.5 }}>
+                {slots.map((slot) => (
+                  <Swatch key={slot} reference={upNext[slot]} />
+                ))}
+              </Flex>
+            </Flex>
+          )}
+
           <Drawer
-            isOpen={isJacketDrawerOpen}
-            onClose={onJacketPromptDismiss}
+            isOpen={isJacketSheetOpen}
+            onClose={onJacketSheetClose}
             placement="bottom"
+            initialFocusRef={sheetTitleRef}
           >
             <DrawerOverlay />
             <DrawerContent bg="transparent" boxShadow="none">
-              <Swipeable direction="down" onClose={onJacketPromptDismiss}>
+              <Swipeable direction="down" onClose={onJacketSheetClose}>
                 <DrawerHeader
-                  sx={{
-                    boxShadow: "material",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 2,
-                  }}
+                  ref={sheetTitleRef}
+                  tabIndex={-1}
+                  sx={{ pb: 1, _focus: { outline: "none" } }}
                 >
-                  Choose today&apos;s jacket
+                  Which jacket today?
                 </DrawerHeader>
                 <DrawerBody>
-                  <Text sx={{ color: "gray.600" }}>
-                    {temperatureJackets.length} jackets suit today&apos;s
-                    weather. Pick one for this outfit.
-                  </Text>
-                  <Grid templateColumns="repeat(2, 1fr)" gap={2} my={3}>
-                    {temperatureJackets.map((jacket) => (
-                      <OutfitItem
-                        key={jacket.id}
-                        id={jacket.id}
-                        type="jacket"
-                        imageUrl={jacket.imageUrl}
+                  {weatherData && (
+                    <Text sx={{ color: "gray.600", mb: 3 }}>
+                      It&apos;s {Math.round(weatherData.main.temp)}° with{" "}
+                      {weatherData.weather[0]?.description}. Each of these suits
+                      the weather.
+                    </Text>
+                  )}
+                  {temperatureJackets.map((option) => {
+                    const isChosen = option.id === activeOutfit.jacket?.id;
+                    return (
+                      <Flex
+                        key={option.id}
+                        as="button"
+                        role="radio"
+                        aria-checked={isChosen}
                         onClick={() => {
-                          updateOutfit(activeOutfit.id, { jacket });
-                          onJacketDrawerClose();
+                          updateOutfit(activeOutfit.id, { jacket: option });
+                          onJacketSheetClose();
                         }}
-                      />
-                    ))}
-                  </Grid>
+                        sx={{
+                          w: "100%",
+                          alignItems: "center",
+                          gap: 3,
+                          p: 2,
+                          mb: 2,
+                          textAlign: "left",
+                          borderRadius: "xl",
+                          border: "2px solid",
+                          borderColor: isChosen ? "accent.600" : "gray.200",
+                          backgroundColor: "white",
+                        }}
+                      >
+                        <Image
+                          src={option.imageUrl}
+                          alt=""
+                          sx={{
+                            w: 14,
+                            h: 14,
+                            borderRadius: "lg",
+                            objectFit: "cover",
+                          }}
+                        />
+                        <Box sx={{ flex: 1, minW: 0 }}>
+                          <Text noOfLines={1} sx={{ fontWeight: "medium" }}>
+                            {option.title}
+                          </Text>
+                          <Text sx={{ fontSize: "sm", color: "gray.600" }}>
+                            For {option.maxTemperature}° or cooler
+                          </Text>
+                        </Box>
+                        <Icon
+                          as={
+                            isChosen
+                              ? MdRadioButtonChecked
+                              : MdRadioButtonUnchecked
+                          }
+                          sx={{
+                            w: 6,
+                            h: 6,
+                            color: isChosen ? "accent.600" : "gray.400",
+                          }}
+                        />
+                      </Flex>
+                    );
+                  })}
                 </DrawerBody>
+                <DrawerFooter sx={{ pt: 0 }}>
+                  <Button
+                    variant="ghost"
+                    onClick={onJacketSheetClose}
+                    sx={{ w: "100%", borderRadius: "full" }}
+                  >
+                    {activeOutfit.jacket
+                      ? `Keep the ${activeOutfit.jacket.title}`
+                      : "Decide later"}
+                  </Button>
+                </DrawerFooter>
               </Swipeable>
             </DrawerContent>
           </Drawer>
@@ -292,13 +470,14 @@ const Home = () => {
               </Flex>
             </PopoverAnchor>
             <PopoverContent>
-              <PopoverHeader>You only have one outfit!</PopoverHeader>
+              <PopoverHeader>Just one outfit so far</PopoverHeader>
               <PopoverBody>
-                Go to{" "}
-                <Link color="accent.700" as={WouterLink} to="/outfits">
+                Alfred rotates between outfits, so there&apos;s nothing to move
+                on to yet. Add another in{" "}
+                <Link color="accent.600" as={WouterLink} to="/outfits">
                   Outfits
-                </Link>{" "}
-                and start adding
+                </Link>
+                .
               </PopoverBody>
               <PopoverArrow />
             </PopoverContent>
@@ -306,19 +485,20 @@ const Home = () => {
         </>
       ) : (
         <EmptyState
-          {...(jackets?.length
+          {...(items?.length
             ? {
                 icon: MdDryCleaning,
-                title: "Build your first outfit",
+                title: "Your wardrobe is in. Now, a first outfit.",
                 description:
-                  "Pick a shirt, belt, pants and shoes from your wardrobe.",
+                  "Pick one shirt, one belt, one pair of pants and one pair of shoes. Alfred will add it to the rotation.",
                 actionLabel: "Create an outfit",
-                to: "/outfits",
+                onAction: openNewOutfit,
               }
             : {
                 icon: MdCheckroom,
-                title: "Start with your wardrobe",
-                description: "Add a few shirts, belts, pants and shoes first.",
+                title: "Shall we begin with your wardrobe?",
+                description:
+                  "Photograph a few shirts, belts, pants and shoes. Once they're in, Alfred will lay out something to wear each morning.",
                 actionLabel: "Open wardrobe",
                 to: "/wardrobe",
               })}
