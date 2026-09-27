@@ -4,6 +4,7 @@ import { WiThermometer } from "react-icons/wi";
 
 import OutfitReference from "components/OutfitReference";
 import useData from "resources/useData";
+import { openOutfit } from "utils/history";
 import { Item, Outfit } from "utils/types";
 
 const slots = ["shirt", "belt", "pants", "shoes"] as const;
@@ -82,7 +83,13 @@ const ItemDetails = ({ item }: { item: Item }) => {
             {usedIn.map(({ outfit, number }) => (
               <Flex
                 key={outfit.id}
+                as="button"
+                onClick={() => openOutfit(outfit.id)}
                 sx={{
+                  w: "100%",
+                  textAlign: "left",
+                  transition: "transform 0.1s",
+                  _active: { transform: "scale(0.98)" },
                   alignItems: "center",
                   gap: 3,
                   p: 2,

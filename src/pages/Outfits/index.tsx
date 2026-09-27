@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { orderBy } from "@firebase/firestore";
 import {
   Badge,
@@ -9,7 +8,6 @@ import {
   IconButton,
   Icon,
   Flex,
-  useDisclosure,
 } from "@chakra-ui/react";
 import {
   DragDropContext,
@@ -20,6 +18,7 @@ import {
 import { MdAdd, MdDryCleaning } from "react-icons/md";
 import { GrDrag } from "react-icons/gr";
 
+import { openNewOutfit, openOutfit } from "utils/history";
 import { Outfit } from "utils/types";
 
 import OutfitReference from "components/OutfitReference";
@@ -29,29 +28,27 @@ import EmptyState from "components/EmptyState";
 import useData from "resources/useData";
 import useUpdateDocument from "resources/useUpdateDocument";
 
-import OutfitDetails from "./OutfitDetails";
-
 const fields = ["shirt", "belt", "pants", "shoes"] as const;
 
 const Outfits = () => {
-  const [currentOutfit, setCurrentOutfit] = useState<Outfit>();
   const [outfits, isOutfitsLoading] = useData<Outfit>(
     "outfits",
     orderBy("order")
   );
   const [updateOutfit] = useUpdateDocument("outfits");
-  const { isOpen, onOpen, onClose } = useDisclosure();
 
   const onDragEnd = (result: DropResult) => {
     const { destination, source } = result;
     if (!destination || !outfits) return;
 
-    const [droppedItem] = outfits.splice(source.index, 1);
-    outfits.splice(destination.index, 0, droppedItem);
+    const reordered = [...outfits];
+    const [dropped] = reordered.splice(source.index, 1);
+    reordered.splice(destination.index, 0, dropped);
 
-    outfits.forEach((outfit, index) =>
-      updateOutfit(outfit.id, { ...outfit, order: index })
-    );
+    // Only write the outfits whose position actually changed
+    reordered.forEach((outfit, order) => {
+      if (outfit.order !== order) updateOutfit(outfit.id, { order });
+    });
   };
 
   return (
@@ -64,7 +61,7 @@ const Outfits = () => {
           title="No outfits yet"
           description="Pick a shirt, belt, pants and shoes to make your first one."
           actionLabel="Create an outfit"
-          onAction={onOpen}
+          onAction={openNewOutfit}
         />
       ) : (
         <DragDropContext onDragEnd={onDragEnd}>
@@ -86,10 +83,7 @@ const Outfits = () => {
                         <Box
                           ref={provided.innerRef}
                           {...provided.draggableProps}
-                          onClick={() => {
-                            setCurrentOutfit(outfit);
-                            onOpen();
-                          }}
+                          onClick={() => openOutfit(outfit.id)}
                         >
                           <Box
                             sx={{
@@ -176,7 +170,7 @@ const Outfits = () => {
       )}
 
       <IconButton
-        onClick={onOpen}
+        onClick={openNewOutfit}
         aria-label="Add Outfit"
         size="lg"
         colorScheme="brand"
@@ -197,16 +191,6 @@ const Outfits = () => {
           right: 3,
           borderRadius: "full",
         }}
-      />
-
-      <OutfitDetails
-        isOpen={isOpen}
-        onClose={() => {
-          onClose();
-          setCurrentOutfit(undefined);
-        }}
-        currentOutfit={currentOutfit}
-        outfits={outfits}
       />
     </>
   );
