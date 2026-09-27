@@ -18,6 +18,9 @@ const theme = extendTheme({
         display: "flex",
         flexDirection: "column",
         minHeight: "100vh",
+        // 100vh ignores the phone browser's address bar, leaving a scroll on
+        // every page; dvh follows the visible area
+        "@supports (min-height: 100dvh)": { minHeight: "100dvh" },
       },
     },
   },

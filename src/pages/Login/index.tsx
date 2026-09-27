@@ -86,6 +86,7 @@ const Login = () => {
       as={motion.div}
       sx={{
         minH: "100vh",
+        "@supports (min-height: 100dvh)": { minH: "100dvh" },
         display: "flex",
         flexDirection: "column",
         px: 4,
