@@ -10,6 +10,15 @@ import { Item } from "utils/types";
 
 import ItemTile from "./ItemTile";
 
+// Pants and shoes are already plural ("No pants yet", not "No pantss yet")
+const plurals: Record<Item["type"], string> = {
+  shirt: "shirts",
+  jacket: "jackets",
+  belt: "belts",
+  pants: "pants",
+  shoes: "shoes",
+};
+
 // The grid for one wardrobe tab; items open in the app-wide ItemScreen
 const WardrobeItem = ({ type }: Pick<Item, "type">) => {
   const [items, isItemsLoading] = useData<Item>(
@@ -18,7 +27,7 @@ const WardrobeItem = ({ type }: Pick<Item, "type">) => {
   );
 
   if (isItemsLoading || !items) {
-    return <Loading message={`Loading your ${type}s`} />;
+    return <Loading message={`Loading your ${plurals[type]}`} />;
   }
 
   return items.length > 0 ? (
@@ -29,7 +38,7 @@ const WardrobeItem = ({ type }: Pick<Item, "type">) => {
     </Grid>
   ) : (
     <EmptyState
-      title={`No ${type}s yet`}
+      title={`No ${plurals[type]} yet`}
       description={
         type === "jacket"
           ? "Add a jacket and Alfred will suggest it when the temperature drops."
