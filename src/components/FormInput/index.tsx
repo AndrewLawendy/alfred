@@ -10,7 +10,8 @@ import {
 } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "framer-motion";
 
-interface FormInputProps extends InputProps {
+// `as` is left out: Input only renders an <input>
+interface FormInputProps extends Omit<InputProps, "as"> {
   label: string;
   error?: string | null;
   suffix?: string;
