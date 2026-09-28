@@ -1,9 +1,11 @@
+import { getFunctions, httpsCallable } from "firebase/functions";
 import {
   arrayRemove,
   arrayUnion,
   doc,
   serverTimestamp,
   setDoc,
+  Timestamp,
 } from "firebase/firestore";
 import {
   deleteToken,
@@ -21,6 +23,7 @@ export type Reminder = {
   days: number[]; // 0 = Sunday … 6 = Saturday
   timeZone: string;
   tokens?: string[];
+  lastSentAt?: Timestamp;
 };
 
 // The Egyptian work week
@@ -85,3 +88,11 @@ export const turnOff = async () => {
     // Nothing stored to clear
   }
 };
+
+// Today's reminder, sent now to this person's devices (the scheduled function
+// shares the same message)
+export const sendTest = () =>
+  httpsCallable<void, { sent: number }>(
+    getFunctions(auth.app),
+    "sendTestReminder"
+  )();

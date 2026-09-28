@@ -24,14 +24,16 @@ test("not on a day off (Friday)", () => {
   assert.equal(isDue(cairo, new Date("2026-10-02T04:40:00Z")), false);
 });
 
-test("only once a day", () => {
+test("only once a day for the same time", () => {
   assert.equal(
-    isDue(
-      { ...cairo, lastSentOn: "2026-09-27" },
-      new Date("2026-09-27T04:40:00Z")
-    ),
+    isDue({ ...cairo, lastSentFor: "2026-09-28 07:30" }, mondayMorning),
     false
   );
+});
+
+test("a changed time goes out again the same day", () => {
+  const later = { ...cairo, time: "07:40", lastSentFor: "2026-09-28 07:30" };
+  assert.equal(isDue(later, new Date("2026-09-28T04:45:00Z")), true);
 });
 
 test("not without a device", () => {

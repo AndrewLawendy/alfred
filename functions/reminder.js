@@ -25,20 +25,26 @@ const localParts = (now, timeZone) => {
   };
 };
 
-// Due once a day, on one of its days, within an hour after its time. The hour
-// covers a late or skipped scheduler run; lastSentOn stops a second send.
+// Due once a day per time, on one of its days, within an hour after its time.
+// The hour covers a late or skipped scheduler run; lastSentFor ("date time")
+// stops a second send, yet lets a changed time go out again that day.
 const WINDOW_MINUTES = 60;
+
+const sentKey = (reminder, now) =>
+  `${localParts(now, reminder.timeZone || "UTC").date} ${
+    reminder.time || "07:30"
+  }`;
 
 const isDue = (reminder, now) => {
   if (!reminder.tokens || reminder.tokens.length === 0) return false;
-  const { date, day, minutes } = localParts(now, reminder.timeZone || "UTC");
+  const { day, minutes } = localParts(now, reminder.timeZone || "UTC");
   const [hour, minute] = (reminder.time || "07:30").split(":").map(Number);
   const start = hour * 60 + minute;
   return (
     (reminder.days || []).includes(day) &&
     minutes >= start &&
     minutes < start + WINDOW_MINUTES &&
-    reminder.lastSentOn !== date
+    reminder.lastSentFor !== sentKey(reminder, now)
   );
 };
 
@@ -69,4 +75,4 @@ const describe = ({ number, weather, jackets, chosen }) => {
   };
 };
 
-module.exports = { localParts, isDue, describe };
+module.exports = { localParts, isDue, sentKey, describe };

@@ -1,10 +1,11 @@
 const { onSchedule } = require("firebase-functions/v2/scheduler");
+const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const logger = require("firebase-functions/logger");
 const { initializeApp } = require("firebase-admin/app");
 const { getFirestore, FieldValue } = require("firebase-admin/firestore");
 const { getMessaging } = require("firebase-admin/messaging");
 
-const { isDue, describe, localParts } = require("./reminder");
+const { isDue, describe, sentKey } = require("./reminder");
 
 initializeApp();
 const db = getFirestore();
@@ -29,8 +30,8 @@ const isGone = (error) =>
     "messaging/invalid-argument",
   ].includes(error?.code);
 
-const remind = async (reference, reminder, now) => {
-  const uid = reference.id;
+// Title and body for this person's reminder right now, or null without outfits
+const compose = async (uid, reminder) => {
   const [outfitsSnapshot, itemsSnapshot] = await Promise.all([
     db.collection("outfits").where("user", "==", uid).get(),
     db.collection("wardrobe-items").where("user", "==", uid).get(),
@@ -38,7 +39,7 @@ const remind = async (reference, reminder, now) => {
   const outfits = outfitsSnapshot.docs
     .map((doc) => doc.data())
     .sort((a, b) => a.order - b.order);
-  if (outfits.length === 0) return;
+  if (outfits.length === 0) return null;
 
   const index = Math.max(
     0,
@@ -52,12 +53,16 @@ const remind = async (reference, reminder, now) => {
     return undefined;
   });
 
-  const { title, body } = describe({
+  return describe({
     number: index + 1,
     weather,
     jackets,
     chosen: outfits[index].jacket,
   });
+};
+
+// Send to every device of a reminder and drop the ones that are gone
+const send = async (reference, reminder, { title, body }) => {
   const { responses } = await getMessaging().sendEachForMulticast({
     tokens: reminder.tokens,
     data: { title, body, url: "/" },
@@ -65,14 +70,24 @@ const remind = async (reference, reminder, now) => {
   });
 
   const gone = reminder.tokens.filter((_, i) => isGone(responses[i].error));
-  await reference.update({
-    lastSentOn: localParts(now, reminder.timeZone || "UTC").date,
-    ...(gone.length && { tokens: FieldValue.arrayRemove(...gone) }),
-  });
-  logger.info("Sent the morning reminder", {
-    uid,
-    sent: responses.filter(({ success }) => success).length,
+  if (gone.length) {
+    await reference.update({ tokens: FieldValue.arrayRemove(...gone) });
+  }
+  const sent = responses.filter(({ success }) => success).length;
+  logger.info(`Sent a reminder to ${sent} device(s)`, {
+    uid: reference.id,
     removed: gone.length,
+  });
+  return sent;
+};
+
+const remind = async (reference, reminder, now) => {
+  const message = await compose(reference.id, reminder);
+  if (!message) return;
+  await send(reference, reminder, message);
+  await reference.update({
+    lastSentFor: sentKey(reminder, now),
+    lastSentAt: FieldValue.serverTimestamp(),
   });
 };
 
@@ -91,4 +106,23 @@ exports.morningReminder = onSchedule("every 15 minutes", async () => {
         )
       )
   );
+});
+
+// "Send a test" in Account: this person's reminder now, whatever the schedule
+exports.sendTestReminder = onCall(async (request) => {
+  const uid = request.auth?.uid;
+  if (!uid) throw new HttpsError("unauthenticated", "Sign in first.");
+  const reference = db.collection("reminders").doc(uid);
+  const reminder = (await reference.get()).data();
+  if (!reminder?.tokens?.length) {
+    throw new HttpsError(
+      "failed-precondition",
+      "Switch the reminder on on this device first."
+    );
+  }
+  const message = (await compose(uid, reminder)) || {
+    title: "Alfred",
+    body: "Your reminders work. Add an outfit to see it here each morning.",
+  };
+  return { sent: await send(reference, reminder, message) };
 });

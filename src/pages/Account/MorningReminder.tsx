@@ -22,6 +22,7 @@ import {
   reminderRef,
   Reminder,
   saveSchedule,
+  sendTest,
   turnOff,
   turnOn,
 } from "utils/reminders";
@@ -49,6 +50,31 @@ const MorningReminder = () => {
   const [isOn, setIsOn] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
   const toast = useToast();
+  const lastSentAt = (saved as Reminder | undefined)?.lastSentAt?.toDate();
+
+  const onTest = async () => {
+    setIsBusy(true);
+    try {
+      const { data } = await sendTest();
+      toast({
+        status: "success",
+        title: "Test sent",
+        description: `It should arrive on ${data.sent} device${
+          data.sent === 1 ? "" : "s"
+        } in a few seconds.`,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        status: "error",
+        title: "Couldn't send a test",
+        description: (error as Error).message,
+        isClosable: true,
+      });
+    } finally {
+      setIsBusy(false);
+    }
+  };
 
   useEffect(() => {
     pushSupport().then((state) => {
@@ -178,6 +204,23 @@ const MorningReminder = () => {
               );
             })}
           </Flex>
+
+          {isOn && (
+            <Flex sx={{ mt: 4, alignItems: "center", gap: 3 }}>
+              <Text sx={{ flex: 1, fontSize: "sm", color: "gray.600" }}>
+                {lastSentAt
+                  ? `Last sent ${lastSentAt.toLocaleString("en-GB", {
+                      weekday: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}`
+                  : "Not sent yet"}
+              </Text>
+              <Button variant="outline" onClick={onTest} isLoading={isBusy}>
+                Send a test
+              </Button>
+            </Flex>
+          )}
         </>
       )}
     </Box>
