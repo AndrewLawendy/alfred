@@ -50,28 +50,43 @@ const isDue = (reminder, now) => {
 
 const numbers = ["No", "One", "Two", "Three", "Four", "Five", "Six"];
 
-// Title and body, e.g. "Today: Outfit No. 3" / "9° and light rain — two
-// jackets would suit. Tap to choose."
-const describe = ({ number, weather, jackets, chosen }) => {
-  const title = `Today: Outfit No. ${number}`;
-  if (!weather) return { title, body: "Tap to see what's laid out." };
-
+// The weather and what it means for a jacket, e.g. "9° and light rain — two
+// jackets would suit". The jacket already chosen only counts when the outfit
+// stays (after Next, a new jacket is chosen for the new outfit).
+const weatherLine = ({ weather, jackets, chosen }) => {
+  if (!weather) return "";
   const sky = `${Math.round(weather.temp)}° and ${weather.description}`;
-  if (chosen) return { title, body: `${sky}. With your ${chosen.title}.` };
-  if (chosen === false) return { title, body: `${sky}. No jacket today.` };
-  if (jackets.length === 0) return { title, body: `${sky}.` };
+  if (chosen) return `${sky} — with your ${chosen.title}.`;
+  if (chosen === false) return `${sky} — no jacket today.`;
+  if (jackets.length === 0) return `${sky}.`;
 
   const suitable = jackets.filter(
     ({ maxTemperature }) => maxTemperature >= weather.temp
   );
-  if (suitable.length === 0)
-    return { title, body: `${sky} — no jacket needed.` };
+  if (suitable.length === 0) return `${sky} — no jacket needed.`;
   if (suitable.length === 1)
-    return { title, body: `${sky} — your ${suitable[0].title} would suit.` };
+    return `${sky} — your ${suitable[0].title} would suit.`;
   const count = numbers[suitable.length] || String(suitable.length);
+  return `${sky} — ${count.toLowerCase()} jackets would suit.`;
+};
+
+// The morning nudge: move on to the next outfit (named piece by piece), plus
+// the weather. With a single outfit there's nothing to move on to.
+const describe = ({ isNudge, pieces, weather, jackets, chosen }) => {
+  const outfit = pieces.join(", ");
+  const firstLine = !outfit
+    ? "Tap to see it."
+    : isNudge
+    ? `Up next: ${outfit}.`
+    : `${outfit}.`;
   return {
-    title,
-    body: `${sky} — ${count.toLowerCase()} jackets would suit. Tap to choose.`,
+    title: isNudge ? "Time for the next outfit" : "Your outfit is laid out",
+    body: [
+      firstLine,
+      weatherLine({ weather, jackets, chosen: isNudge ? undefined : chosen }),
+    ]
+      .filter(Boolean)
+      .join("\n"),
   };
 };
 

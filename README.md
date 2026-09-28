@@ -22,8 +22,9 @@ Live: https://alfred-wardrobe-stylist.web.app
   outfit by picking one piece per category.
 - **Wardrobe:** your clothes by category, each with a photo, a title and an
   optional description.
-- **Morning reminder:** a notification at your time on your days (Account),
-  with today's outfit and whether it's a jacket day. On iPhone it needs
+- **Morning reminder:** a notification at your time on your days (Account)
+  nudging you to the next outfit, naming its pieces, with the weather and
+  jacket call; on Android, **Wear it** moves the rotation on from there. On iPhone it needs
   Alfred installed to the Home Screen.
 - **Shortcuts and sharing (Android):** long-press the icon for Next outfit,
   New outfit or Add to wardrobe, and share a photo from the gallery straight

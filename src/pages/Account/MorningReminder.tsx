@@ -131,7 +131,7 @@ const MorningReminder = () => {
             </Heading>
           </FormLabel>
           <Text sx={{ mt: 1, color: "gray.600" }}>
-            Today&apos;s outfit and whether it&apos;s a jacket day.
+            A nudge to move on to the next outfit, with the weather.
           </Text>
         </Box>
         {(support === "granted" || support === "default") && (

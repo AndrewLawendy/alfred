@@ -45,6 +45,15 @@ const compose = async (uid, reminder) => {
     0,
     outfits.findIndex(({ active }) => active)
   );
+  // Nudge towards the next outfit, unless there's only one
+  const isNudge = outfits.length > 1;
+  const outfit = outfits[isNudge ? (index + 1) % outfits.length : index];
+  const titles = Object.fromEntries(
+    itemsSnapshot.docs.map((doc) => [doc.id, doc.data().title])
+  );
+  const pieces = ["shirt", "belt", "pants", "shoes"]
+    .map((slot) => titles[outfit[slot]?.id])
+    .filter(Boolean);
   const jackets = itemsSnapshot.docs
     .map((doc) => doc.data())
     .filter(({ type }) => type === "jacket");
@@ -53,19 +62,18 @@ const compose = async (uid, reminder) => {
     return undefined;
   });
 
-  return describe({
-    number: index + 1,
-    weather,
-    jackets,
-    chosen: outfits[index].jacket,
-  });
+  return {
+    ...describe({ isNudge, pieces, weather, jackets, chosen: outfit.jacket }),
+    // "Wear it" moves the rotation on, like the Next outfit shortcut
+    ...(isNudge && { action: "/?action=next" }),
+  };
 };
 
 // Send to every device of a reminder and drop the ones that are gone
-const send = async (reference, reminder, { title, body }) => {
+const send = async (reference, reminder, { title, body, action }) => {
   const { responses } = await getMessaging().sendEachForMulticast({
     tokens: reminder.tokens,
-    data: { title, body, url: "/" },
+    data: { title, body, url: "/", ...(action && { action }) },
     webpush: { headers: { Urgency: "high", TTL: String(3 * 60 * 60) } },
   });
 

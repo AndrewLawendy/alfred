@@ -132,16 +132,22 @@ self.addEventListener("push", (event) => {
       body: data.body,
       icon: "/icons/icon-192.png",
       tag: "morning-reminder",
-      data: { url: data.url || "/" },
-    })
+      data: { url: data.url || "/", action: data.action },
+      // Android shows the button; iOS just opens the app on tap
+      ...(data.action && { actions: [{ action: "wear", title: "Wear it" }] }),
+    } as NotificationOptions)
   );
 });
 
 // Tapping it opens Today, reusing an open Alfred window when there is one
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const url = new URL(event.notification.data?.url || "/", self.location.origin)
-    .href;
+  // "Wear it" moves the rotation on; tapping the notification just opens Today
+  const { url: openUrl = "/", action } = event.notification.data || {};
+  const url = new URL(
+    event.action === "wear" && action ? action : openUrl,
+    self.location.origin
+  ).href;
   event.waitUntil(
     (async () => {
       const windows = await self.clients.matchAll({

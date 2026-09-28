@@ -44,34 +44,60 @@ const weather = { temp: 9, description: "light rain" };
 const coat = { title: "Camel overcoat", maxTemperature: 10 };
 const blazer = { title: "Navy blazer", maxTemperature: 18 };
 
-test("jacket lines", () => {
-  assert.equal(
-    describe({ number: 3, weather, jackets: [coat, blazer] }).body,
-    "9° and light rain — two jackets would suit. Tap to choose."
+const pieces = [
+  "White oxford",
+  "Brown leather",
+  "Charcoal wool",
+  "Brown oxfords",
+];
+
+test("nudges to the next outfit, naming its pieces and the weather", () => {
+  assert.deepEqual(
+    describe({ isNudge: true, pieces, weather, jackets: [coat, blazer] }),
+    {
+      title: "Time for the next outfit",
+      body:
+        "Up next: White oxford, Brown leather, Charcoal wool, Brown oxfords.\n" +
+        "9° and light rain — two jackets would suit.",
+    }
   );
-  assert.equal(
-    describe({
-      number: 3,
-      weather: { ...weather, temp: 15 },
-      jackets: [coat, blazer],
-    }).body,
-    "15° and light rain — your Navy blazer would suit."
-  );
-  assert.equal(
-    describe({ number: 3, weather: { ...weather, temp: 25 }, jackets: [coat] })
-      .body,
-    "25° and light rain — no jacket needed."
-  );
-  assert.equal(
-    describe({ number: 3, weather, jackets: [coat], chosen: coat }).body,
-    "9° and light rain. With your Camel overcoat."
-  );
-  assert.equal(
-    describe({ number: 3, weather, jackets: [coat], chosen: false }).body,
-    "9° and light rain. No jacket today."
-  );
-  assert.deepEqual(describe({ number: 2, jackets: [] }), {
-    title: "Today: Outfit No. 2",
-    body: "Tap to see what's laid out.",
+});
+
+test("a nudge ignores the jacket picked for the outfit being left", () => {
+  const { body } = describe({
+    isNudge: true,
+    pieces,
+    weather: { ...weather, temp: 15 },
+    jackets: [coat, blazer],
+    chosen: coat,
   });
+  assert.match(body, /15° and light rain — your Navy blazer would suit\.$/);
+});
+
+test("a single outfit is laid out, with its chosen jacket", () => {
+  const { title, body } = describe({
+    isNudge: false,
+    pieces,
+    weather,
+    jackets: [coat],
+    chosen: coat,
+  });
+  assert.equal(title, "Your outfit is laid out");
+  assert.match(body, /with your Camel overcoat\.$/);
+});
+
+test("warm, no weather, and missing pieces", () => {
+  assert.match(
+    describe({
+      isNudge: true,
+      pieces,
+      weather: { ...weather, temp: 25 },
+      jackets: [coat],
+    }).body,
+    /no jacket needed\.$/
+  );
+  assert.equal(
+    describe({ isNudge: true, pieces: [], jackets: [] }).body,
+    "Tap to see it."
+  );
 });
