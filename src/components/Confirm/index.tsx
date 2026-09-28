@@ -37,6 +37,7 @@ const Confirm = ({
   onConfirm,
 }: ConfirmProps) => {
   const confirmDrawerRef = useRef(null);
+  const isConfirmed = useRef(false);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const cancel = () => {
     onCancel();
@@ -53,6 +54,14 @@ const Confirm = ({
         placement="bottom"
         onClose={cancel}
         portalProps={{ containerRef: confirmDrawerRef }}
+        // Act only once the sheet is gone and its history entry popped, so
+        // an action that navigates (sign out, closing a screen) can't race
+        // the sheet's own Back and overshoot the history
+        onCloseComplete={() => {
+          if (!isConfirmed.current) return;
+          isConfirmed.current = false;
+          onConfirm();
+        }}
       >
         <DrawerOverlay />
         <DrawerContent bg="transparent" boxShadow="none">
@@ -60,25 +69,26 @@ const Confirm = ({
             <Box sx={{ pt: 2, pb: 2 }}>
               <DrawerBody>{message}</DrawerBody>
 
-              <DrawerFooter sx={{ gap: 3 }}>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  onClick={cancel}
-                  sx={{ flex: 1, borderRadius: "full" }}
-                >
-                  {cancelText}
-                </Button>
+              {/* The action on top, the way out right under it */}
+              <DrawerFooter sx={{ flexDirection: "column", gap: 3 }}>
                 <Button
                   colorScheme={okType}
                   size="lg"
-                  sx={{ flex: 1, borderRadius: "full" }}
+                  sx={{ w: "100%" }}
                   onClick={() => {
-                    onConfirm();
+                    isConfirmed.current = true;
                     onClose();
                   }}
                 >
                   {okText}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={cancel}
+                  sx={{ w: "100%" }}
+                >
+                  {cancelText}
                 </Button>
               </DrawerFooter>
             </Box>
