@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import * as serviceWorkerRegistration from "./serviceWorkerRegistration";
 import reportWebVitals from "./reportWebVitals";
+import "./utils/pwa";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
@@ -23,6 +24,10 @@ serviceWorkerRegistration.register({
       new CustomEvent("sw-update", { detail: registration })
     ),
 });
+
+// Ask the browser not to clear cached photos and outfits when storage runs
+// low; installed apps are usually granted this
+navigator.storage?.persist?.().catch(() => undefined);
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))

@@ -32,6 +32,7 @@ import { useDocumentData } from "react-firebase-hooks/firestore";
 import { Link as WouterLink } from "wouter";
 
 import PageHeader, { Eyebrow } from "components/PageHeader";
+import { useInstallHint } from "components/Install";
 import PickedMark, { pickedRing } from "components/PickedMark";
 import Weather from "components/Weather";
 import EmptyState from "components/EmptyState";
@@ -46,7 +47,12 @@ import useData from "resources/useData";
 import useUpdateDocument from "resources/useUpdateDocument";
 import useWeather from "resources/useWeather";
 
-import { openItem, openNewOutfit, openOutfit } from "utils/history";
+import {
+  openItem,
+  openNewOutfit,
+  openOutfit,
+  replaceSearch,
+} from "utils/history";
 import { jacketState } from "utils/jacket";
 import { nextOutfit } from "utils/rotation";
 import { Item, Jacket, Outfit } from "utils/types";
@@ -113,6 +119,7 @@ const CARD_HEIGHT = 72;
 
 const Home = () => {
   const [user] = useAuth();
+  useInstallHint();
   const {
     isOpen: isSingleOutfitOpen,
     onClose: onSingleOutfitClose,
@@ -203,6 +210,18 @@ const Home = () => {
       jacket: null,
     });
   };
+
+  // The "Next outfit" app shortcut opens /?action=next. Drop the parameter
+  // first, so a reload can't move the rotation on a second time.
+  const isShortcutNext = useRef(
+    new URLSearchParams(window.location.search).get("action") === "next"
+  );
+  useEffect(() => {
+    if (!isShortcutNext.current || !outfits) return;
+    isShortcutNext.current = false;
+    replaceSearch("");
+    onFetchNextOutfit();
+  }, [outfits]);
 
   // Height taken by everything but the photos: date and greeting, weather
   // card, action bar, plus the jacket card and up-next card when shown

@@ -9,6 +9,7 @@ import { openNewItem } from "utils/history";
 import { Item } from "utils/types";
 
 import WardrobeItem from "./WardrobeItem";
+import AddChooser from "./AddChooser";
 
 const tabs: { type: Item["type"]; label: string; singular: string }[] = [
   { type: "shirt", label: "Shirts", singular: "shirt" },
@@ -106,6 +107,8 @@ const Wardrobe = () => {
       <Box role="tabpanel">
         <WardrobeItem key={active.type} type={active.type} />
       </Box>
+
+      <AddChooser />
     </>
   );
 };

@@ -12,7 +12,7 @@ type LayerState = { depth?: number; screens?: Partial<Record<Screen, number>> };
 
 // Which search params belong to each screen
 const screenParams: Record<Screen, string[]> = {
-  item: ["item", "new"],
+  item: ["item", "new", "shared"],
   outfit: ["outfit"],
 };
 
@@ -77,6 +77,16 @@ const subscribe = (onChange: () => void) => {
 const useSearchParams = () =>
   new URLSearchParams(
     useSyncExternalStore(subscribe, () => window.location.search)
+  );
+
+export const useSearchParam = (name: string) => useSearchParams().get(name);
+
+// Swap one query for another without adding a history entry
+export const replaceSearch = (search: string) =>
+  window.history.replaceState(
+    window.history.state,
+    "",
+    window.location.pathname + (search ? `?${search}` : "")
   );
 
 export const useItemRoute = () => {

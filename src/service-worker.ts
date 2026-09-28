@@ -94,6 +94,29 @@ registerRoute(
 
 // This allows the web app to trigger skipWaiting via
 // registration.waiting.postMessage({type: 'SKIP_WAITING'})
+// A photo shared into Alfred from another app (manifest share_target): keep it
+// for the app to pick up, then open the "What are you adding?" chooser
+self.addEventListener("fetch", (event) => {
+  const url = new URL(event.request.url);
+  if (event.request.method !== "POST" || url.pathname !== "/share-target") {
+    return;
+  }
+  event.respondWith(
+    (async () => {
+      const form = await event.request.formData();
+      const photo = form.get("photo");
+      if (photo instanceof File) {
+        const cache = await caches.open("shared");
+        await cache.put(
+          "/shared-photo",
+          new Response(photo, { headers: { "Content-Type": photo.type } })
+        );
+      }
+      return Response.redirect("/wardrobe?add=1&shared=1", 303);
+    })()
+  );
+});
+
 self.addEventListener("message", (event) => {
   if (event.data && event.data.type === "SKIP_WAITING") {
     self.skipWaiting();

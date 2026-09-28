@@ -1,12 +1,14 @@
 import { useState } from "react";
 import {
-  addDoc,
+  doc,
+  setDoc,
   collection,
   serverTimestamp,
   CollectionReference,
   DocumentReference,
 } from "firebase/firestore";
 import { db } from "utils/firebase";
+import settle from "resources/settle";
 
 import useAuth from "hooks/useAuth";
 
@@ -24,18 +26,20 @@ const useAddDocument = <T>(
   const [isLoading, setLoading] = useState(false);
 
   const addDocument = (data: Omit<T, keyof Common>) => {
-    setLoading(true);
-    return addDoc(
+    // A reference made up front, so it's known even before the write lands
+    const reference = doc(
       collection(db, collectionName) as CollectionReference<
         Omit<T, keyof Common>
-      >,
-      {
-        ...data,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        user: user?.uid,
-      }
-    ).finally(() => setLoading(false));
+      >
+    );
+    setLoading(navigator.onLine);
+    const write = setDoc(reference, {
+      ...data,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      user: user?.uid,
+    }).then(() => reference);
+    return settle(write, reference).finally(() => setLoading(false));
   };
 
   return [addDocument, isLoading];

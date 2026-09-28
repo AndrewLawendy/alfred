@@ -13,6 +13,7 @@ import Account from "pages/Account";
 import Header from "components/Header";
 import BottomNav from "components/BottomNav";
 import UpdatePrompt from "components/UpdatePrompt";
+import OfflineBanner from "components/OfflineBanner";
 import ItemScreen from "pages/Wardrobe/ItemScreen";
 import OutfitScreen from "pages/Outfits/OutfitScreen";
 
@@ -28,6 +29,7 @@ function App() {
     <ChakraProvider theme={theme}>
       <MotionConfig reducedMotion="user">
         <UpdatePrompt />
+        <OfflineBanner />
         <Route path="/login" component={Login} />
         <Authorized>
           <Header />

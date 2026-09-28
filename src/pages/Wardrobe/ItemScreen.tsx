@@ -15,6 +15,7 @@ import {
   DrawerContent,
   Stack,
   Progress,
+  useToast,
 } from "@chakra-ui/react";
 import { MdArrowBack } from "react-icons/md";
 
@@ -32,7 +33,8 @@ import useDeleteImage from "resources/useDeleteImage";
 import useUpdateDocument from "resources/useUpdateDocument";
 import useDeleteDocument from "resources/useDeleteDocument";
 import { db } from "utils/firebase";
-import { closeItem, useItemRoute } from "utils/history";
+import { closeItem, useItemRoute, useSearchParam } from "utils/history";
+import { clearSharedPhoto, readSharedPhoto } from "utils/sharedPhoto";
 import geFileURL from "utils/geFileURL";
 import resizeImage from "utils/resizeImage";
 import { Item } from "utils/types";
@@ -60,7 +62,11 @@ const examples: Record<Item["type"], string> = {
   jacket: "e.g. Grey wool overcoat",
 };
 
-const formFor = (type: Item["type"], item?: Item): ItemForm => ({
+const formFor = (
+  type: Item["type"],
+  item?: Item,
+  photoUrl?: string
+): ItemForm => ({
   title: {
     initialValue: item?.title || "",
     isRequired: true,
@@ -68,7 +74,7 @@ const formFor = (type: Item["type"], item?: Item): ItemForm => ({
   },
   description: { initialValue: item?.description || "" },
   imageUrl: {
-    initialValue: item?.imageUrl || "",
+    initialValue: item?.imageUrl || photoUrl || "",
     isRequired: true,
     requiredMessage: "Add a photo",
   },
@@ -86,9 +92,11 @@ type EditorProps = {
   type: Item["type"];
   item?: Item;
   headingRef: RefObject<HTMLParagraphElement>;
+  // A photo shared into Alfred from another app, ready to use
+  sharedPhoto?: File;
 };
 
-const ItemEditor = ({ type, item, headingRef }: EditorProps) => {
+const ItemEditor = ({ type, item, headingRef, sharedPhoto }: EditorProps) => {
   const [mode, setMode] = useState<"submit" | "view">(item ? "view" : "submit");
   const [currentFile, setCurrentFile] = useState<File>();
   const [addItem, isAddItemLoading] = useAddDocument<Item>("wardrobe-items");
@@ -99,7 +107,13 @@ const ItemEditor = ({ type, item, headingRef }: EditorProps) => {
     useUploadImage();
   const [deleteItemImage, isDeleteItemImageLoading] = useDeleteImage();
 
-  const form = useForm<ItemForm>(formFor(type, item));
+  const [sharedUrl] = useState(
+    () => sharedPhoto && URL.createObjectURL(sharedPhoto)
+  );
+  useEffect(() => {
+    if (sharedPhoto) resizeImage(sharedPhoto).then(setCurrentFile);
+  }, []);
+  const form = useForm<ItemForm>(formFor(type, item, sharedUrl));
   const {
     values,
     errors,
@@ -130,8 +144,24 @@ const ItemEditor = ({ type, item, headingRef }: EditorProps) => {
   // After editing, show the updated item rather than closing it
   const onEditSaved = () => setMode("view");
 
+  // Photos live in Storage, which can't queue an upload or a delete offline
+  const toast = useToast();
+  const needsConnection = (action: string) => {
+    if (navigator.onLine) return false;
+    toast({
+      id: "offline",
+      status: "info",
+      title: "You're offline",
+      description: `${action} needs a connection. Try again once you're back online.`,
+      isClosable: true,
+    });
+    return true;
+  };
+
   const onSubmit = () => {
     handleSubmit().then((values) => {
+      if (values.imageUrl !== item?.imageUrl && needsConnection("A new photo"))
+        return;
       if (item) {
         if (item.imageUrl === values.imageUrl) {
           updateItem(item.id, { ...values }).then(onEditSaved);
@@ -152,7 +182,7 @@ const ItemEditor = ({ type, item, headingRef }: EditorProps) => {
   };
 
   const onDelete = () => {
-    if (!item) return;
+    if (!item || needsConnection("Deleting")) return;
     deleteItemImage(item.imageUrl).then(() => {
       deleteItem(item.id).then(closeItem);
     });
@@ -323,10 +353,34 @@ const ItemPanel = ({
     [itemId]
   );
   const [data, isLoading] = useDocumentData(reference);
+  // A shared photo (?shared=1) is read once, then removed from the cache;
+  // null means there was none to read
+  const isShared = useSearchParam("shared") === "1";
+  const [sharedPhoto, setSharedPhoto] = useState<File | null>();
+  useEffect(() => {
+    if (!newType || !isShared) return;
+    readSharedPhoto().then((file) => {
+      setSharedPhoto(file || null);
+      clearSharedPhoto();
+    });
+  }, []);
   const item = data && itemId ? ({ ...data, id: itemId } as Item) : undefined;
 
   if (newType) {
-    return <ItemEditor type={newType} headingRef={headingRef} />;
+    if (isShared && sharedPhoto === undefined) {
+      return (
+        <DrawerBody sx={{ pt: 16 }}>
+          <Loading message="Getting your photo" columns={1} />
+        </DrawerBody>
+      );
+    }
+    return (
+      <ItemEditor
+        type={newType}
+        headingRef={headingRef}
+        sharedPhoto={sharedPhoto || undefined}
+      />
+    );
   }
   if (isLoading) {
     return (

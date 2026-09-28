@@ -10,6 +10,7 @@ import {
 import { TbLogout } from "react-icons/tb";
 
 import PageHeader from "components/PageHeader";
+import { InstallCard } from "components/Install";
 import useAuth from "hooks/useAuth";
 import Logo from "assets/logo.png";
 
@@ -49,6 +50,8 @@ const Account = () => {
           )}
         </Box>
       </Flex>
+
+      <InstallCard />
 
       <Logout
         sx={{ width: "100%", mt: 5 }}
