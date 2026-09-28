@@ -91,10 +91,10 @@ const remind = async (reference, reminder, now) => {
   });
 };
 
-// Every 15 minutes, send the reminders that are due in their own timezones.
+// Every 5 minutes, send the reminders that are due in their own timezones.
 // ponytail: reads every reminder each run; fine for a few people, query by
 // time slot if Alfred ever has many users.
-exports.morningReminder = onSchedule("every 15 minutes", async () => {
+exports.morningReminder = onSchedule("every 5 minutes", async () => {
   const now = new Date();
   const snapshot = await db.collection("reminders").get();
   await Promise.all(
