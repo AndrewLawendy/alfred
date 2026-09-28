@@ -14,11 +14,7 @@ import Header from "components/Header";
 import BottomNav from "components/BottomNav";
 import UpdatePrompt from "components/UpdatePrompt";
 import OfflineBanner from "components/OfflineBanner";
-import ScreenStack, {
-  PARALLAX,
-  SCREEN_TRANSITION,
-} from "components/ScreenStack";
-import { useScreenStack } from "utils/history";
+import ScreenStack, { PageUnderScreens } from "components/ScreenStack";
 
 import theme from "utils/theme";
 
@@ -27,7 +23,6 @@ import "@fontsource/bodoni-moda";
 function App() {
   const [location] = useLocation();
   const tab = location.split("/")[1].toLowerCase();
-  const stack = useScreenStack();
 
   return (
     <ChakraProvider theme={theme}>
@@ -37,12 +32,7 @@ function App() {
         <Route path="/login" component={Login} />
         <Authorized>
           <Header />
-          {/* The page eases left under the first screen pushed over it */}
-          <motion.div
-            animate={{ x: stack.length ? PARALLAX : 0 }}
-            transition={SCREEN_TRANSITION}
-            style={{ display: "flex", flexDirection: "column", flexGrow: 1 }}
-          >
+          <PageUnderScreens>
             <Box sx={{ pt: 6, px: 3, pb: "nav", flexGrow: 1 }} as="main">
               <motion.div
                 key={tab}
@@ -58,7 +48,7 @@ function App() {
                 <Route path="/account" component={Account} />
               </motion.div>
             </Box>
-          </motion.div>
+          </PageUnderScreens>
           <BottomNav />
           <ScreenStack />
         </Authorized>

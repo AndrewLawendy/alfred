@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { memo, ReactNode, useEffect, useMemo, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 import { ScreenContext } from "components/Screen";
@@ -22,17 +22,20 @@ const keyOf = (entry: StackEntry) =>
     entry.depth ?? "link"
   }`;
 
-const Layer = ({
-  entry,
-  index,
-  isTop,
-}: {
+type LayerProps = {
   entry: StackEntry;
   index: number;
   isTop: boolean;
-}) => {
+  // Fully covered by two or more screens: kept (scroll, edits) but not drawn,
+  // so the phone isn't compositing a pile of full-screen photos
+  isBuried: boolean;
+};
+
+function Layer({ entry, index, isTop, isBuried }: LayerProps) {
   const headingRef = useRef<HTMLParagraphElement>(null);
-  const screen = useMemo(() => ({ close: () => closeScreen(entry) }), [entry]);
+  const key = keyOf(entry);
+  // Keyed by identity: each stack snapshot hands over a fresh `entry` object
+  const screen = useMemo(() => ({ close: () => closeScreen(entry) }), [key]);
 
   // Start at the title, like a new page, without scrolling anything
   useEffect(() => {
@@ -54,6 +57,7 @@ const Layer = ({
         zIndex: 1250 + index,
         display: "flex",
         flexDirection: "column",
+        visibility: isBuried ? "hidden" : "visible",
       }}
     >
       <ScreenContext.Provider value={screen}>
@@ -84,6 +88,37 @@ const Layer = ({
       />
     </motion.div>
   );
+}
+
+// Stack snapshots are fresh objects; re-render a layer only when what it
+// shows changes
+const MemoLayer = memo(
+  Layer,
+  (before, after) =>
+    keyOf(before.entry) === keyOf(after.entry) &&
+    before.index === after.index &&
+    before.isTop === after.isTop &&
+    before.isBuried === after.isBuried
+);
+
+// The page under the screens: eases left under the first one, and isn't
+// drawn once two screens cover it
+export const PageUnderScreens = ({ children }: { children: ReactNode }) => {
+  const { length } = useScreenStack();
+  return (
+    <motion.div
+      animate={{ x: length ? PARALLAX : 0 }}
+      transition={SCREEN_TRANSITION}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        flexGrow: 1,
+        visibility: length >= 2 ? "hidden" : "visible",
+      }}
+    >
+      {children}
+    </motion.div>
+  );
 };
 
 // Item and outfit screens, stacked in the order they were opened. The stack
@@ -100,11 +135,12 @@ const ScreenStack = () => {
   return (
     <AnimatePresence initial={false}>
       {stack.map((entry, index) => (
-        <Layer
+        <MemoLayer
           key={keyOf(entry)}
           entry={entry}
           index={index}
           isTop={index === stack.length - 1}
+          isBuried={index < stack.length - 2}
         />
       ))}
     </AnimatePresence>
