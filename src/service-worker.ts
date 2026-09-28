@@ -132,6 +132,9 @@ self.addEventListener("push", (event) => {
       body: data.body,
       icon: "/icons/icon-192.png",
       tag: "morning-reminder",
+      // A new reminder replaces the last one in the tray; still buzz for it
+      renotify: true,
+      vibrate: [200, 100, 200],
       data: { url: data.url || "/", action: data.action },
       // Android shows the button; iOS just opens the app on tap
       ...(data.action && { actions: [{ action: "wear", title: "Wear it" }] }),
