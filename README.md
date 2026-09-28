@@ -37,7 +37,7 @@ Live: https://alfred-wardrobe-stylist.web.app
 
 ## Getting started
 
-Requirements: Node (developed on Node 24) and Yarn 1.
+Requirements: Node 24 (`nvm use` picks it up from `.nvmrc`) and Yarn 1.
 
 ```sh
 yarn install
