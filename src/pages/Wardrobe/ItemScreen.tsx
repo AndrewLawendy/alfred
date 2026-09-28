@@ -98,7 +98,10 @@ type EditorProps = {
 
 const ItemEditor = ({ type, item, headingRef, sharedPhoto }: EditorProps) => {
   const [mode, setMode] = useState<"submit" | "view">(item ? "view" : "submit");
-  const [currentFile, setCurrentFile] = useState<File>();
+  // The picked photo, resized. Kept as the promise so Save can wait for it
+  // instead of finding nothing to upload when tapped mid-resize.
+  const photoFile = useRef<Promise<File>>();
+  const [isSaving, setIsSaving] = useState(false);
   const [addItem, isAddItemLoading] = useAddDocument<Item>("wardrobe-items");
   const [updateItem, isUpdateItemLoading] =
     useUpdateDocument<Item>("wardrobe-items");
@@ -107,11 +110,23 @@ const ItemEditor = ({ type, item, headingRef, sharedPhoto }: EditorProps) => {
     useUploadImage();
   const [deleteItemImage, isDeleteItemImageLoading] = useDeleteImage();
 
-  const [sharedUrl] = useState(
-    () => sharedPhoto && URL.createObjectURL(sharedPhoto)
+  // The picked photo's preview URL. One at a time: the previous one is
+  // released on every new pick and when the editor closes.
+  const previewUrl = useRef<string>();
+  const showPhoto = (file: File) => {
+    if (previewUrl.current) URL.revokeObjectURL(previewUrl.current);
+    previewUrl.current = URL.createObjectURL(file);
+    return previewUrl.current;
+  };
+  useEffect(
+    () => () => {
+      if (previewUrl.current) URL.revokeObjectURL(previewUrl.current);
+    },
+    []
   );
+  const [sharedUrl] = useState(() => sharedPhoto && showPhoto(sharedPhoto));
   useEffect(() => {
-    if (sharedPhoto) resizeImage(sharedPhoto).then(setCurrentFile);
+    if (sharedPhoto) photoFile.current = resizeImage(sharedPhoto);
   }, []);
   const form = useForm<ItemForm>(formFor(type, item, sharedUrl));
   const {
@@ -128,6 +143,7 @@ const ItemEditor = ({ type, item, headingRef, sharedPhoto }: EditorProps) => {
   const isView = mode === "view" && item !== undefined;
   const isEdit = mode === "submit" && item !== undefined;
   const isLoading =
+    isSaving ||
     isAddItemLoading ||
     isItemImageUploading ||
     isDeleteItemImageLoading ||
@@ -158,34 +174,58 @@ const ItemEditor = ({ type, item, headingRef, sharedPhoto }: EditorProps) => {
     return true;
   };
 
-  const onSubmit = () => {
-    handleSubmit().then((values) => {
-      if (values.imageUrl !== item?.imageUrl && needsConnection("A new photo"))
-        return;
-      if (item) {
-        if (item.imageUrl === values.imageUrl) {
-          updateItem(item.id, { ...values }).then(onEditSaved);
-        } else if (currentFile) {
-          uploadItemImage(currentFile, item.imageUrl).then(async (response) => {
-            const imageUrl = await geFileURL(response?.metadata.name || "");
-            updateItem(item.id, { ...values, imageUrl }).then(onEditSaved);
-          });
-        }
-      } else if (currentFile) {
-        uploadItemImage(currentFile).then(async (response) => {
-          const imageUrl = await geFileURL(response?.metadata.name || "");
-          await addItem({ ...values, type, imageUrl });
-          closeItem();
-        });
-      }
-    });
+  // Upload the photo (to `path` when replacing one) and return its URL
+  const uploadPhoto = async (path?: string) => {
+    const file = await photoFile.current;
+    if (!file) throw new Error("No photo to upload");
+    const response = await uploadItemImage(file, path);
+    if (!response) throw new Error("Photo upload failed");
+    return geFileURL(response.metadata.name);
   };
 
-  const onDelete = () => {
+  const onSubmit = async () => {
+    // Stays pending while the form is invalid; the fields show why
+    const values = await handleSubmit();
+    const isNewPhoto = values.imageUrl !== item?.imageUrl;
+    if (isNewPhoto && needsConnection("A new photo")) return;
+
+    setIsSaving(true);
+    try {
+      if (item) {
+        const imageUrl = isNewPhoto
+          ? await uploadPhoto(item.imageUrl)
+          : item.imageUrl;
+        await updateItem(item.id, { ...values, imageUrl });
+        onEditSaved();
+      } else {
+        const imageUrl = await uploadPhoto();
+        await addItem({ ...values, type, imageUrl });
+        closeItem();
+      }
+    } catch {
+      toast({
+        status: "error",
+        title: `Couldn't save the ${type}`,
+        description: "Nothing was changed. Please try again.",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const onDelete = async () => {
     if (!item || needsConnection("Deleting")) return;
-    deleteItemImage(item.imageUrl).then(() => {
-      deleteItem(item.id).then(closeItem);
-    });
+    try {
+      await deleteItemImage(item.imageUrl);
+      await deleteItem(item.id);
+      closeItem();
+    } catch {
+      toast({
+        status: "error",
+        title: `Couldn't delete the ${type}`,
+        description: "Please try again.",
+      });
+    }
   };
 
   return (
@@ -234,12 +274,11 @@ const ItemEditor = ({ type, item, headingRef, sharedPhoto }: EditorProps) => {
               <div>
                 <PhotoInput
                   name="imageUrl"
-                  initialImageUrl={values.imageUrl}
+                  imageUrl={values.imageUrl}
                   error={errors.imageUrl}
                   onChange={(file) => {
-                    const imageUrl = URL.createObjectURL(file);
-                    setFieldValue("imageUrl", imageUrl);
-                    resizeImage(file).then(setCurrentFile);
+                    setFieldValue("imageUrl", showPhoto(file));
+                    photoFile.current = resizeImage(file);
                   }}
                   onBlur={() => {
                     setFieldTouched("imageUrl");

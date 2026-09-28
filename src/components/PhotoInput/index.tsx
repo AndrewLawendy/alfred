@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId } from "react";
 import {
   Input,
   InputProps,
@@ -17,24 +17,27 @@ interface PhotoInputProps extends Omit<InputProps, "onChange"> {
   onChange: (file: File) => void;
   onBlur?: () => void;
   disabled?: boolean;
-  initialImageUrl?: string;
+  // What to show: the saved photo, or the one just picked (the parent owns it)
+  imageUrl?: string;
   error?: string | null;
 }
 
 const PhotoInput = ({
-  initialImageUrl = "",
+  imageUrl: imgSrc = "",
   onChange,
   onBlur,
   disabled,
   error,
   ...props
 }: PhotoInputProps) => {
-  const [imgSrc, setImgSrc] = useState<string>(initialImageUrl);
+  // Unique ids, so two photo inputs on one screen can't clash
+  const id = useId();
+  const cameraId = `${id}-camera`;
+  const galleryId = `${id}-gallery`;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
-      setImgSrc(URL.createObjectURL(file));
       onChange(file);
       onBlur?.();
     }
@@ -59,7 +62,7 @@ const PhotoInput = ({
     <Box>
       <Box
         as="label"
-        htmlFor="upload-shot"
+        htmlFor={galleryId}
         sx={{
           display: "block",
           width: "100%",
@@ -98,9 +101,9 @@ const PhotoInput = ({
       </Box>
 
       <Flex sx={{ gap: 2, mt: 3 }}>
-        {source("take-shot", imgSrc ? "Retake" : "Take photo", BsCameraFill)}
+        {source(cameraId, imgSrc ? "Retake" : "Take photo", BsCameraFill)}
         {source(
-          "upload-shot",
+          galleryId,
           imgSrc ? "Choose another" : "From gallery",
           MdPhotoLibrary
         )}
@@ -108,7 +111,7 @@ const PhotoInput = ({
       <Input
         {...props}
         sx={{ display: "none" }}
-        id="take-shot"
+        id={cameraId}
         accept="image/*"
         type="file"
         capture="environment"
@@ -118,7 +121,7 @@ const PhotoInput = ({
       <Input
         {...props}
         sx={{ display: "none" }}
-        id="upload-shot"
+        id={galleryId}
         accept="image/*"
         type="file"
         onChange={handleChange}
