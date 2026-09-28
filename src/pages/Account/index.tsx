@@ -38,7 +38,10 @@ const Account = () => {
           size="lg"
           name={user.displayName || "User"}
           src={user.photoURL || ""}
-          sx={{ bg: "brand.500", color: "card", fontFamily: "heading" }}
+          // Chakra colours initials from the name; keep them ink
+          bg="brand.500"
+          color="card"
+          sx={{ fontFamily: "heading" }}
         />
         <Box sx={{ minW: 0 }}>
           <Heading noOfLines={1} sx={{ fontSize: "xl" }}>

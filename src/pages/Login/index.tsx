@@ -15,8 +15,8 @@ import {
   Text,
   Icon,
   Spinner,
-  useToast,
 } from "@chakra-ui/react";
+import useNotice from "hooks/useNotice";
 import { FaFacebookSquare } from "react-icons/fa";
 import { motion } from "framer-motion";
 
@@ -77,7 +77,7 @@ const item = {
 const Login = () => {
   const [user, isLoading] = useAuth();
   const [, setLocation] = useLocation();
-  const toast = useToast();
+  const toast = useNotice();
 
   const onSignIn = (provider: AuthProvider) =>
     signIn(auth, provider).catch((error) =>

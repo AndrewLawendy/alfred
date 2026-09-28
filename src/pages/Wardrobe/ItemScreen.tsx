@@ -15,8 +15,8 @@ import {
   DrawerContent,
   Stack,
   Progress,
-  useToast,
 } from "@chakra-ui/react";
+import useNotice from "hooks/useNotice";
 import { MdArrowBack } from "react-icons/md";
 
 import FormInput from "components/FormInput";
@@ -145,7 +145,7 @@ const ItemEditor = ({ type, item, headingRef, sharedPhoto }: EditorProps) => {
   const onEditSaved = () => setMode("view");
 
   // Photos live in Storage, which can't queue an upload or a delete offline
-  const toast = useToast();
+  const toast = useNotice();
   const needsConnection = (action: string) => {
     if (navigator.onLine) return false;
     toast({

@@ -9,8 +9,8 @@ import {
   Input,
   Switch,
   Text,
-  useToast,
 } from "@chakra-ui/react";
+import useNotice from "hooks/useNotice";
 import { useDocumentData } from "react-firebase-hooks/firestore";
 
 import useAuth from "hooks/useAuth";
@@ -50,7 +50,7 @@ const MorningReminder = () => {
   const [support, setSupport] = useState<string>();
   const [isOn, setIsOn] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
-  const toast = useToast();
+  const toast = useNotice();
   // Changes are a draft until saved, like setting an alarm
   const [draft, setDraft] = useState<typeof schedule | null>(null);
   const shown = draft ?? schedule;
@@ -170,6 +170,18 @@ const MorningReminder = () => {
           <Text sx={{ mt: 1, color: "gray.600" }}>
             A nudge to move on to the next outfit, with the weather.
           </Text>
+          {support !== "unsupported" && support !== "denied" && (
+            // What's set, at a glance (the saved schedule, not a draft)
+            <Text sx={{ mt: 2, fontSize: "sm", fontWeight: "medium" }}>
+              {`Set for ${schedule.time}, ${describeDays(schedule.days)} · `}
+              {isOn
+                ? `next one ${
+                    nextReminder(new Date(), schedule.time, schedule.days) ??
+                    "when you pick a day"
+                  }`
+                : "off on this phone"}
+            </Text>
+          )}
         </Box>
         {(support === "granted" || support === "default") && (
           <Switch
