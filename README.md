@@ -1,46 +1,120 @@
-# Getting Started with Create React App
+# Alfred
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Your own wardrobe stylist. Photograph your shirts, belts, pants, shoes and
+jackets, build outfits from them, and each morning Alfred lays out the next
+outfit in your rotation and suggests a jacket when the weather calls for one.
 
-## Available Scripts
+Alfred is a mobile-first progressive web app: install it from the browser
+("Add to Home Screen") and it runs full screen, works offline with the
+outfits and photos you've already seen, and offers to reload when a new
+version is out.
 
-In the project directory, you can run:
+Live: https://alfred-wardrobe-stylist.web.app
 
-### `npm start`
+## What it does
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+- **Today:** today's outfit with the weather. **Next outfit** moves on in the
+  rotation; **Swap with next** wears the next one today and this one after it.
+- **Jackets:** each jacket has the temperature it suits. When one or more
+  suit the forecast, Alfred asks which to wear with the new outfit (or none),
+  and remembers the pick for that outfit.
+- **Outfits:** the rotation, in order. Drag to reorder; build or edit an
+  outfit by picking one piece per category.
+- **Wardrobe:** your clothes by category, each with a photo, a title and an
+  optional description.
+- **Back** closes whatever is on top (a sheet, edit mode, an item or outfit)
+  before leaving the page, like a native app. Items and outfits have their own
+  links (`?item=<id>`, `?outfit=<id>`).
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+## Stack
 
-### `npm test`
+- React 18 and TypeScript on Create React App 5, with a Workbox service
+  worker (`src/service-worker.ts`)
+- Chakra UI v2 (theme in `src/utils/theme.ts`) and framer-motion
+- Firebase: Auth (Google, Facebook), Firestore, Storage, Hosting
+- [OpenWeather](https://openweathermap.org/api) current weather
+- wouter for routing
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Getting started
 
-### `npm run build`
+Requirements: Node (developed on Node 24) and Yarn 1.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```sh
+yarn install
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+Create a `.env` file in the project root with an OpenWeather API key:
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```sh
+REACT_APP_WEATHER_API_ID=<your OpenWeather key>
+```
 
-### `npm run eject`
+Then:
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+```sh
+yarn start   # http://localhost:3000
+```
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+The Firebase project config lives in `src/utils/firebase.ts`.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+### Signing in during development
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+Sign-in uses a popup everywhere except on the Firebase auth domain
+(`alfred-wardrobe-stylist.firebaseapp.com`), where it uses a redirect. Popups
+work on `localhost` out of the box. Any other host (a tunnel, a LAN address)
+must first be added under **Firebase console → Authentication → Settings →
+Authorized domains**, or sign-in fails with `auth/unauthorized-domain`.
 
-## Learn More
+## Scripts
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+| Command       | What it does                                              |
+| ------------- | --------------------------------------------------------- |
+| `yarn start`  | Dev server with hot reload                                |
+| `yarn test`   | Jest in watch mode (`CI=true yarn test` for a single run) |
+| `yarn build`  | Production build in `build/`                              |
+| `yarn lint`   | ESLint with fixes                                         |
+| `yarn format` | Prettier over `src/`                                      |
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+The app version shown on the Account page comes from `version` in
+`package.json`.
+
+## Deploying
+
+Build first, then preview on a Firebase Hosting channel before going live:
+
+```sh
+yarn build
+
+# Preview at a temporary URL (printed at the end), valid for 7 days
+npx firebase-tools hosting:channel:deploy dev --expires 7d
+
+# Promote exactly what's on the preview to production
+npx firebase-tools hosting:clone alfred-wardrobe-stylist:dev alfred-wardrobe-stylist:live
+```
+
+`yarn update` builds and deploys straight to production, skipping the
+preview.
+
+Installed apps pick up a new version the next time they're opened and show
+a **Reload** prompt. A bad release can be rolled back from **Firebase console
+→ Hosting → Release history**.
+
+## Project layout
+
+```
+src/
+  pages/        Today (Home), Outfits, Wardrobe, Account, Login
+  components/   Shared UI: page header, sheets, confirm, photo input, nav
+  hooks/        useAuth, useForm, useBackToClose (Back closes the top layer)
+  resources/    Firestore, Storage and weather hooks
+  utils/        theme, history layers, rotation and jacket rules, types
+```
+
+The rotation and jacket rules are plain functions with tests
+(`src/utils/rotation.test.ts`, `src/utils/jacket.test.ts`).
+
+## Contributing
+
+- Commits follow [Conventional Commits](https://www.conventionalcommits.org);
+  commitlint and lint-staged run on every commit through Husky.
+- The weather is currently fixed to Cairo (`src/resources/useWeather.ts`).
