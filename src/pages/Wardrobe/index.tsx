@@ -47,10 +47,20 @@ const Wardrobe = () => {
     <>
       <PageHeader
         title="Wardrobe"
-        subtitle={
+        eyebrow={
           allItems
             ? `${allItems.length} piece${allItems.length === 1 ? "" : "s"}`
             : undefined
+        }
+        action={
+          <Button
+            onClick={() => openNewItem(active.type)}
+            leftIcon={<Icon as={MdAdd} sx={{ w: 5, h: 5 }} />}
+            colorScheme="brand"
+            sx={{ flexShrink: 0 }}
+          >
+            Add {active.singular}
+          </Button>
         }
       />
       <Flex
@@ -59,7 +69,7 @@ const Wardrobe = () => {
           gap: 2,
           mx: -3,
           px: 3,
-          mb: 4,
+          mb: 5,
           overflowX: "auto",
           scrollbarWidth: "none",
           "&::-webkit-scrollbar": { display: "none" },
@@ -73,21 +83,18 @@ const Wardrobe = () => {
               role="tab"
               aria-selected={isActive}
               onClick={() => navigate(`/${type}`, { replace: true })}
-              size="sm"
-              variant="outline"
               sx={{
                 flexShrink: 0,
-                borderRadius: "full",
-                fontWeight: isActive ? "semibold" : "medium",
-                borderColor: isActive ? "accent.400" : "gray.200",
-                backgroundColor: isActive ? "accent.50" : "white",
-                color: isActive ? "brand.800" : "gray.600",
+                fontWeight: "medium",
+                backgroundColor: isActive ? "brand.500" : "card",
+                color: isActive ? "card" : "brand.500",
+                _hover: { backgroundColor: isActive ? "brand.500" : "card" },
               }}
             >
               {label}
               <Text
                 as="span"
-                sx={{ ml: 1.5, color: isActive ? "accent.600" : "gray.400" }}
+                sx={{ ml: 1.5, color: isActive ? "gray.300" : "gray.600" }}
               >
                 {counts[type] || 0}
               </Text>
@@ -99,22 +106,6 @@ const Wardrobe = () => {
       <Box role="tabpanel">
         <WardrobeItem key={active.type} type={active.type} />
       </Box>
-
-      <Button
-        onClick={() => openNewItem(active.type)}
-        leftIcon={<Icon as={MdAdd} w={6} h={6} />}
-        colorScheme="brand"
-        size="lg"
-        sx={{
-          position: "fixed",
-          bottom: "nav",
-          right: 3,
-          borderRadius: "full",
-          boxShadow: "material",
-        }}
-      >
-        Add {active.singular}
-      </Button>
     </>
   );
 };

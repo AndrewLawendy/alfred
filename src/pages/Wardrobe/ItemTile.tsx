@@ -1,5 +1,6 @@
 import { Box, Image, Text } from "@chakra-ui/react";
 
+import { frosted } from "utils/theme";
 import { Item } from "utils/types";
 
 type ItemTileProps = {
@@ -22,9 +23,9 @@ const ItemTile = ({ item, onClick }: ItemTileProps) => (
       sx={{
         position: "relative",
         aspectRatio: "4 / 5",
-        borderRadius: "xl",
+        borderRadius: "card",
         overflow: "hidden",
-        backgroundColor: "gray.100",
+        backgroundColor: "surface",
       }}
     >
       <Image
@@ -36,14 +37,13 @@ const ItemTile = ({ item, onClick }: ItemTileProps) => (
         // The limit that decides when this jacket is suggested
         <Text
           sx={{
+            ...frosted,
             position: "absolute",
-            top: 2,
-            left: 2,
-            px: 2,
+            top: 2.5,
+            left: 2.5,
+            px: 2.5,
             py: 0.5,
             borderRadius: "full",
-            backgroundColor: "whiteAlpha.900",
-            color: "brand.800",
             fontSize: "xs",
             fontWeight: "semibold",
           }}
@@ -52,7 +52,10 @@ const ItemTile = ({ item, onClick }: ItemTileProps) => (
         </Text>
       )}
     </Box>
-    <Text noOfLines={1} sx={{ pt: 2, fontWeight: "semibold" }}>
+    <Text
+      noOfLines={1}
+      sx={{ pt: 2.5, fontFamily: "heading", fontSize: "lg", lineHeight: 1.3 }}
+    >
       {item.title}
     </Text>
     <Text noOfLines={1} sx={{ minH: 5, fontSize: "sm", color: "gray.600" }}>

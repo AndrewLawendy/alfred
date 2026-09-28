@@ -169,7 +169,7 @@ const Login = () => {
             left: 0,
             width: "100%",
             height: "100%",
-            backgroundColor: "rgba(251, 250, 246, 0.85)",
+            backgroundColor: "rgba(238, 237, 233, 0.85)",
             display: "flex",
             justifyContent: "center",
             alignItems: "center",

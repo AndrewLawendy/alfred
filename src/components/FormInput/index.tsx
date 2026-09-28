@@ -6,6 +6,7 @@ import {
   FormControl,
   FormLabel,
   FormErrorMessage,
+  Text,
 } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -13,12 +14,35 @@ interface FormInputProps extends InputProps {
   label: string;
   error?: string | null;
   suffix?: string;
+  // Says "Optional" beside the label
+  isOptional?: boolean;
+  // A line of help under the field
+  helper?: string;
 }
 
-const FormInput = ({ label, error, suffix, ...props }: FormInputProps) => {
+const FormInput = ({
+  label,
+  error,
+  suffix,
+  isOptional,
+  helper,
+  ...props
+}: FormInputProps) => {
   return (
     <FormControl isInvalid={error !== null}>
-      <FormLabel>{label}</FormLabel>
+      <FormLabel
+        sx={{ display: "flex", fontWeight: "semibold", fontSize: "sm", mr: 0 }}
+      >
+        {label}
+        {isOptional && (
+          <Text
+            as="span"
+            sx={{ ml: "auto", fontWeight: "normal", color: "gray.600" }}
+          >
+            Optional
+          </Text>
+        )}
+      </FormLabel>
       <InputGroup>
         <Input {...props} />
         {suffix && <InputRightAddon>{suffix}</InputRightAddon>}
@@ -34,6 +58,9 @@ const FormInput = ({ label, error, suffix, ...props }: FormInputProps) => {
           </motion.div>
         )}
       </AnimatePresence>
+      {helper && (
+        <Text sx={{ mt: 2, fontSize: "sm", color: "gray.600" }}>{helper}</Text>
+      )}
     </FormControl>
   );
 };

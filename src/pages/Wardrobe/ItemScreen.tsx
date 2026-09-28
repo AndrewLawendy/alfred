@@ -162,7 +162,6 @@ const ItemEditor = ({ type, item, headingRef }: EditorProps) => {
     <>
       <DrawerHeader
         sx={{
-          boxShadow: "material",
           display: "flex",
           alignItems: "center",
           gap: 2,
@@ -188,12 +187,7 @@ const ItemEditor = ({ type, item, headingRef }: EditorProps) => {
           {heading}
         </Text>
         {isView && (
-          <Button
-            onClick={() => setMode("submit")}
-            variant="outline"
-            size="sm"
-            sx={{ borderRadius: "full", px: 4 }}
-          >
+          <Button onClick={() => setMode("submit")} variant="outline">
             Edit
           </Button>
         )}
@@ -248,7 +242,8 @@ const ItemEditor = ({ type, item, headingRef }: EditorProps) => {
                 placeholder={examples[type]}
               />
               <FormInput
-                label="Description (Optional)"
+                label="Description"
+                isOptional
                 name="description"
                 value={values.description}
                 error={errors.description}
@@ -265,9 +260,12 @@ const ItemEditor = ({ type, item, headingRef }: EditorProps) => {
                 <Confirm
                   message={
                     <>
-                      <Heading size="md">Delete {item.title}?</Heading>
-                      <Text sx={{ mt: 1, color: "gray.600" }}>
-                        Its photo goes too. You can&apos;t undo this.
+                      <Heading sx={{ fontSize: "2xl" }}>
+                        Delete {item.title}?
+                      </Heading>
+                      <Text sx={{ mt: 2, color: "gray.600" }}>
+                        This removes the {type} and its photo from your
+                        wardrobe. You can&apos;t undo this.
                       </Text>
                     </>
                   }
@@ -294,7 +292,7 @@ const ItemEditor = ({ type, item, headingRef }: EditorProps) => {
           <DrawerFooter
             sx={{
               borderTop: "1px solid",
-              borderColor: "gray.100",
+              borderColor: "line",
               pb: "calc(var(--chakra-space-4) + env(safe-area-inset-bottom))",
             }}
           >

@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import {
   Box,
   Button,
@@ -10,6 +10,7 @@ import {
   DrawerHeader,
   DrawerOverlay,
   DrawerContent,
+  Heading,
   Text,
   Link,
   Icon,
@@ -24,18 +25,14 @@ import {
 } from "@chakra-ui/react";
 import { GiSleevelessJacket } from "react-icons/gi";
 import { HiSwitchVertical } from "react-icons/hi";
-import {
-  MdArrowForward,
-  MdCheckroom,
-  MdDryCleaning,
-  MdRadioButtonChecked,
-  MdRadioButtonUnchecked,
-} from "react-icons/md";
+import { MdArrowForward, MdChevronRight } from "react-icons/md";
+import { WiThermometer } from "react-icons/wi";
 import { orderBy } from "@firebase/firestore";
 import { useDocumentData } from "react-firebase-hooks/firestore";
 import { Link as WouterLink } from "wouter";
 
-import PageHeader from "components/PageHeader";
+import PageHeader, { Eyebrow } from "components/PageHeader";
+import PickedMark, { pickedRing } from "components/PickedMark";
 import Weather from "components/Weather";
 import EmptyState from "components/EmptyState";
 import Loading from "components/Loading";
@@ -74,29 +71,14 @@ const greeting = () => {
   return "Good evening";
 };
 
-// Small label above a section, e.g. "UP NEXT"
-const Eyebrow = ({ children }: { children: string }) => (
-  <Text
-    sx={{
-      fontSize: "xs",
-      fontWeight: "semibold",
-      letterSpacing: "wider",
-      textTransform: "uppercase",
-      color: "gray.600",
-    }}
-  >
-    {children}
-  </Text>
-);
-
 const Swatch = ({ reference }: { reference: Outfit["shirt"] }) => {
   const [item] = useDocumentData(reference);
   return (
     <Box
       sx={{
-        w: 9,
-        h: 9,
-        borderRadius: "md",
+        w: 10,
+        h: 10,
+        borderRadius: "thumb",
         overflow: "hidden",
         backgroundColor: "surface",
       }}
@@ -115,68 +97,19 @@ const Swatch = ({ reference }: { reference: Outfit["shirt"] }) => {
 // Outfit whose jacket prompt was shown; survives tab switches, resets on reload
 let promptedFor: string | undefined;
 
-// One row in the jacket sheet
-const Choice = ({
-  isChosen,
-  onClick,
-  picture,
-  title,
-  detail,
-}: {
-  isChosen: boolean;
-  onClick: () => void;
-  picture: ReactNode;
-  title: string;
-  detail: string;
-}) => (
-  <Flex
-    as="button"
-    role="radio"
-    aria-checked={isChosen}
-    onClick={onClick}
-    sx={{
-      w: "100%",
-      alignItems: "center",
-      gap: 3,
-      p: 2,
-      mb: 2,
-      textAlign: "left",
-      borderRadius: "xl",
-      border: "2px solid",
-      borderColor: isChosen ? "accent.600" : "gray.200",
-      backgroundColor: "white",
-    }}
-  >
-    {picture}
-    <Box sx={{ flex: 1, minW: 0 }}>
-      <Text noOfLines={1} sx={{ fontWeight: "medium" }}>
-        {title}
-      </Text>
-      <Text sx={{ fontSize: "sm", color: "gray.600" }}>{detail}</Text>
-    </Box>
-    <Icon
-      as={isChosen ? MdRadioButtonChecked : MdRadioButtonUnchecked}
-      sx={{ w: 6, h: 6, color: isChosen ? "accent.600" : "gray.400" }}
-    />
-  </Flex>
-);
+// A near-white card on the stone page
+const card = {
+  alignItems: "center",
+  gap: 3,
+  p: 2,
+  pr: 3,
+  borderRadius: "card",
+  backgroundColor: "card",
+} as const;
 
-const JacketIcon = () => (
-  <Flex
-    sx={{
-      w: 12,
-      h: 12,
-      flexShrink: 0,
-      borderRadius: "lg",
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: "accent.50",
-      color: "accent.600",
-    }}
-  >
-    <Icon as={GiSleevelessJacket} sx={{ w: 7, h: 7 }} />
-  </Flex>
-);
+// Measured heights (px) of everything on Home but the photos
+const FIXED_HEIGHT = 240;
+const CARD_HEIGHT = 72;
 
 const Home = () => {
   const [user] = useAuth();
@@ -192,7 +125,7 @@ const Home = () => {
   } = useDisclosure();
   useBackToClose(isJacketSheetOpen, onJacketSheetClose);
   // Focus the title on open, so no focus ring lands on the first jacket
-  const sheetTitleRef = useRef<HTMLElement>(null);
+  const sheetTitleRef = useRef<HTMLHeadingElement>(null);
   const { data: weatherData, isLoading: isWeatherLoading } = useWeather();
   const [outfits, isOutfitsLoading] = useData<Outfit>(
     "outfits",
@@ -271,9 +204,12 @@ const Home = () => {
     });
   };
 
-  // Height taken by everything but the photos: date and greeting (114px),
-  // weather card (68), action bar (64), plus the jacket card and up-next row
-  const fixedHeight = 246 + (hasJacketCard ? 72 : 0) + (upNext ? 56 : 0);
+  // Height taken by everything but the photos: date and greeting, weather
+  // card, action bar, plus the jacket card and up-next card when shown
+  const fixedHeight =
+    FIXED_HEIGHT +
+    (hasJacketCard ? CARD_HEIGHT : 0) +
+    (upNext ? CARD_HEIGHT : 0);
 
   if (!user) return null;
 
@@ -282,8 +218,9 @@ const Home = () => {
       <PageHeader
         eyebrow={`Today · ${today()}`}
         title={`${greeting()}, ${user.displayName?.split(" ")[0]}.`}
+        titleSize="3xl"
       />
-      <Box sx={{ mb: 3 }}>
+      <Box sx={{ mt: -2, mb: 3 }}>
         <Weather
           weatherData={weatherData}
           isLoading={isWeatherLoading}
@@ -302,31 +239,23 @@ const Home = () => {
             style={
               {
                 // Fit the whole outfit on screen: what's left after the rest
-                // of the page and the nav, over two rows (8px gap, 10px frame
-                // each); between 110px and the usual 162px
-                "--outfit-photo-height": `clamp(110px, calc((100dvh - ${fixedHeight}px - env(safe-area-inset-top) - var(--chakra-space-nav)) / 2 - 14px), 162px)`,
+                // of the page and the nav, over two rows (8px gap between);
+                // between 110px and 190px
+                "--outfit-photo-height": `clamp(110px, calc((100dvh - ${fixedHeight}px - env(safe-area-inset-top) - var(--chakra-space-nav)) / 2 - 4px), 190px)`,
               } as React.CSSProperties
             }
           >
             {slots.map((slot) => (
-              <OutfitReference key={slot} reference={activeOutfit[slot]} />
+              <OutfitReference
+                key={slot}
+                reference={activeOutfit[slot]}
+                isLabelled
+              />
             ))}
           </Grid>
 
           {hasJacketCard && (
-            <Flex
-              sx={{
-                mt: 2,
-                minH: 16,
-                alignItems: "center",
-                gap: 3,
-                p: 2,
-                borderRadius: "xl",
-                border: "1px solid",
-                borderColor: jacket || isSkipped ? "gray.200" : "accent.200",
-                backgroundColor: "white",
-              }}
-            >
+            <Flex sx={{ ...card, mt: 2, minH: 16 }}>
               {jacket ? (
                 <Box
                   as="button"
@@ -340,17 +269,37 @@ const Home = () => {
                     sx={{
                       w: 12,
                       h: 12,
-                      borderRadius: "lg",
+                      borderRadius: "thumb",
                       objectFit: "cover",
                     }}
                   />
                 </Box>
               ) : (
-                <JacketIcon />
+                <Flex
+                  sx={{
+                    w: 12,
+                    h: 12,
+                    flexShrink: 0,
+                    borderRadius: "thumb",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: "surface",
+                    color: "accent.600",
+                  }}
+                >
+                  <Icon as={GiSleevelessJacket} sx={{ w: 7, h: 7 }} />
+                </Flex>
               )}
               <Box sx={{ flex: 1, minW: 0 }}>
                 <Eyebrow>Today&apos;s jacket</Eyebrow>
-                <Text noOfLines={1} sx={{ fontWeight: "medium" }}>
+                <Text
+                  noOfLines={1}
+                  sx={{
+                    fontFamily: "heading",
+                    fontSize: "lg",
+                    lineHeight: 1.3,
+                  }}
+                >
                   {jacket
                     ? jacket.title
                     : isSkipped
@@ -360,11 +309,9 @@ const Home = () => {
               </Box>
               <Button
                 onClick={onJacketSheetOpen}
-                size="md"
                 {...(jacket || isSkipped
-                  ? { variant: "ghost" }
-                  : { colorScheme: "accent", bg: "accent.600" })}
-                sx={{ minH: "44px", px: 5, borderRadius: "full" }}
+                  ? { variant: "outline" }
+                  : { colorScheme: "brand" })}
               >
                 {jacket || isSkipped ? "Change" : "Choose"}
               </Button>
@@ -377,22 +324,37 @@ const Home = () => {
               onClick={() => openOutfit(upNext.id)}
               aria-label="Open the next outfit"
               sx={{
+                ...card,
                 mt: 2,
                 w: "100%",
-                minH: 12,
-                alignItems: "center",
-                gap: 3,
-                px: 2,
+                minH: 16,
+                pl: 4,
+                textAlign: "left",
                 transition: "transform 0.1s",
                 _active: { transform: "scale(0.98)" },
               }}
             >
-              <Eyebrow>Up next</Eyebrow>
+              <Box sx={{ flex: 1 }}>
+                <Eyebrow>Up next</Eyebrow>
+                <Text
+                  sx={{
+                    fontFamily: "heading",
+                    fontSize: "lg",
+                    lineHeight: 1.3,
+                  }}
+                >
+                  No. {(outfits?.indexOf(upNext) ?? 0) + 1}
+                </Text>
+              </Box>
               <Flex sx={{ gap: 1.5 }}>
                 {slots.map((slot) => (
                   <Swatch key={slot} reference={upNext[slot]} />
                 ))}
               </Flex>
+              <Icon
+                as={MdChevronRight}
+                sx={{ w: 5, h: 5, color: "gray.600" }}
+              />
             </Flex>
           )}
 
@@ -405,62 +367,111 @@ const Home = () => {
             <DrawerOverlay />
             <DrawerContent bg="transparent" boxShadow="none">
               <Swipeable direction="down" onClose={onJacketSheetClose}>
-                <DrawerHeader
-                  ref={sheetTitleRef}
-                  tabIndex={-1}
-                  sx={{ pb: 1, _focus: { outline: "none" } }}
-                >
-                  Which jacket today?
+                <DrawerHeader sx={{ pb: 2 }}>
+                  {weatherData && (
+                    <Flex
+                      sx={{
+                        alignItems: "center",
+                        gap: 1,
+                        color: "accent.600",
+                        fontFamily: "body",
+                        fontSize: "xs",
+                        fontWeight: "semibold",
+                        letterSpacing: "0.12em",
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      <Icon as={WiThermometer} sx={{ w: 5, h: 5 }} />
+                      {Math.round(weatherData.main.temp)}° ·{" "}
+                      {weatherData.weather[0]?.description}
+                    </Flex>
+                  )}
+                  <Heading
+                    ref={sheetTitleRef}
+                    tabIndex={-1}
+                    sx={{ fontSize: "3xl", _focus: { outline: "none" } }}
+                  >
+                    Which jacket today?
+                  </Heading>
                 </DrawerHeader>
                 <DrawerBody>
-                  {weatherData && (
-                    <Text sx={{ color: "gray.600", mb: 3 }}>
-                      It&apos;s {Math.round(weatherData.main.temp)}° with{" "}
-                      {weatherData.weather[0]?.description}.
-                      {temperatureJackets.length > 0 &&
-                        " These suit the weather."}
-                    </Text>
-                  )}
-                  {options.map((option) => (
-                    <Choice
-                      key={option.id}
-                      isChosen={chosen ? option.id === chosen.id : false}
-                      onClick={() => onPickJacket(option)}
-                      picture={
-                        <Image
-                          src={option.imageUrl}
-                          alt=""
-                          sx={{
-                            w: 12,
-                            h: 12,
-                            borderRadius: "lg",
-                            objectFit: "cover",
-                          }}
-                        />
-                      }
-                      title={option.title}
-                      detail={`For ${option.maxTemperature}° or cooler`}
-                    />
-                  ))}
-                  <Choice
-                    isChosen={isSkipped}
-                    onClick={() => onPickJacket(false)}
-                    picture={<JacketIcon />}
-                    title="No jacket today"
-                    detail="Go without one"
-                  />
+                  <Text sx={{ color: "gray.600", mb: 4 }}>
+                    {temperatureJackets.length > 0
+                      ? `${count(temperatureJackets.length)} of your jackets ${
+                          temperatureJackets.length === 1 ? "suits" : "suit"
+                        } the weather. `
+                      : ""}
+                    Alfred will remember your pick for this outfit.
+                  </Text>
+                  <Grid templateColumns="repeat(2, 1fr)" gap={3}>
+                    {options.map((option) => {
+                      const isChosen = chosen ? option.id === chosen.id : false;
+                      return (
+                        <Box
+                          key={option.id}
+                          as="button"
+                          aria-pressed={isChosen}
+                          onClick={() => onPickJacket(option)}
+                          sx={{ textAlign: "left", minW: 0 }}
+                        >
+                          <Box
+                            sx={{
+                              position: "relative",
+                              aspectRatio: "4 / 5",
+                              borderRadius: "card",
+                              overflow: "hidden",
+                              backgroundColor: "surface",
+                              ...(isChosen && pickedRing),
+                            }}
+                          >
+                            <Image
+                              src={option.imageUrl}
+                              alt=""
+                              sx={{ w: "100%", h: "100%", objectFit: "cover" }}
+                            />
+                            {isChosen && <PickedMark />}
+                          </Box>
+                          <Text
+                            noOfLines={1}
+                            sx={{
+                              pt: 2,
+                              fontFamily: "heading",
+                              fontSize: "lg",
+                            }}
+                          >
+                            {option.title}
+                          </Text>
+                          <Text sx={{ fontSize: "sm", color: "gray.600" }}>
+                            Up to {option.maxTemperature}°
+                          </Text>
+                        </Box>
+                      );
+                    })}
+                  </Grid>
                 </DrawerBody>
-                {chosen == null && (
-                  <DrawerFooter sx={{ pt: 0 }}>
+                <DrawerFooter sx={{ flexDirection: "column", gap: 2 }}>
+                  <Button
+                    size="lg"
+                    aria-pressed={isSkipped}
+                    onClick={() => onPickJacket(false)}
+                    {...(isSkipped
+                      ? { colorScheme: "brand" }
+                      : { variant: "outline" })}
+                    sx={{ w: "100%" }}
+                  >
+                    No jacket today
+                  </Button>
+                  {chosen == null && (
                     <Button
                       variant="ghost"
+                      size="lg"
                       onClick={onJacketSheetClose}
-                      sx={{ w: "100%", borderRadius: "full" }}
+                      sx={{ w: "100%" }}
                     >
-                      Decide later
+                      Not now
                     </Button>
-                  </DrawerFooter>
-                )}
+                  )}
+                </DrawerFooter>
               </Swipeable>
             </DrawerContent>
           </Drawer>
@@ -486,12 +497,10 @@ const Home = () => {
                 <Button
                   size="lg"
                   variant="outline"
-                  colorScheme="brand"
-                  backgroundColor="white"
                   leftIcon={<Icon as={HiSwitchVertical} />}
                   onClick={onSwitchCurrentOutfit}
                   isDisabled={isUpdateOutfitLoading}
-                  sx={{ flex: 1, px: 4, fontSize: "md", borderRadius: "full" }}
+                  sx={{ flex: 1, px: 4 }}
                 >
                   Swap with next
                 </Button>
@@ -502,20 +511,16 @@ const Home = () => {
                   rightIcon={<Icon as={MdArrowForward} />}
                   onClick={onFetchNextOutfit}
                   isLoading={isUpdateOutfitLoading}
-                  sx={{
-                    flex: 1,
-                    px: 4,
-                    fontSize: "md",
-                    borderRadius: "full",
-                    boxShadow: "material",
-                  }}
+                  sx={{ flex: 1, px: 4 }}
                 >
                   Next outfit
                 </Button>
               </Flex>
             </PopoverAnchor>
-            <PopoverContent>
-              <PopoverHeader>Just one outfit so far</PopoverHeader>
+            <PopoverContent sx={{ borderRadius: "card", bg: "card" }}>
+              <PopoverHeader sx={{ fontWeight: "semibold" }}>
+                Just one outfit so far
+              </PopoverHeader>
               <PopoverBody>
                 Alfred rotates between outfits, so there&apos;s nothing to move
                 on to yet. Add another in{" "}
@@ -524,7 +529,7 @@ const Home = () => {
                 </Link>
                 .
               </PopoverBody>
-              <PopoverArrow />
+              <PopoverArrow sx={{ bg: "card" }} />
             </PopoverContent>
           </Popover>
         </>
@@ -532,7 +537,6 @@ const Home = () => {
         <EmptyState
           {...(items?.length
             ? {
-                icon: MdDryCleaning,
                 title: "Your wardrobe is in. Now, a first outfit.",
                 description:
                   "Pick one shirt, one belt, one pair of pants and one pair of shoes. Alfred will add it to the rotation.",
@@ -540,7 +544,6 @@ const Home = () => {
                 onAction: openNewOutfit,
               }
             : {
-                icon: MdCheckroom,
                 title: "Shall we begin with your wardrobe?",
                 description:
                   "Photograph a few shirts, belts, pants and shoes. Once they're in, Alfred will lay out something to wear each morning.",

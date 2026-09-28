@@ -51,7 +51,7 @@ const Weather = ({ weatherData, isLoading, verdict }: WeatherProps) => {
   const [weather] = weatherData?.weather || [];
 
   if (isLoading) {
-    return <Skeleton height={14} borderRadius="xl" />;
+    return <Skeleton height={14} borderRadius="card" />;
   }
 
   if (!weatherData || !weather) return null;
@@ -64,15 +64,15 @@ const Weather = ({ weatherData, isLoading, verdict }: WeatherProps) => {
         minH: 14,
         px: 3,
         py: 2,
-        borderRadius: "xl",
-        backgroundColor: "surface",
+        borderRadius: "card",
+        backgroundColor: "card",
         color: "brand.500",
       }}
     >
       <Icon
         as={icons[weather.icon] || WiThermometer}
         aria-hidden
-        sx={{ w: 9, h: 9, flexShrink: 0, color: "accent.600" }}
+        sx={{ w: 9, h: 9, flexShrink: 0, color: "accent.500" }}
       />
       <Text sx={{ fontFamily: "heading", fontSize: "3xl", lineHeight: 1 }}>
         {Math.round(weatherData.main.temp)}°

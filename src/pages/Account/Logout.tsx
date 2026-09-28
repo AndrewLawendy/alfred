@@ -8,15 +8,17 @@ const Logout = (props: Omit<ButtonProps, "onClick">) => (
   <Confirm
     message={
       <>
-        <Heading size="md">Sign out of Alfred?</Heading>
-        <Text sx={{ mt: 1, color: "gray.600" }}>
-          Your wardrobe and outfits stay saved to your account.
+        <Heading sx={{ fontSize: "2xl" }}>Sign out of Alfred?</Heading>
+        <Text sx={{ mt: 2, color: "gray.600" }}>
+          Your wardrobe and outfits stay safe in your account. Sign in again any
+          time.
         </Text>
       </>
     }
     onConfirm={() => signOut(auth)}
     okText="Sign out"
-    cancelText="Stay"
+    okType="red"
+    cancelText="Cancel"
   >
     {({ onOpen }) => (
       <Button {...props} onClick={onOpen}>

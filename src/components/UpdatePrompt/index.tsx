@@ -30,14 +30,13 @@ const UpdatePrompt = () => {
             sx={{
               alignItems: "center",
               gap: 3,
-              pl: 4,
-              pr: 2,
-              py: 2,
+              pl: 5,
+              pr: 3,
+              py: 3,
               mt: "env(safe-area-inset-top)",
-              borderRadius: "full",
+              borderRadius: "card",
               backgroundColor: "brand.500",
-              color: "white",
-              boxShadow: "lg",
+              color: "card",
             }}
           >
             <Text sx={{ flex: 1, fontSize: "sm" }}>
@@ -46,11 +45,7 @@ const UpdatePrompt = () => {
             <Button
               size="sm"
               onClick={reload}
-              sx={{
-                borderRadius: "full",
-                backgroundColor: "accent.100",
-                color: "brand.800",
-              }}
+              sx={{ backgroundColor: "card", color: "brand.500" }}
             >
               Reload
             </Button>

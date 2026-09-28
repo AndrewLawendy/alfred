@@ -18,7 +18,7 @@ import OutfitScreen from "pages/Outfits/OutfitScreen";
 
 import theme from "utils/theme";
 
-import "@fontsource/instrument-serif";
+import "@fontsource/bodoni-moda";
 
 function App() {
   const [location] = useLocation();

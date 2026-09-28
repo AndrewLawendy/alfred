@@ -1,11 +1,5 @@
 import { Link, useRoute } from "wouter";
-import {
-  Link as ChakraLink,
-  LinkProps,
-  Icon,
-  Text,
-  Box,
-} from "@chakra-ui/react";
+import { Link as ChakraLink, LinkProps, Icon, Text } from "@chakra-ui/react";
 import { IconType } from "react-icons";
 import { motion } from "framer-motion";
 
@@ -13,16 +7,9 @@ interface SideNavItemProps extends LinkProps {
   to: string;
   label: string;
   icon: IconType;
-  activeIcon: IconType;
 }
 
-const BottomNavItem = ({
-  to,
-  label,
-  icon,
-  activeIcon,
-  ...rest
-}: SideNavItemProps) => {
+const BottomNavItem = ({ to, label, icon, ...rest }: SideNavItemProps) => {
   // Match nested routes too, e.g. /wardrobe/shirt/new
   const [isActive] = useRoute(to === "/" ? "/" : `${to}/:rest*`);
 
@@ -38,45 +25,36 @@ const BottomNavItem = ({
         flexDirection: "column",
         alignItems: "center",
         gap: 1,
-        pt: 2,
-        pb: 1,
-        minHeight: 14,
+        position: "relative",
+        pt: 2.5,
+        pb: 1.5,
+        minHeight: 16,
         fontSize: "xs",
-        fontWeight: isActive ? "semibold" : "normal",
-        color: isActive ? "brand.700" : "gray.600",
+        fontWeight: "medium",
+        color: isActive ? "brand.500" : "gray.600",
 
         "&:hover": {
           textDecoration: "none",
         },
       }}
     >
-      <Box
-        sx={{
-          position: "relative",
-          display: "flex",
-          justifyContent: "center",
-          width: 16,
-          py: 0.5,
-        }}
-      >
-        {isActive && (
-          // One shared pill that glides to the newly active tab
-          <motion.div
-            layoutId="nav-pill"
-            transition={{ type: "spring", stiffness: 500, damping: 40 }}
-            style={{
-              position: "absolute",
-              inset: 0,
-              borderRadius: 9999,
-              background: "var(--chakra-colors-accent-100)",
-            }}
-          />
-        )}
-        <Icon
-          as={isActive ? activeIcon : icon}
-          sx={{ position: "relative", w: 6, h: 6 }}
+      {isActive && (
+        // One brass bar that glides to the newly active tab
+        <motion.div
+          layoutId="nav-bar"
+          transition={{ type: "spring", stiffness: 500, damping: 40 }}
+          style={{
+            position: "absolute",
+            top: -1,
+            width: 24,
+            height: 2,
+            borderRadius: 9999,
+            background: "var(--chakra-colors-accent-500)",
+          }}
         />
-      </Box>
+      )}
+      {/* A heavier stroke marks the active tab */}
+      <Icon as={icon} strokeWidth={isActive ? 2.2 : 1.6} sx={{ w: 6, h: 6 }} />
       <Text>{label}</Text>
     </ChakraLink>
   );

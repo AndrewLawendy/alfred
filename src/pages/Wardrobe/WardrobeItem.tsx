@@ -1,6 +1,5 @@
 import { where } from "firebase/firestore";
 import { Grid } from "@chakra-ui/react";
-import { MdCheckroom } from "react-icons/md";
 
 import Loading from "components/Loading";
 import EmptyState from "components/EmptyState";
@@ -23,16 +22,19 @@ const WardrobeItem = ({ type }: Pick<Item, "type">) => {
   }
 
   return items.length > 0 ? (
-    <Grid templateColumns="repeat(2, 1fr)" columnGap={3} rowGap={4}>
+    <Grid templateColumns="repeat(2, 1fr)" columnGap={3} rowGap={5}>
       {items.map((item) => (
         <ItemTile key={item.id} item={item} onClick={() => openItem(item.id)} />
       ))}
     </Grid>
   ) : (
     <EmptyState
-      icon={MdCheckroom}
       title={`No ${type}s yet`}
-      description={`Add your first ${type} with a photo and a title.`}
+      description={
+        type === "jacket"
+          ? "Add a jacket and Alfred will suggest it when the temperature drops."
+          : `Add your first ${type} with a photo and a title.`
+      }
       actionLabel={`Add ${type}`}
       onAction={() => openNewItem(type)}
     />

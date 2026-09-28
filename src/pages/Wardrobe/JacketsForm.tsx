@@ -12,6 +12,7 @@ const JacketsForm = ({
   return (
     <FormInput
       label="Suggest when it's this cool or cooler"
+      helper="Alfred checks the morning forecast and suggests this jacket at or below this temperature."
       name="maxTemperature"
       value={values.maxTemperature}
       error={errors.maxTemperature}

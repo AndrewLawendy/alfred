@@ -19,7 +19,7 @@ const theme = extendTheme({
         userSelect: "none",
       },
       body: {
-        bg: "linen",
+        bg: "page",
       },
       "#root": {
         display: "flex",
@@ -34,44 +34,75 @@ const theme = extendTheme({
   fonts: {
     // The phone's own font (San Francisco on iOS, Roboto on Android)
     body: `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif`,
-    heading: `"Instrument Serif", Georgia, serif`,
+    heading: `"Bodoni Moda", "Didot", Georgia, serif`,
   },
   colors: {
-    // Ivory page, ink text, one oxblood accent kept for decisions
-    linen: "#FBFAF6",
-    surface: "#F3F0E9",
+    // Warm stone page with near-white cards: depth from tone, not shadows.
+    // Ink for text and actions, brass for small accents.
+    page: "#EEEDE9",
+    card: "#FAFAF8",
+    surface: "#E3E2DD",
+    line: "#D6D4CE",
+    // Warm greys; 600 is the secondary text colour (5:1 on the page)
+    gray: {
+      50: "#F5F4F1",
+      100: "#E3E2DD",
+      200: "#D6D4CE",
+      300: "#BDBAB3",
+      400: "#8E8C86",
+      500: "#75777D",
+      600: "#62656C",
+      700: "#45474D",
+      800: "#2A2C31",
+      900: "#15171C",
+    },
     brand: {
-      50: "#F3F0E9",
-      100: "#E6E2DA",
-      200: "#CDC8BF",
-      300: "#A6A199",
-      400: "#6F6B65",
-      500: "#1A1B1E",
-      600: "#141518",
-      700: "#0E0F11",
-      800: "#08090A",
+      50: "#F5F4F1",
+      100: "#E3E2DD",
+      200: "#CDCBC5",
+      300: "#A3A39F",
+      400: "#62656C",
+      500: "#15171C",
+      600: "#0F1114",
+      700: "#0A0B0D",
+      800: "#050607",
       900: "#000000",
     },
+    // Brass: 500 for icons and rings; 600 and up for text (500 is under
+    // 4.5:1 on the page)
     accent: {
-      50: "#F8EFED",
-      100: "#EFDCD8",
-      200: "#DDB5AE",
-      300: "#C48A80",
-      400: "#A05A50",
-      500: "#83403A",
-      600: "#6B2B2B",
-      700: "#5A2323",
-      800: "#461B1B",
-      900: "#2F1212",
+      50: "#F6F1E8",
+      100: "#EDE3D1",
+      200: "#DCC7A3",
+      300: "#C4A676",
+      400: "#AD8C5C",
+      500: "#9A7646",
+      600: "#7F6038",
+      700: "#654C2C",
+      800: "#4B3921",
+      900: "#322616",
     },
+    red: {
+      50: "#FBEAEA",
+      100: "#F3C9C9",
+      200: "#E49A9A",
+      300: "#D26B6B",
+      400: "#BD4545",
+      500: "#9B2C2C",
+      600: "#822727",
+      700: "#6B2020",
+      800: "#541919",
+      900: "#3D1212",
+    },
+  },
+  radii: {
+    card: "22px",
+    field: "18px",
+    thumb: "12px",
   },
   space: {
     // Bottom nav height plus the iPhone home indicator
     nav: "calc(4.75rem + env(safe-area-inset-bottom))",
-  },
-  shadows: {
-    material: "0 2px 4px var(--chakra-colors-gray-300)",
-    "reverse-material": "0 -2px 4px var(--chakra-colors-gray-300)",
   },
   components: {
     Drawer: {
@@ -85,7 +116,7 @@ const theme = extendTheme({
           fontSize: "2xl",
         },
         dialog: {
-          bg: "linen",
+          bg: "page",
           maxH: "$100vh",
           ...(isFullHeight && { height: "$100vh" }),
         },
@@ -94,20 +125,60 @@ const theme = extendTheme({
         full: { dialog: { h: "$100vh" } },
       },
     },
-    // Instrument Serif has a single weight; a faux bold smudges it
+    // Only the regular weight is loaded; a faux bold smudges Bodoni
     Heading: {
-      baseStyle: { fontWeight: "normal", letterSpacing: "-0.01em" },
+      baseStyle: { fontWeight: "normal" },
     },
-    // red.500 is under 4.5:1 on ivory
-    FormError: {
-      baseStyle: { text: { color: "red.600" } },
+    Input: {
+      sizes: {
+        md: {
+          field: { h: 12, fontSize: "md", borderRadius: "field", px: 4 },
+          addon: { h: 12, borderRadius: "field" },
+        },
+      },
+      variants: {
+        outline: {
+          field: {
+            bg: "card",
+            borderColor: "line",
+            _hover: { borderColor: "gray.300" },
+            _focusVisible: {
+              borderColor: "brand.500",
+              boxShadow: "0 0 0 1px var(--chakra-colors-brand-500)",
+            },
+          },
+          addon: { bg: "card", borderColor: "line", color: "gray.600" },
+        },
+      },
     },
     Button: {
       baseStyle: {
+        borderRadius: "full",
         _active: { transform: "scale(0.97)" },
+      },
+      sizes: {
+        md: { h: "44px", px: 5 },
+        lg: { h: 12, fontSize: "md" },
+      },
+      variants: {
+        // Secondary actions: a near-white pill with a faint ink edge
+        outline: {
+          bg: "card",
+          color: "brand.500",
+          borderColor: "rgba(21, 23, 28, 0.15)",
+          _hover: { bg: "card" },
+          _active: { bg: "surface" },
+        },
       },
     },
   },
 });
+
+// A near-white, blurred label that sits on a photo
+export const frosted = {
+  backgroundColor: "rgba(250, 250, 248, 0.9)",
+  backdropFilter: "blur(8px)",
+  color: "brand.500",
+} as const;
 
 export default theme;

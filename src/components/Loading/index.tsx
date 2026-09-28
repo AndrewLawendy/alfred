@@ -8,7 +8,7 @@ type LoadingProps = {
 const Loading = ({ message, columns = 3 }: LoadingProps) => (
   <SimpleGrid role="status" aria-label={message} columns={columns} spacing={2}>
     {Array.from({ length: columns * 2 }, (_, index) => (
-      <Skeleton key={index} height="170px" borderRadius="md" />
+      <Skeleton key={index} height="170px" borderRadius="card" />
     ))}
   </SimpleGrid>
 );

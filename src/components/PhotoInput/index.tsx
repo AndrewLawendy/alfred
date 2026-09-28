@@ -46,9 +46,10 @@ const PhotoInput = ({
       as="label"
       htmlFor={id}
       variant="outline"
+      size="lg"
       leftIcon={<Icon as={icon} sx={{ w: 5, h: 5 }} />}
       isDisabled={disabled}
-      sx={{ flex: 1, minH: "44px", borderRadius: "full", cursor: "pointer" }}
+      sx={{ flex: 1, px: 3, cursor: "pointer" }}
     >
       {label}
     </Button>
@@ -64,10 +65,10 @@ const PhotoInput = ({
           width: "100%",
           overflow: "hidden",
           border: "1px solid",
-          borderRadius: "xl",
+          borderRadius: "card",
           cursor: "pointer",
-          backgroundColor: "surface",
-          borderColor: error ? "red.500" : "gray.200",
+          backgroundColor: "card",
+          borderColor: error ? "red.500" : "transparent",
           boxShadow: error
             ? "0 0 0 1px var(--chakra-colors-red-500)"
             : undefined,

@@ -1,14 +1,5 @@
 import { Box, Flex } from "@chakra-ui/react";
-import {
-  MdHome,
-  MdOutlineHome,
-  MdDryCleaning,
-  MdOutlineDryCleaning,
-  MdCheckroom,
-  MdOutlineCheckroom,
-  MdPerson,
-  MdPersonOutline,
-} from "react-icons/md";
+import { TbShirt, TbStack2, TbSun, TbUser } from "react-icons/tb";
 
 import BottomNavItem from "components/BottomNavItem";
 
@@ -21,36 +12,19 @@ const BottomNav = () => {
         bottom: 0,
         left: 0,
         width: "100%",
-        backgroundColor: "linen",
-        boxShadow: "0px -1px var(--chakra-colors-chakra-border-color)",
+        // Translucent so the page shows through as it scrolls underneath
+        backgroundColor: "rgba(238, 237, 233, 0.9)",
+        backdropFilter: "blur(12px)",
+        borderTop: "1px solid",
+        borderColor: "line",
         pb: "env(safe-area-inset-bottom)",
       }}
     >
       <Flex as="nav">
-        <BottomNavItem
-          to="/"
-          label="Home"
-          icon={MdOutlineHome}
-          activeIcon={MdHome}
-        />
-        <BottomNavItem
-          to="/outfits"
-          label="Outfits"
-          icon={MdOutlineDryCleaning}
-          activeIcon={MdDryCleaning}
-        />
-        <BottomNavItem
-          to="/wardrobe"
-          label="Wardrobe"
-          icon={MdOutlineCheckroom}
-          activeIcon={MdCheckroom}
-        />
-        <BottomNavItem
-          to="/account"
-          label="Account"
-          icon={MdPersonOutline}
-          activeIcon={MdPerson}
-        />
+        <BottomNavItem to="/" label="Today" icon={TbSun} />
+        <BottomNavItem to="/outfits" label="Outfits" icon={TbStack2} />
+        <BottomNavItem to="/wardrobe" label="Wardrobe" icon={TbShirt} />
+        <BottomNavItem to="/account" label="Account" icon={TbUser} />
       </Flex>
     </Box>
   );

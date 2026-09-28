@@ -21,7 +21,7 @@ const Header = () => {
         top: 0,
         zIndex: "sticky",
         height: "env(safe-area-inset-top)",
-        backgroundColor: "linen",
+        backgroundColor: "page",
         borderBottom: "1px solid",
         borderColor: isScrolled ? "gray.200" : "transparent",
         transition: "border-color 0.2s",

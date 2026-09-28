@@ -1,9 +1,10 @@
 import { Link } from "wouter";
-import { Button, Flex, Heading, Icon, Text } from "@chakra-ui/react";
-import { IconType } from "react-icons";
+import { Button, Flex, Heading, Icon, Image, Text } from "@chakra-ui/react";
+import { MdAdd } from "react-icons/md";
+
+import Logo from "assets/logo.png";
 
 type EmptyStateProps = {
-  icon: IconType;
   title: string;
   description: string;
   actionLabel: string;
@@ -13,7 +14,6 @@ type EmptyStateProps = {
 };
 
 const EmptyState = ({
-  icon,
   title,
   description,
   actionLabel,
@@ -27,16 +27,20 @@ const EmptyState = ({
       textAlign: "center",
       gap: 2,
       py: 10,
-      px: 4,
+      px: 5,
+      border: "1.5px dashed",
+      borderColor: "line",
+      borderRadius: "card",
     }}
   >
-    <Icon as={icon} sx={{ w: 14, h: 14, color: "gray.300", mb: 2 }} />
-    <Heading size="md">{title}</Heading>
+    <Image src={Logo} alt="" sx={{ h: 10, mb: 3 }} />
+    <Heading sx={{ fontSize: "2xl" }}>{title}</Heading>
     <Text sx={{ color: "gray.600", maxW: "xs" }}>{description}</Text>
     <Button
       {...(to ? { as: Link, to } : { onClick: onAction })}
       colorScheme="brand"
-      borderRadius="full"
+      size="lg"
+      leftIcon={<Icon as={MdAdd} sx={{ w: 5, h: 5 }} />}
       mt={4}
     >
       {actionLabel}

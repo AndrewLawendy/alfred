@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, RefObject } from "react";
 import { doc, orderBy } from "firebase/firestore";
 import {
-  Badge,
   Box,
   Button,
   Drawer,
@@ -19,12 +18,13 @@ import {
   Text,
 } from "@chakra-ui/react";
 import { IconType } from "react-icons";
-import { MdAdd, MdArrowBack, MdCheckCircle } from "react-icons/md";
+import { MdAdd, MdArrowBack } from "react-icons/md";
 import { GiShirt, GiBelt, GiTrousers, GiRunningShoe } from "react-icons/gi";
 
 import Confirm from "components/Confirm";
 import Loading from "components/Loading";
 import Swipeable from "components/Swipeable";
+import PickedMark, { pickedRing } from "components/PickedMark";
 
 import useBackToClose from "hooks/useBackToClose";
 import useAddDocument from "resources/useAddDocument";
@@ -56,6 +56,14 @@ const picksOf = (outfit?: Outfit): Picks =>
     ? Object.fromEntries(slots.map(({ key }) => [key, outfit[key]?.id]))
     : {};
 
+const labelStyle = {
+  fontSize: "xs",
+  fontWeight: "semibold",
+  textTransform: "uppercase",
+  letterSpacing: "0.12em",
+  color: "gray.600",
+} as const;
+
 // One piece of the outfit: its photo, opening the item
 const Slot = ({
   label,
@@ -79,7 +87,7 @@ const Slot = ({
     <Flex
       sx={{
         aspectRatio: "4 / 5",
-        borderRadius: "xl",
+        borderRadius: "card",
         overflow: "hidden",
         alignItems: "center",
         justifyContent: "center",
@@ -97,30 +105,17 @@ const Slot = ({
         <Icon as={icon} sx={{ w: 10, h: 10 }} />
       )}
     </Flex>
-    <Text sx={labelStyle}>{label}</Text>
-    <Text noOfLines={1} sx={{ fontWeight: "medium", minH: 6 }}>
+    <Text sx={{ ...labelStyle, pt: 3 }}>{label}</Text>
+    <Text
+      noOfLines={1}
+      sx={{ fontFamily: "heading", fontSize: "lg", lineHeight: 1.3, minH: 6 }}
+    >
       {item?.title || "Missing"}
     </Text>
   </Box>
 );
 
-const labelStyle = {
-  pt: 2,
-  fontSize: "xs",
-  fontWeight: "semibold",
-  textTransform: "uppercase",
-  letterSpacing: "wider",
-  color: "gray.600",
-} as const;
-
-const tileStyle = {
-  flexShrink: 0,
-  w: "6.5rem",
-  aspectRatio: "4 / 5",
-  borderRadius: "xl",
-  overflow: "hidden",
-  scrollSnapAlign: "start",
-} as const;
+const tileWidth = "8rem";
 
 // Every item of one category in a row you swipe through; tap one to pick it
 const Carousel = ({
@@ -135,7 +130,6 @@ const Carousel = ({
   onPick: (id: string) => void;
 }) => {
   const choices = items.filter(({ type }) => type === slot.key);
-  const selected = choices.find(({ id }) => id === selectedId);
   const rowRef = useRef<HTMLDivElement>(null);
 
   // Start with the current pick in view
@@ -150,20 +144,19 @@ const Carousel = ({
   }, []);
 
   return (
-    <Box as="section" aria-label={slot.label} sx={{ mb: 5 }}>
-      <Flex sx={{ alignItems: "baseline", gap: 2, px: 4, mb: 2 }}>
-        <Text sx={{ ...labelStyle, pt: 0 }}>{slot.label}</Text>
-        <Text noOfLines={1} sx={{ fontSize: "sm", color: "gray.600" }}>
-          {selected?.title}
-        </Text>
-      </Flex>
+    <Box as="section" aria-label={slot.label} sx={{ mb: 6 }}>
+      <Heading as="h3" sx={{ fontSize: "xl", px: 4, mb: 2 }}>
+        {slot.label}
+      </Heading>
       <Flex
         ref={rowRef}
         sx={{
           // The offsetParent for centring the current pick
           position: "relative",
-          gap: 2.5,
+          gap: 3,
           px: 4,
+          // Room for the chosen tile's ring, which the scroll area would clip
+          py: 1,
           overflowX: "auto",
           scrollSnapType: "x mandatory",
           scrollPaddingInline: 4,
@@ -179,42 +172,37 @@ const Carousel = ({
               as="button"
               onClick={() => onPick(item.id)}
               aria-pressed={isSelected}
-              aria-label={item.title}
               sx={{
-                ...tileStyle,
-                position: "relative",
-                // Chakra turns outline "none" into a 2px transparent one,
-                // so only colour it when selected
-                ...(isSelected && {
-                  outline: "3px solid",
-                  outlineColor: "accent.600",
-                  outlineOffset: "-3px",
-                }),
-                opacity: selectedId && !isSelected ? 0.7 : 1,
-                transition: "opacity 0.15s, transform 0.1s",
+                flexShrink: 0,
+                w: tileWidth,
+                textAlign: "left",
+                scrollSnapAlign: "start",
+                transition: "transform 0.1s",
                 _active: { transform: "scale(0.97)" },
               }}
             >
-              <Image
-                src={item.imageUrl}
-                alt=""
-                sx={{ w: "100%", h: "100%", objectFit: "cover" }}
-              />
-              {isSelected && (
-                <Icon
-                  as={MdCheckCircle}
-                  sx={{
-                    position: "absolute",
-                    top: 1.5,
-                    right: 1.5,
-                    w: 6,
-                    h: 6,
-                    color: "accent.600",
-                    backgroundColor: "white",
-                    borderRadius: "full",
-                  }}
+              <Box
+                sx={{
+                  position: "relative",
+                  aspectRatio: "4 / 5",
+                  borderRadius: "card",
+                  overflow: "hidden",
+                  backgroundColor: "surface",
+                  // Chakra turns outline "none" into a 2px transparent one,
+                  // so only add it when selected
+                  ...(isSelected && pickedRing),
+                }}
+              >
+                <Image
+                  src={item.imageUrl}
+                  alt=""
+                  sx={{ w: "100%", h: "100%", objectFit: "cover" }}
                 />
-              )}
+                {isSelected && <PickedMark />}
+              </Box>
+              <Text noOfLines={1} sx={{ pt: 2, fontWeight: "medium" }}>
+                {item.title}
+              </Text>
             </Box>
           );
         })}
@@ -222,13 +210,17 @@ const Carousel = ({
           as="button"
           onClick={() => openNewItem(slot.key)}
           sx={{
-            ...tileStyle,
+            flexShrink: 0,
+            w: tileWidth,
+            aspectRatio: "4 / 5",
+            scrollSnapAlign: "start",
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
             gap: 1,
             border: "1.5px dashed",
-            borderColor: "gray.300",
+            borderColor: "line",
+            borderRadius: "card",
             color: "gray.600",
             fontSize: "sm",
           }}
@@ -309,14 +301,13 @@ const OutfitEditor = ({
   const heading = !outfit
     ? "New outfit"
     : isEditing
-    ? "Edit outfit"
-    : `Outfit #${number}`;
+    ? `Edit No. ${number}`
+    : `Outfit No. ${number}`;
 
   return (
     <>
       <DrawerHeader
         sx={{
-          boxShadow: "material",
           display: "flex",
           alignItems: "center",
           gap: 2,
@@ -339,22 +330,38 @@ const OutfitEditor = ({
         >
           {heading}
         </Text>
-        {outfit?.active && !isEditing && (
-          <Badge colorScheme="accent">Today</Badge>
-        )}
         {!isEditing && (
-          <Button
-            onClick={() => setMode("edit")}
-            variant="outline"
-            size="sm"
-            sx={{ borderRadius: "full", px: 4 }}
-          >
+          <Button onClick={() => setMode("edit")} variant="outline">
             Edit
           </Button>
         )}
       </DrawerHeader>
 
-      <DrawerBody sx={{ py: 5, ...(isEditing && { px: 0 }) }}>
+      <DrawerBody sx={{ pt: 2, pb: 5, ...(isEditing && { px: 0 }) }}>
+        {isEditing && (
+          <Text sx={{ px: 4, mb: 5, color: "gray.600" }}>
+            Choose one of each. Jackets are picked on the day, based on the
+            weather.
+          </Text>
+        )}
+        {!isEditing && outfit?.active && (
+          <Text
+            sx={{
+              display: "inline-block",
+              mb: 4,
+              px: 3,
+              py: 1,
+              borderRadius: "full",
+              backgroundColor: "accent.600",
+              color: "card",
+              fontSize: "xs",
+              fontWeight: "semibold",
+              letterSpacing: "0.12em",
+            }}
+          >
+            TODAY&apos;S OUTFIT
+          </Text>
+        )}
         {isEditing ? (
           slots.map((slot) => (
             <Carousel
@@ -366,7 +373,7 @@ const OutfitEditor = ({
             />
           ))
         ) : (
-          <Grid templateColumns="repeat(2, 1fr)" columnGap={3} rowGap={4}>
+          <Grid templateColumns="repeat(2, 1fr)" columnGap={3} rowGap={5}>
             {slots.map((slot) => (
               <Slot
                 key={slot.key}
@@ -383,9 +390,11 @@ const OutfitEditor = ({
             <Confirm
               message={
                 <>
-                  <Heading size="md">Delete Outfit #{number}?</Heading>
-                  <Text sx={{ mt: 1, color: "gray.600" }}>
-                    Its clothes stay in your wardrobe.
+                  <Heading sx={{ fontSize: "2xl" }}>
+                    Delete Outfit No. {number}?
+                  </Heading>
+                  <Text sx={{ mt: 2, color: "gray.600" }}>
+                    It leaves the rotation. Its clothes stay in your wardrobe.
                   </Text>
                   {outfit.active && (
                     <Text sx={{ mt: 2, color: "red.600" }}>
@@ -418,7 +427,7 @@ const OutfitEditor = ({
         <DrawerFooter
           sx={{
             borderTop: "1px solid",
-            borderColor: "gray.100",
+            borderColor: "line",
             pb: "calc(var(--chakra-space-4) + env(safe-area-inset-bottom))",
             flexDirection: "column",
           }}

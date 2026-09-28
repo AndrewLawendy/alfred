@@ -36,7 +36,7 @@ const Swipeable = ({ direction, onClose, children }: SwipeableProps) => {
         display: "flex",
         flexDirection: "column",
         height: isBack ? "100%" : undefined,
-        background: "var(--chakra-colors-linen)",
+        background: "var(--chakra-colors-page)",
         ...(isBack
           ? { boxShadow: "-8px 0 24px rgba(0, 0, 0, 0.12)" }
           : {
