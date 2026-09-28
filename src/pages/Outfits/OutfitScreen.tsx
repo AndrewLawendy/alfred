@@ -137,9 +137,9 @@ const Carousel = ({
     // Scroll only the row: scrollIntoView would also scroll the screen
     const row = rowRef.current;
     const tile = row?.querySelector<HTMLElement>("[aria-pressed=true]");
-    if (row && tile) {
-      row.scrollLeft =
-        tile.offsetLeft - (row.clientWidth - tile.clientWidth) / 2;
+    // Only when it's out of view, lining it up with the row's left padding
+    if (row && tile && tile.offsetLeft + tile.offsetWidth > row.clientWidth) {
+      row.scrollLeft = tile.offsetLeft - 16;
     }
   }, []);
 
