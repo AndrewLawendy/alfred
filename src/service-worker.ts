@@ -117,6 +117,50 @@ self.addEventListener("fetch", (event) => {
   );
 });
 
+// The morning reminder, sent as a data-only push by the scheduled function.
+// Every push must show a notification (iOS stops delivering otherwise).
+self.addEventListener("push", (event) => {
+  let payload: { data?: Record<string, string> } & Record<string, string> = {};
+  try {
+    payload = event.data?.json() ?? {};
+  } catch {
+    // Not JSON: fall back to a plain reminder
+  }
+  const data = payload.data ?? payload;
+  event.waitUntil(
+    self.registration.showNotification(data.title || "Alfred", {
+      body: data.body,
+      icon: "/icons/icon-192.png",
+      tag: "morning-reminder",
+      data: { url: data.url || "/" },
+    })
+  );
+});
+
+// Tapping it opens Today, reusing an open Alfred window when there is one
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = new URL(event.notification.data?.url || "/", self.location.origin)
+    .href;
+  event.waitUntil(
+    (async () => {
+      const windows = await self.clients.matchAll({
+        type: "window",
+        includeUncontrolled: true,
+      });
+      const open = windows.find((client) =>
+        client.url.startsWith(self.location.origin)
+      );
+      if (open) {
+        await open.focus();
+        await open.navigate(url);
+      } else {
+        await self.clients.openWindow(url);
+      }
+    })()
+  );
+});
+
 self.addEventListener("message", (event) => {
   if (event.data && event.data.type === "SKIP_WAITING") {
     self.skipWaiting();

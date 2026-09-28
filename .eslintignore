@@ -1,0 +1,2 @@
+# The Cloud Function is plain Node, outside the app's TypeScript project
+functions/

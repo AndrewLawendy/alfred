@@ -15,6 +15,7 @@ import useAuth from "hooks/useAuth";
 import Logo from "assets/logo.png";
 
 import Logout from "./Logout";
+import MorningReminder from "./MorningReminder";
 
 const Account = () => {
   const [user] = useAuth();
@@ -51,6 +52,7 @@ const Account = () => {
         </Box>
       </Flex>
 
+      <MorningReminder />
       <InstallCard />
 
       <Logout
