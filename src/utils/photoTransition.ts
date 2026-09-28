@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from "react";
 import { flushSync } from "react-dom";
 
-import { openItem } from "utils/history";
+import { isInStack, openItem } from "utils/history";
 
 // A tapped photo grows into the item's page, and shrinks back into its tile
 // on Back, using the browser's View Transitions (Chrome 111+, Safari 18+).
@@ -67,7 +67,8 @@ const waitForTarget = async (id: string) => {
 
 export const openItemFromPhoto = (id: string, photo?: HTMLElement | null) => {
   const start = (document as WithViewTransitions).startViewTransition;
-  if (!photo || !start || !isSupported()) {
+  // Already open further down: Back to it, as usual, with no morph
+  if (!photo || !start || !isSupported() || isInStack({ kind: "item", id })) {
     openItem(id);
     return;
   }

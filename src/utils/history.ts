@@ -63,6 +63,10 @@ export const pushLayer = (url?: string, screen?: Screen) => {
 const nameOf = (screen: Screen) =>
   screen.kind === "new" ? `new:${screen.type}` : `${screen.kind}:${screen.id}`;
 
+// Whether a screen is open anywhere in the stack
+export const isInStack = (screen: Screen) =>
+  currentStack().some((entry) => nameOf(entry) === nameOf(screen));
+
 // A screen already in the stack is gone back to, never opened twice, so
 // item → outfit → item can't loop and Back stays a few steps
 const openScreen = (screen: Screen) => {

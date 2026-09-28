@@ -1,5 +1,4 @@
 import { Box, Image, Text, Skeleton, SkeletonProps } from "@chakra-ui/react";
-import { ReactNode } from "react";
 
 import { openItemFromPhoto } from "utils/photoTransition";
 import { frosted } from "utils/theme";
@@ -28,21 +27,50 @@ const OutfitItem = ({
   radius = "card",
   ...props
 }: OutfitItemProps) => {
-  const Wrapper = ({ children }: { children: ReactNode }) =>
-    props.onClick ? (
-      <>{children}</>
-    ) : (
-      <Box
-        as="button"
-        onClick={(event: React.MouseEvent<HTMLElement>) =>
-          openItemFromPhoto(id, event.currentTarget.querySelector("img"))
-        }
-        aria-label={title}
-        sx={{ display: "block", w: "100%", textAlign: "left" }}
-      >
-        {children}
-      </Box>
-    );
+  const photo = (
+    <Box
+      sx={{
+        position: "relative",
+        borderRadius: radius,
+        overflow: "hidden",
+        backgroundColor: "surface",
+      }}
+    >
+      <Image
+        alt={isLabelled ? "" : title}
+        src={imageUrl}
+        data-photo-source={id}
+        sx={{
+          display: "block",
+          width: "100%",
+          objectFit: "cover",
+          ...(aspectRatio
+            ? { aspectRatio: `${aspectRatio}` }
+            : // A parent (Home) can shrink photos to fit the screen
+              { height: "var(--outfit-photo-height, 162px)" }),
+        }}
+      />
+      {isLabelled && title && (
+        <Text
+          noOfLines={1}
+          sx={{
+            ...frosted,
+            position: "absolute",
+            left: 2,
+            bottom: 2,
+            maxW: "calc(100% - 16px)",
+            px: 3,
+            py: 1,
+            borderRadius: "field",
+            fontFamily: "heading",
+            fontSize: "md",
+          }}
+        >
+          {title}
+        </Text>
+      )}
+    </Box>
+  );
 
   return (
     <Skeleton
@@ -52,50 +80,22 @@ const OutfitItem = ({
       _active={{ transform: "scale(0.97)" }}
       {...props}
     >
-      <Wrapper>
+      {props.onClick ? (
+        photo
+      ) : (
+        // A plain element, not a component made per render: a new component
+        // type each render remounted the photo on every re-render
         <Box
-          sx={{
-            position: "relative",
-            borderRadius: radius,
-            overflow: "hidden",
-            backgroundColor: "surface",
-          }}
+          as="button"
+          onClick={(event: React.MouseEvent<HTMLElement>) =>
+            openItemFromPhoto(id, event.currentTarget.querySelector("img"))
+          }
+          aria-label={title}
+          sx={{ display: "block", w: "100%", textAlign: "left" }}
         >
-          <Image
-            alt={isLabelled ? "" : title}
-            src={imageUrl}
-            data-photo-source={id}
-            sx={{
-              display: "block",
-              width: "100%",
-              objectFit: "cover",
-              ...(aspectRatio
-                ? { aspectRatio: `${aspectRatio}` }
-                : // A parent (Home) can shrink photos to fit the screen
-                  { height: "var(--outfit-photo-height, 162px)" }),
-            }}
-          />
-          {isLabelled && title && (
-            <Text
-              noOfLines={1}
-              sx={{
-                ...frosted,
-                position: "absolute",
-                left: 2,
-                bottom: 2,
-                maxW: "calc(100% - 16px)",
-                px: 3,
-                py: 1,
-                borderRadius: "field",
-                fontFamily: "heading",
-                fontSize: "md",
-              }}
-            >
-              {title}
-            </Text>
-          )}
+          {photo}
         </Box>
-      </Wrapper>
+      )}
     </Skeleton>
   );
 };
