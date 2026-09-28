@@ -59,7 +59,26 @@ export const pushLayer = (url?: string, screen?: Screen) => {
   return depth;
 };
 
-const openScreen = (screen: Screen) => pushLayer(urlFor(screen), screen);
+// "item:abc", "outfit:xyz", "new:shirt"
+const nameOf = (screen: Screen) =>
+  screen.kind === "new" ? `new:${screen.type}` : `${screen.kind}:${screen.id}`;
+
+// A screen already in the stack is gone back to, never opened twice, so
+// item → outfit → item can't loop and Back stays a few steps
+const openScreen = (screen: Screen) => {
+  const stack = currentStack();
+  const index = stack.findIndex((entry) => nameOf(entry) === nameOf(screen));
+  if (index === -1) {
+    pushLayer(urlFor(screen), screen);
+    return;
+  }
+  // Back to the entry where it was on top: its own, or (opened from a link,
+  // so it has none) the one just before the next screen was pushed
+  const next = stack[index + 1];
+  const target = stack[index].depth ?? (next?.depth ?? 0) - 1;
+  const steps = layerDepth() - target;
+  if (next && target >= 0 && steps > 0) window.history.go(-steps);
+};
 
 export const openItem = (id: string) => openScreen({ kind: "item", id });
 export const openNewItem = (type: Item["type"]) =>
