@@ -30,6 +30,7 @@ const ItemDetails = ({ item }: { item: Item }) => {
         <Image
           src={item.imageUrl}
           alt={item.title}
+          data-photo-target={item.id}
           sx={{
             display: "block",
             maxW: "100%",

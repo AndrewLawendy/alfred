@@ -10,6 +10,23 @@ const theme = extendTheme({
       "@supports (height: 100dvh)": {
         "html:root": { "--chakra-vh": "100dvh" },
       },
+      // A tapped photo growing into its page (utils/photoTransition): crop the
+      // snapshots instead of stretching them between the tile's 4:5 and the
+      // photo's own shape, keep the rounded corners, and ease like the screens
+      "::view-transition-group(item-photo)": {
+        animationDuration: "0.36s",
+        animationTimingFunction: "cubic-bezier(0.32, 0.72, 0, 1)",
+        borderRadius: "22px",
+        overflow: "clip",
+      },
+      "::view-transition-old(item-photo), ::view-transition-new(item-photo)": {
+        height: "100%",
+        objectFit: "cover",
+        overflow: "clip",
+      },
+      "::view-transition-old(root), ::view-transition-new(root)": {
+        animationDuration: "0.28s",
+      },
       "html, body": {
         overscrollBehavior: "none",
         WebkitTapHighlightColor: "transparent",

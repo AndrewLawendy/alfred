@@ -31,7 +31,8 @@ import useData from "resources/useData";
 import useDeleteDocument from "resources/useDeleteDocument";
 import useUpdateDocument from "resources/useUpdateDocument";
 import { db } from "utils/firebase";
-import { openItem, openNewItem } from "utils/history";
+import { openNewItem } from "utils/history";
+import { openItemFromPhoto } from "utils/photoTransition";
 import { afterDelete, nextOrder } from "utils/rotation";
 import { Item, Outfit } from "utils/types";
 
@@ -70,7 +71,10 @@ const Slot = ({
 }) => (
   <Box
     as="button"
-    onClick={() => item && openItem(item.id)}
+    onClick={(event: React.MouseEvent<HTMLElement>) =>
+      item &&
+      openItemFromPhoto(item.id, event.currentTarget.querySelector("img"))
+    }
     sx={{
       textAlign: "left",
       minW: 0,
@@ -93,6 +97,7 @@ const Slot = ({
         <Image
           src={item.imageUrl}
           alt={item.title}
+          data-photo-source={item.id}
           sx={{ w: "100%", h: "100%", objectFit: "cover" }}
         />
       ) : (

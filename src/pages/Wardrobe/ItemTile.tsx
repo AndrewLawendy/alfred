@@ -5,7 +5,7 @@ import { Item } from "utils/types";
 
 type ItemTileProps = {
   item: Item;
-  onClick: () => void;
+  onClick: (event: React.MouseEvent<HTMLElement>) => void;
 };
 
 const ItemTile = ({ item, onClick }: ItemTileProps) => (
@@ -31,6 +31,7 @@ const ItemTile = ({ item, onClick }: ItemTileProps) => (
       <Image
         src={item.imageUrl}
         alt={item.title}
+        data-photo-source={item.id}
         sx={{ w: "100%", h: "100%", objectFit: "cover" }}
       />
       {item.type === "jacket" && (

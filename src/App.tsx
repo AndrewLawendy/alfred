@@ -17,16 +17,19 @@ import OfflineBanner from "components/OfflineBanner";
 import ScreenStack from "components/ScreenStack";
 
 import theme from "utils/theme";
+import { useInstantMotion } from "utils/photoTransition";
 
 import "@fontsource/bodoni-moda";
 
 function App() {
   const [location] = useLocation();
   const tab = location.split("/")[1].toLowerCase();
+  // A photo growing into its page takes over the motion (utils/photoTransition)
+  const isInstantMotion = useInstantMotion();
 
   return (
     <ChakraProvider theme={theme}>
-      <MotionConfig reducedMotion="user">
+      <MotionConfig reducedMotion={isInstantMotion ? "always" : "user"}>
         <UpdatePrompt />
         <OfflineBanner />
         <Route path="/login" component={Login} />

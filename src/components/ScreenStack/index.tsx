@@ -6,6 +6,7 @@ import Swipeable from "components/Swipeable";
 import { ItemPanel } from "pages/Wardrobe/ItemScreen";
 import { OutfitPanel } from "pages/Outfits/OutfitScreen";
 import { closeScreen, StackEntry, useScreenStack } from "utils/history";
+import { closeItemToPhoto, markSwipe, wasSwiped } from "utils/photoTransition";
 
 const keyOf = (entry: StackEntry) =>
   `${entry.kind}:${"id" in entry ? entry.id : entry.type}:${
@@ -49,7 +50,13 @@ const ScreenDrawer = ({
         sx={{ visibility: isBuried ? "hidden" : "visible" }}
       >
         <ScreenContext.Provider value={screen}>
-          <Swipeable direction="right" onClose={screen.close}>
+          <Swipeable
+            direction="right"
+            onClose={() => {
+              markSwipe();
+              screen.close();
+            }}
+          >
             {entry.kind === "outfit" ? (
               <OutfitPanel param={entry.id} headingRef={headingRef} />
             ) : (
@@ -75,16 +82,35 @@ const ScreenStack = () => {
     stack.map((entry) => ({ entry, isOpen: true }))
   );
 
+  // Mirrors `rendered` for the effect below, which runs per stack change
+  const renderedRef = useRef(rendered);
+  renderedRef.current = rendered;
+
   useEffect(() => {
-    setRendered((previous) => {
-      const keys = new Set(stack.map(keyOf));
-      return [
-        ...stack.map((entry) => ({ entry, isOpen: true })),
-        ...previous
-          .filter(({ entry }) => !keys.has(keyOf(entry)))
-          .map(({ entry }) => ({ entry, isOpen: false })),
-      ];
-    });
+    const keys = new Set(stack.map(keyOf));
+    const open = stack.map((entry) => ({ entry, isOpen: true }));
+    const removed = renderedRef.current.filter(
+      ({ entry, isOpen }) => isOpen && !keys.has(keyOf(entry))
+    );
+    const leaving = renderedRef.current
+      .filter(({ entry }) => !keys.has(keyOf(entry)))
+      .map(({ entry }) => ({ entry, isOpen: false }));
+
+    // An item page popped by Back shrinks its photo into its tile, when the
+    // tile is on screen; otherwise (or after a swipe) it slides away
+    const [popped] = removed;
+    if (removed.length === 1 && popped.entry.kind === "item" && !wasSwiped()) {
+      const isMorphing = closeItemToPhoto(popped.entry.id, () =>
+        setRendered([
+          ...open,
+          ...leaving.filter(
+            ({ entry }) => keyOf(entry) !== keyOf(popped.entry)
+          ),
+        ])
+      );
+      if (isMorphing) return;
+    }
+    setRendered([...open, ...leaving]);
   }, [stack]);
 
   return (

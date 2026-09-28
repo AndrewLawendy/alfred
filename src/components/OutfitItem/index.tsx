@@ -1,7 +1,7 @@
 import { Box, Image, Text, Skeleton, SkeletonProps } from "@chakra-ui/react";
 import { ReactNode } from "react";
 
-import { openItem } from "utils/history";
+import { openItemFromPhoto } from "utils/photoTransition";
 import { frosted } from "utils/theme";
 import { Item } from "utils/types";
 
@@ -34,7 +34,9 @@ const OutfitItem = ({
     ) : (
       <Box
         as="button"
-        onClick={() => openItem(id)}
+        onClick={(event: React.MouseEvent<HTMLElement>) =>
+          openItemFromPhoto(id, event.currentTarget.querySelector("img"))
+        }
         aria-label={title}
         sx={{ display: "block", w: "100%", textAlign: "left" }}
       >
@@ -62,6 +64,7 @@ const OutfitItem = ({
           <Image
             alt={isLabelled ? "" : title}
             src={imageUrl}
+            data-photo-source={id}
             sx={{
               display: "block",
               width: "100%",

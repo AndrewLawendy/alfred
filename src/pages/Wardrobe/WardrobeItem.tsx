@@ -5,7 +5,8 @@ import Loading from "components/Loading";
 import EmptyState from "components/EmptyState";
 
 import useData from "resources/useData";
-import { openItem, openNewItem } from "utils/history";
+import { openNewItem } from "utils/history";
+import { openItemFromPhoto } from "utils/photoTransition";
 import { Item } from "utils/types";
 
 import ItemTile from "./ItemTile";
@@ -33,7 +34,13 @@ const WardrobeItem = ({ type }: Pick<Item, "type">) => {
   return items.length > 0 ? (
     <Grid templateColumns="repeat(2, 1fr)" columnGap={3} rowGap={5}>
       {items.map((item) => (
-        <ItemTile key={item.id} item={item} onClick={() => openItem(item.id)} />
+        <ItemTile
+          key={item.id}
+          item={item}
+          onClick={(event) =>
+            openItemFromPhoto(item.id, event.currentTarget.querySelector("img"))
+          }
+        />
       ))}
     </Grid>
   ) : (

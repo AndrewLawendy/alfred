@@ -47,13 +47,9 @@ import useData from "resources/useData";
 import useUpdateDocument from "resources/useUpdateDocument";
 import useWeather from "resources/useWeather";
 
-import {
-  openItem,
-  openNewOutfit,
-  openOutfit,
-  replaceSearch,
-} from "utils/history";
+import { openNewOutfit, openOutfit, replaceSearch } from "utils/history";
 import { jacketState } from "utils/jacket";
+import { openItemFromPhoto } from "utils/photoTransition";
 import { nextOutfit } from "utils/rotation";
 import { Item, Jacket, Outfit } from "utils/types";
 
@@ -278,13 +274,19 @@ const Home = () => {
               {jacket ? (
                 <Box
                   as="button"
-                  onClick={() => openItem(jacket.id)}
+                  onClick={(event: React.MouseEvent<HTMLElement>) =>
+                    openItemFromPhoto(
+                      jacket.id,
+                      event.currentTarget.querySelector("img")
+                    )
+                  }
                   aria-label={`Open ${jacket.title}`}
                   sx={{ flexShrink: 0 }}
                 >
                   <Image
                     src={jacket.imageUrl}
                     alt=""
+                    data-photo-source={jacket.id}
                     sx={{
                       w: 12,
                       h: 12,
