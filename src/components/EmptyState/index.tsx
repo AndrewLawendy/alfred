@@ -2,7 +2,7 @@ import { Link } from "wouter";
 import { Button, Flex, Heading, Icon, Image, Text } from "@chakra-ui/react";
 import { MdAdd } from "react-icons/md";
 
-import Logo from "assets/logo.png";
+import Logo from "assets/alfred-mark.svg";
 
 type EmptyStateProps = {
   title: string;
@@ -33,7 +33,7 @@ const EmptyState = ({
       borderRadius: "card",
     }}
   >
-    <Image src={Logo} alt="" sx={{ h: 10, mb: 3 }} />
+    <Image src={Logo} alt="" sx={{ h: 12, mb: 3 }} />
     <Heading sx={{ fontSize: "2xl" }}>{title}</Heading>
     <Text sx={{ color: "gray.600", maxW: "xs" }}>{description}</Text>
     <Button

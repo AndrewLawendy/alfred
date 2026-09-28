@@ -12,7 +12,7 @@ import { TbLogout } from "react-icons/tb";
 import PageHeader from "components/PageHeader";
 import { InstallCard } from "components/Install";
 import useAuth from "hooks/useAuth";
-import Logo from "assets/logo.png";
+import Logo from "assets/alfred-mark.svg";
 
 import Logout from "./Logout";
 import MorningReminder from "./MorningReminder";
@@ -68,7 +68,7 @@ const Account = () => {
       <Flex
         sx={{ flexDirection: "column", alignItems: "center", gap: 2, mt: 10 }}
       >
-        <Image src={Logo} alt="" sx={{ h: 6, opacity: 0.7 }} />
+        <Image src={Logo} alt="" sx={{ h: 8, opacity: 0.7 }} />
         <Text sx={{ fontSize: "sm", color: "gray.600" }}>
           Alfred {process.env.REACT_APP_VERSION}
         </Text>

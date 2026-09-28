@@ -7,15 +7,7 @@ import {
   signInWithRedirect,
   signInWithPopup,
 } from "firebase/auth";
-import {
-  Box,
-  Button,
-  Image,
-  Heading,
-  Text,
-  Icon,
-  Spinner,
-} from "@chakra-ui/react";
+import { Box, Button, Image, Text, Icon, Spinner } from "@chakra-ui/react";
 import useNotice from "hooks/useNotice";
 import { FaFacebookSquare } from "react-icons/fa";
 import { motion } from "framer-motion";
@@ -23,7 +15,7 @@ import { motion } from "framer-motion";
 import useAuth from "hooks/useAuth";
 import { auth } from "utils/firebase";
 
-import Logo from "assets/logo.png";
+import Lockup from "assets/alfred-lockup.svg";
 import { GoogleLogo } from "components/Icons";
 
 const googleAuthProvider = new GoogleAuthProvider();
@@ -114,10 +106,11 @@ const Login = () => {
     >
       <Box sx={{ flex: 1 }}>
         <motion.div variants={item}>
-          <Image src={Logo} alt="" sx={{ maxH: 24, mx: "auto" }} />
-        </motion.div>
-        <motion.div variants={item}>
-          <Heading sx={{ mt: 6, fontSize: "5xl" }}>Alfred</Heading>
+          <Image
+            src={Lockup}
+            alt="Alfred Wardrobe"
+            sx={{ h: 56, mx: "auto" }}
+          />
         </motion.div>
         <motion.div variants={item}>
           <Text sx={{ mt: 2, fontSize: "lg", color: "gray.600" }}>
