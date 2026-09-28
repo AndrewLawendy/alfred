@@ -14,7 +14,11 @@ import {
 import { MdChevronRight } from "react-icons/md";
 
 import Swipeable from "components/Swipeable";
-import { replaceSearch, useSearchParam } from "utils/history";
+import {
+  replaceSearch,
+  showScreenInPlace,
+  useSearchParam,
+} from "utils/history";
 import { clearSharedPhoto, readSharedPhoto } from "utils/sharedPhoto";
 import { Item } from "utils/types";
 
@@ -49,10 +53,10 @@ const AddChooser = () => {
   }, [isOpen, isShared]);
 
   const onPick = (type: Item["type"]) =>
-    window.history.replaceState(
-      window.history.state,
-      "",
-      `/wardrobe/${type}?new=${type}${isShared ? "&shared=1" : ""}`
+    showScreenInPlace(
+      { kind: "new", type },
+      `/wardrobe/${type}`,
+      isShared ? { shared: "1" } : undefined
     );
 
   const onClose = () => {

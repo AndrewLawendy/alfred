@@ -14,8 +14,11 @@ import Header from "components/Header";
 import BottomNav from "components/BottomNav";
 import UpdatePrompt from "components/UpdatePrompt";
 import OfflineBanner from "components/OfflineBanner";
-import ItemScreen from "pages/Wardrobe/ItemScreen";
-import OutfitScreen from "pages/Outfits/OutfitScreen";
+import ScreenStack, {
+  PARALLAX,
+  SCREEN_TRANSITION,
+} from "components/ScreenStack";
+import { useScreenStack } from "utils/history";
 
 import theme from "utils/theme";
 
@@ -24,6 +27,7 @@ import "@fontsource/bodoni-moda";
 function App() {
   const [location] = useLocation();
   const tab = location.split("/")[1].toLowerCase();
+  const stack = useScreenStack();
 
   return (
     <ChakraProvider theme={theme}>
@@ -33,24 +37,30 @@ function App() {
         <Route path="/login" component={Login} />
         <Authorized>
           <Header />
-          <Box sx={{ pt: 6, px: 3, pb: "nav", flexGrow: 1 }} as="main">
-            <motion.div
-              key={tab}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.2 }}
-            >
-              <Route path="/" component={Home} />
-              <Route path="/Outfits" component={Outfits} />
-              <NestedRoute base="/wardrobe">
-                <Wardrobe />
-              </NestedRoute>
-              <Route path="/account" component={Account} />
-            </motion.div>
-          </Box>
+          {/* The page eases left under the first screen pushed over it */}
+          <motion.div
+            animate={{ x: stack.length ? PARALLAX : 0 }}
+            transition={SCREEN_TRANSITION}
+            style={{ display: "flex", flexDirection: "column", flexGrow: 1 }}
+          >
+            <Box sx={{ pt: 6, px: 3, pb: "nav", flexGrow: 1 }} as="main">
+              <motion.div
+                key={tab}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Route path="/" component={Home} />
+                <Route path="/Outfits" component={Outfits} />
+                <NestedRoute base="/wardrobe">
+                  <Wardrobe />
+                </NestedRoute>
+                <Route path="/account" component={Account} />
+              </motion.div>
+            </Box>
+          </motion.div>
           <BottomNav />
-          <OutfitScreen />
-          <ItemScreen />
+          <ScreenStack />
         </Authorized>
       </MotionConfig>
     </ChakraProvider>

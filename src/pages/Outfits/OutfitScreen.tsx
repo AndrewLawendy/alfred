@@ -3,12 +3,6 @@ import { doc, orderBy } from "firebase/firestore";
 import {
   Box,
   Button,
-  Drawer,
-  DrawerBody,
-  DrawerContent,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerOverlay,
   Flex,
   Grid,
   Heading,
@@ -23,7 +17,12 @@ import { GiShirt, GiBelt, GiTrousers, GiRunningShoe } from "react-icons/gi";
 
 import Confirm from "components/Confirm";
 import Loading from "components/Loading";
-import Swipeable from "components/Swipeable";
+import {
+  ScreenBody,
+  ScreenFooter,
+  ScreenHeader,
+  useScreen,
+} from "components/Screen";
 import PickedMark, { pickedRing } from "components/PickedMark";
 
 import useBackToClose from "hooks/useBackToClose";
@@ -32,12 +31,7 @@ import useData from "resources/useData";
 import useDeleteDocument from "resources/useDeleteDocument";
 import useUpdateDocument from "resources/useUpdateDocument";
 import { db } from "utils/firebase";
-import {
-  closeOutfit,
-  openItem,
-  openNewItem,
-  useOutfitRoute,
-} from "utils/history";
+import { openItem, openNewItem } from "utils/history";
 import { afterDelete, nextOrder } from "utils/rotation";
 import { Item, Outfit } from "utils/types";
 
@@ -249,6 +243,7 @@ const OutfitEditor = ({
   headingRef,
 }: EditorProps) => {
   const [mode, setMode] = useState<"view" | "edit">(outfit ? "view" : "edit");
+  const { close: closeOutfit } = useScreen();
   const [picks, setPicks] = useState<Picks>(() => picksOf(outfit));
   const [addOutfit, isAdding] = useAddDocument<Outfit>("outfits");
   const [updateOutfit, isUpdating] = useUpdateDocument<Outfit>("outfits");
@@ -306,7 +301,7 @@ const OutfitEditor = ({
 
   return (
     <>
-      <DrawerHeader
+      <ScreenHeader
         sx={{
           display: "flex",
           alignItems: "center",
@@ -335,9 +330,9 @@ const OutfitEditor = ({
             Edit
           </Button>
         )}
-      </DrawerHeader>
+      </ScreenHeader>
 
-      <DrawerBody sx={{ pt: 2, pb: 5, ...(isEditing && { px: 0 }) }}>
+      <ScreenBody sx={{ pt: 2, pb: 5, ...(isEditing && { px: 0 }) }}>
         {isEditing && (
           <Text sx={{ px: 4, mb: 5, color: "gray.600" }}>
             Choose one of each. Jackets are picked on the day, based on the
@@ -421,10 +416,10 @@ const OutfitEditor = ({
             </Confirm>
           </Flex>
         )}
-      </DrawerBody>
+      </ScreenBody>
 
       {isEditing && (
-        <DrawerFooter
+        <ScreenFooter
           sx={{
             borderTop: "1px solid",
             borderColor: "line",
@@ -448,14 +443,14 @@ const OutfitEditor = ({
           >
             {outfit ? "Save changes" : "Add to rotation"}
           </Button>
-        </DrawerFooter>
+        </ScreenFooter>
       )}
     </>
   );
 };
 
 // Loads outfits and wardrobe items before handing over to the editor
-const OutfitPanel = ({
+export const OutfitPanel = ({
   param,
   headingRef,
 }: {
@@ -467,18 +462,18 @@ const OutfitPanel = ({
 
   if (!outfits || !items) {
     return (
-      <DrawerBody sx={{ pt: 16 }}>
+      <ScreenBody sx={{ pt: 16 }}>
         <Loading message="Loading your outfit" columns={2} />
-      </DrawerBody>
+      </ScreenBody>
     );
   }
 
   const index = outfits.findIndex(({ id }) => id === param);
   if (param !== "new" && index === -1) {
     return (
-      <DrawerBody sx={{ pt: 16, textAlign: "center", color: "gray.600" }}>
+      <ScreenBody sx={{ pt: 16, textAlign: "center", color: "gray.600" }}>
         This outfit no longer exists.
-      </DrawerBody>
+      </ScreenBody>
     );
   }
 
@@ -492,36 +487,3 @@ const OutfitPanel = ({
     />
   );
 };
-
-// One outfit screen for the whole app, opened on top of whichever page you're on
-const OutfitScreen = () => {
-  const param = useOutfitRoute();
-  // Keep showing the last outfit while the screen slides away
-  const [shown, setShown] = useState(param);
-  const headingRef = useRef<HTMLParagraphElement>(null);
-
-  useEffect(() => {
-    if (param) setShown(param);
-  }, [param]);
-
-  return (
-    <Drawer
-      isOpen={Boolean(param)}
-      onClose={closeOutfit}
-      placement="right"
-      size="full"
-      initialFocusRef={headingRef}
-    >
-      <DrawerOverlay />
-      <DrawerContent bg="transparent" boxShadow="none">
-        <Swipeable direction="right" onClose={closeOutfit}>
-          {shown && (
-            <OutfitPanel key={shown} param={shown} headingRef={headingRef} />
-          )}
-        </Swipeable>
-      </DrawerContent>
-    </Drawer>
-  );
-};
-
-export default OutfitScreen;

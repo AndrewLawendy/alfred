@@ -7,12 +7,6 @@ import {
   Icon,
   Text,
   Heading,
-  Drawer,
-  DrawerBody,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerOverlay,
-  DrawerContent,
   Stack,
   Progress,
 } from "@chakra-ui/react";
@@ -23,7 +17,12 @@ import FormInput from "components/FormInput";
 import PhotoInput from "components/PhotoInput";
 import Loading from "components/Loading";
 import Confirm from "components/Confirm";
-import Swipeable from "components/Swipeable";
+import {
+  ScreenBody,
+  ScreenFooter,
+  ScreenHeader,
+  useScreen,
+} from "components/Screen";
 
 import useForm, { FromReturn, FormConfig } from "hooks/useForm";
 import useBackToClose from "hooks/useBackToClose";
@@ -33,7 +32,7 @@ import useDeleteImage from "resources/useDeleteImage";
 import useUpdateDocument from "resources/useUpdateDocument";
 import useDeleteDocument from "resources/useDeleteDocument";
 import { db } from "utils/firebase";
-import { closeItem, useItemRoute, useSearchParam } from "utils/history";
+import { useSearchParam } from "utils/history";
 import { clearSharedPhoto, readSharedPhoto } from "utils/sharedPhoto";
 import geFileURL from "utils/geFileURL";
 import resizeImage from "utils/resizeImage";
@@ -162,6 +161,7 @@ const ItemEditor = ({ type, item, headingRef, sharedPhoto }: EditorProps) => {
 
   // Photos live in Storage, which can't queue an upload or a delete offline
   const toast = useNotice();
+  const { close: closeItem } = useScreen();
   const needsConnection = (action: string) => {
     if (navigator.onLine) return false;
     toast({
@@ -230,7 +230,7 @@ const ItemEditor = ({ type, item, headingRef, sharedPhoto }: EditorProps) => {
 
   return (
     <>
-      <DrawerHeader
+      <ScreenHeader
         sx={{
           display: "flex",
           alignItems: "center",
@@ -261,15 +261,15 @@ const ItemEditor = ({ type, item, headingRef, sharedPhoto }: EditorProps) => {
             Edit
           </Button>
         )}
-      </DrawerHeader>
+      </ScreenHeader>
 
       {isView && item ? (
-        <DrawerBody sx={{ p: 0 }}>
+        <ScreenBody sx={{ p: 0 }}>
           <ItemDetails item={item} />
-        </DrawerBody>
+        </ScreenBody>
       ) : (
         <>
-          <DrawerBody>
+          <ScreenBody>
             <Stack spacing={4} sx={{ py: 4 }}>
               <div>
                 <PhotoInput
@@ -356,9 +356,9 @@ const ItemEditor = ({ type, item, headingRef, sharedPhoto }: EditorProps) => {
                 </Confirm>
               )}
             </Stack>
-          </DrawerBody>
+          </ScreenBody>
 
-          <DrawerFooter
+          <ScreenFooter
             sx={{
               borderTop: "1px solid",
               borderColor: "line",
@@ -374,7 +374,7 @@ const ItemEditor = ({ type, item, headingRef, sharedPhoto }: EditorProps) => {
             >
               Save
             </Button>
-          </DrawerFooter>
+          </ScreenFooter>
         </>
       )}
     </>
@@ -382,7 +382,7 @@ const ItemEditor = ({ type, item, headingRef, sharedPhoto }: EditorProps) => {
 };
 
 // Loads the item (when viewing one) before handing over to the editor
-const ItemPanel = ({
+export const ItemPanel = ({
   itemId,
   newType,
   headingRef,
@@ -408,9 +408,9 @@ const ItemPanel = ({
   if (newType) {
     if (isShared && sharedPhoto === undefined) {
       return (
-        <DrawerBody sx={{ pt: 16 }}>
+        <ScreenBody sx={{ pt: 16 }}>
           <Loading message="Getting your photo" columns={1} />
-        </DrawerBody>
+        </ScreenBody>
       );
     }
     return (
@@ -423,55 +423,19 @@ const ItemPanel = ({
   }
   if (isLoading) {
     return (
-      <DrawerBody sx={{ pt: 16 }}>
+      <ScreenBody sx={{ pt: 16 }}>
         <Loading message="Loading your item" columns={1} />
-      </DrawerBody>
+      </ScreenBody>
     );
   }
   if (!item) {
     return (
-      <DrawerBody sx={{ pt: 16, textAlign: "center", color: "gray.600" }}>
+      <ScreenBody sx={{ pt: 16, textAlign: "center", color: "gray.600" }}>
         This item no longer exists.
-      </DrawerBody>
+      </ScreenBody>
     );
   }
   return <ItemEditor type={item.type} item={item} headingRef={headingRef} />;
 };
 
-// One item screen for the whole app, opened on top of whichever page you're on
-const ItemScreen = () => {
-  const { itemId, newType } = useItemRoute();
-  const isOpen = Boolean(itemId || newType);
-  // Keep showing the last item while the screen slides away
-  const [shown, setShown] = useState<Target>({ itemId, newType });
-  const headingRef = useRef<HTMLParagraphElement>(null);
-
-  useEffect(() => {
-    if (isOpen) setShown({ itemId, newType });
-  }, [itemId, newType]);
-
-  return (
-    <Drawer
-      isOpen={isOpen}
-      onClose={closeItem}
-      placement="right"
-      size="full"
-      initialFocusRef={headingRef}
-    >
-      <DrawerOverlay />
-      <DrawerContent bg="transparent" boxShadow="none">
-        <Swipeable direction="right" onClose={closeItem}>
-          {(shown.itemId || shown.newType) && (
-            <ItemPanel
-              key={shown.itemId || shown.newType || ""}
-              {...shown}
-              headingRef={headingRef}
-            />
-          )}
-        </Swipeable>
-      </DrawerContent>
-    </Drawer>
-  );
-};
-
-export default ItemScreen;
+export default ItemPanel;
