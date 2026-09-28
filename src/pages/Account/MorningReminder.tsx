@@ -14,6 +14,7 @@ import {
 import { useDocumentData } from "react-firebase-hooks/firestore";
 
 import useAuth from "hooks/useAuth";
+import { describeDays, nextReminder } from "utils/nextReminder";
 import { isInstalled, isIOS } from "utils/pwa";
 import {
   defaultReminder,
@@ -37,7 +38,7 @@ const days = [
   "Saturday",
 ];
 
-// Account: a morning notification with today's outfit and the jacket call
+// Account: a morning nudge to the next outfit, with the weather
 const MorningReminder = () => {
   const [user] = useAuth();
   const reference = useMemo(() => user && reminderRef(user.uid), [user]);
@@ -50,6 +51,39 @@ const MorningReminder = () => {
   const [isOn, setIsOn] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
   const toast = useToast();
+  // Changes are a draft until saved, like setting an alarm
+  const [draft, setDraft] = useState<typeof schedule | null>(null);
+  const shown = draft ?? schedule;
+  const isDirty =
+    draft !== null &&
+    (draft.time !== schedule.time ||
+      draft.days.join() !== schedule.days.join());
+
+  const confirm = (set: typeof schedule, isOnHere: boolean) => {
+    const next = nextReminder(new Date(), set.time, set.days);
+    toast({
+      status: "success",
+      title: `Reminder set for ${set.time}, ${describeDays(set.days)}`,
+      description: !isOnHere
+        ? "Switch it on to get it on this phone."
+        : next
+        ? `Next one: ${next}.`
+        : undefined,
+      isClosable: true,
+    });
+  };
+
+  const onSave = async () => {
+    if (!draft) return;
+    setIsBusy(true);
+    try {
+      await saveSchedule(draft);
+      setDraft(null);
+      confirm(draft, isOn);
+    } finally {
+      setIsBusy(false);
+    }
+  };
   const lastSentAt = (saved as Reminder | undefined)?.lastSentAt?.toDate();
 
   const onTest = async () => {
@@ -90,9 +124,12 @@ const MorningReminder = () => {
         await turnOff();
         setIsOn(false);
       } else {
-        const isGranted = await turnOn(schedule);
+        const isGranted = await turnOn(shown);
         setIsOn(isGranted);
-        if (!isGranted) setSupport(Notification.permission);
+        if (isGranted) {
+          setDraft(null);
+          confirm(shown, true);
+        } else setSupport(Notification.permission);
       }
     } catch (error) {
       toast({
@@ -109,11 +146,11 @@ const MorningReminder = () => {
   };
 
   const toggleDay = (day: number) =>
-    saveSchedule({
-      ...schedule,
-      days: schedule.days.includes(day)
-        ? schedule.days.filter((d) => d !== day)
-        : [...schedule.days, day].sort(),
+    setDraft({
+      ...shown,
+      days: shown.days.includes(day)
+        ? shown.days.filter((d) => d !== day)
+        : [...shown.days, day].sort(),
     });
 
   if (!support) return null;
@@ -170,10 +207,10 @@ const MorningReminder = () => {
             <Input
               id="reminder-time"
               type="time"
-              value={schedule.time}
+              value={shown.time}
               onChange={(event) =>
                 event.target.value &&
-                saveSchedule({ ...schedule, time: event.target.value })
+                setDraft({ ...shown, time: event.target.value })
               }
               sx={{ w: "auto" }}
             />
@@ -181,7 +218,7 @@ const MorningReminder = () => {
           <Text sx={{ mt: 4, mb: 2 }}>Days</Text>
           <Flex role="group" aria-label="Days" sx={{ gap: 1 }}>
             {days.map((name, day) => {
-              const isPicked = schedule.days.includes(day);
+              const isPicked = shown.days.includes(day);
               return (
                 <Button
                   key={name}
@@ -205,7 +242,33 @@ const MorningReminder = () => {
             })}
           </Flex>
 
-          {isOn && (
+          {isDirty && (
+            <Flex sx={{ mt: 4, gap: 2 }}>
+              <Button
+                variant="outline"
+                onClick={() => setDraft(null)}
+                sx={{ flex: 1 }}
+              >
+                Cancel
+              </Button>
+              <Button
+                colorScheme="brand"
+                onClick={onSave}
+                isLoading={isBusy}
+                isDisabled={shown.days.length === 0}
+                sx={{ flex: 1 }}
+              >
+                Save
+              </Button>
+            </Flex>
+          )}
+          {isDirty && shown.days.length === 0 && (
+            <Text sx={{ mt: 2, fontSize: "sm", color: "gray.600" }}>
+              Pick at least one day.
+            </Text>
+          )}
+
+          {isOn && !isDirty && (
             <Flex sx={{ mt: 4, alignItems: "center", gap: 3 }}>
               <Text sx={{ flex: 1, fontSize: "sm", color: "gray.600" }}>
                 {lastSentAt
