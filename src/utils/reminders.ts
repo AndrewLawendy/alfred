@@ -80,6 +80,26 @@ export const turnOn = async (schedule: Pick<Reminder, "time" | "days">) => {
   return true;
 };
 
+// Checked on every app open: Firebase can hand this phone a new notification
+// address, and the server drops ones that stop working. Re-adding it keeps the
+// reminder arriving while the switch says it's on.
+export const refreshDevice = async () => {
+  const stored = deviceToken();
+  if (!stored || !(await isSupported())) return;
+  if (Notification.permission !== "granted") return turnOff();
+  const token = await getToken(getMessaging(), {
+    serviceWorkerRegistration: await navigator.serviceWorker.ready,
+  });
+  await save({ tokens: arrayUnion(token) });
+  if (token === stored) return;
+  await save({ tokens: arrayRemove(stored) });
+  try {
+    localStorage.setItem(TOKEN_KEY, token);
+  } catch {
+    // The next open will try again
+  }
+};
+
 export const turnOff = async () => {
   const token = deviceToken();
   if (token) await save({ tokens: arrayRemove(token) });
