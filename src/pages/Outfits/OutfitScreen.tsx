@@ -374,7 +374,7 @@ const OutfitEditor = ({
               px: 3,
               py: 1,
               borderRadius: "full",
-              backgroundColor: "accent.600",
+              backgroundColor: "accentFill",
               color: "card",
               fontSize: "xs",
               fontWeight: "semibold",

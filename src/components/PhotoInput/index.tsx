@@ -71,9 +71,9 @@ const PhotoInput = ({
           borderRadius: "card",
           cursor: "pointer",
           backgroundColor: "card",
-          borderColor: error ? "red.500" : "transparent",
+          borderColor: error ? "dangerBorder" : "transparent",
           boxShadow: error
-            ? "0 0 0 1px var(--chakra-colors-red-500)"
+            ? "0 0 0 1px var(--chakra-colors-dangerBorder)"
             : undefined,
         }}
       >

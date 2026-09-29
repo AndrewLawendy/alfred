@@ -74,7 +74,10 @@ const theme = extendTheme({
       // Secondary text (5:1 on the page in both)
       muted: { default: "#62656C", _dark: "#A8A6A0" },
       accentText: { default: "accent.600", _dark: "accent.300" },
+      // Brass behind "card" text (TODAY'S OUTFIT): 5.5:1 light, 7:1 dark
+      accentFill: { default: "accent.600", _dark: "accent.300" },
       dangerText: { default: "red.600", _dark: "red.200" },
+      dangerBorder: { default: "red.500", _dark: "red.300" },
       // A light edge on secondary buttons
       outlineEdge: {
         default: "rgba(21, 23, 28, 0.15)",
@@ -225,17 +228,30 @@ const theme = extendTheme({
                 _hover: { bg: "ink", _disabled: { bg: "ink" } },
                 _active: { bg: "ink" },
               }
-            : colorScheme === "red"
+            : colorScheme === "facebook"
               ? {
-                  // Chakra's dark red is a pale pink; keep it a deep red
+                  // Facebook's own blue with white text, as in light mode
                   _dark: {
-                    bg: "red.500",
+                    bg: "facebook.500",
                     color: "white",
-                    _hover: { bg: "red.400", _disabled: { bg: "red.500" } },
-                    _active: { bg: "red.400" },
+                    _hover: {
+                      bg: "facebook.600",
+                      _disabled: { bg: "facebook.500" },
+                    },
+                    _active: { bg: "facebook.600" },
                   },
                 }
-              : {},
+              : colorScheme === "red"
+                ? {
+                    // Chakra's dark red is a pale pink; keep it a deep red
+                    _dark: {
+                      bg: "red.500",
+                      color: "white",
+                      _hover: { bg: "red.400", _disabled: { bg: "red.500" } },
+                      _active: { bg: "red.400" },
+                    },
+                  }
+                : {},
         // Secondary actions: a near-white pill with a faint ink edge
         outline: {
           bg: "card",
