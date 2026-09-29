@@ -29,3 +29,6 @@ firebase-debug.log
 
 # Local agent plans
 /tasks/
+
+# Firebase emulator logs
+*-debug.log
