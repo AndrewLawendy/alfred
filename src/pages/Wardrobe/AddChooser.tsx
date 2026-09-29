@@ -15,6 +15,7 @@ import { MdChevronRight } from "react-icons/md";
 
 import Swipeable from "components/Swipeable";
 import {
+  layerDepth,
   replaceSearch,
   showScreenInPlace,
   useSearchParam,
@@ -59,8 +60,10 @@ const AddChooser = () => {
       isShared ? { shared: "1" } : undefined
     );
 
+  // On its own entry (opened from outside) closing is a Back to the page
   const onClose = () => {
-    replaceSearch("");
+    if (layerDepth() > 0) window.history.back();
+    else replaceSearch("");
     clearSharedPhoto();
   };
 

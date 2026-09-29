@@ -67,6 +67,30 @@ const nameOf = (screen: Screen) =>
 export const isInStack = (screen: Screen) =>
   currentStack().some((entry) => nameOf(entry) === nameOf(screen));
 
+// Opened from outside the app (a shortcut, a shared photo, a link) straight
+// onto a screen or the Add chooser, there's nothing underneath, so Back would
+// close the app. Put the page underneath first, then reopen what was asked for.
+export const putPageUnderLink = () => {
+  if (current().stack) return;
+  const screens = stackFromUrl();
+  const isAdding = new URLSearchParams(window.location.search).get("add");
+  if (!screens.length && !isAdding) return;
+
+  const target = window.location.pathname + window.location.search;
+  const page = new URL(urlFor(), window.location.origin);
+  page.searchParams.delete("add");
+  window.history.replaceState(
+    { depth: 0, stack: [] },
+    "",
+    page.pathname + page.search
+  );
+  if (screens.length) {
+    screens.forEach((screen) => pushLayer(urlFor(screen), screen));
+  } else {
+    window.history.pushState({ depth: 1, stack: [] }, "", target);
+  }
+};
+
 // A screen already in the stack is gone back to, never opened twice, so
 // item → outfit → item can't loop and Back stays a few steps
 const openScreen = (screen: Screen) => {
@@ -97,7 +121,10 @@ export const showScreenInPlace = (
   pathname: string,
   extra?: Record<string, string>
 ) => {
-  const stack = [...currentStack(), { ...screen, depth: null }];
+  // On its own entry (opened from outside), Back from the new screen returns
+  // to the page underneath
+  const depth = layerDepth() || null;
+  const stack = [...currentStack(), { ...screen, depth }];
   // A fresh URL: the page it replaces (the chooser's ?add=1) is gone
   const params = new URLSearchParams(extra);
   if (screen.kind === "item") params.set("item", screen.id);
