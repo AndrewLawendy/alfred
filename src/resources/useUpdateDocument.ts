@@ -11,7 +11,7 @@ const useUpdateDocument = <T>(
   collectionName: string
 ): [
   (documentId: string, data: Partial<Omit<T, keyof Common>>) => Promise<void>,
-  boolean
+  boolean,
 ] => {
   const [isLoading, setLoading] = useState(false);
   const updateDocument = (

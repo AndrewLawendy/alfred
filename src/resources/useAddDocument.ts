@@ -20,7 +20,7 @@ const useAddDocument = <T>(
   (
     data: Omit<T, keyof Common>
   ) => Promise<DocumentReference<Omit<T, keyof Common>>>,
-  boolean
+  boolean,
 ] => {
   const [user] = useAuth();
   const [isLoading, setLoading] = useState(false);
