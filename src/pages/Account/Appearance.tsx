@@ -27,7 +27,7 @@ const Appearance = () => {
         Light, dark, or the same as your phone.
       </Text>
       <Flex
-        role="radiogroup"
+        role="group"
         aria-labelledby="appearance"
         sx={{ mt: 4, gap: 1, p: 1, borderRadius: "full", bg: "page" }}
       >
@@ -36,8 +36,7 @@ const Appearance = () => {
           return (
             <Button
               key={value}
-              role="radio"
-              aria-checked={isPicked}
+              aria-pressed={isPicked}
               onClick={() => setAppearance(value)}
               leftIcon={<Icon as={icon} sx={{ w: 5, h: 5 }} />}
               sx={{

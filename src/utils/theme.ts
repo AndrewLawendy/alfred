@@ -1,5 +1,7 @@
 import { extendTheme } from "@chakra-ui/react";
 
+import { PAGE_DARK, PAGE_LIGHT } from "utils/appearance";
+
 const theme = extendTheme({
   styles: {
     global: {
@@ -64,7 +66,7 @@ const theme = extendTheme({
   // light colour, so ink fills (chips, notices, buttons) turn light.
   semanticTokens: {
     colors: {
-      page: { default: "#EEEDE9", _dark: "#15171C" },
+      page: { default: PAGE_LIGHT, _dark: PAGE_DARK },
       card: { default: "#FAFAF8", _dark: "#1E2026" },
       surface: { default: "#E3E2DD", _dark: "#272A30" },
       line: { default: "#D6D4CE", _dark: "#33363D" },
@@ -229,7 +231,7 @@ const theme = extendTheme({
                   _dark: {
                     bg: "red.500",
                     color: "white",
-                    _hover: { bg: "red.400" },
+                    _hover: { bg: "red.400", _disabled: { bg: "red.500" } },
                     _active: { bg: "red.400" },
                   },
                 }

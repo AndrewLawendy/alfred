@@ -52,6 +52,7 @@ export const setBrowserColour = (mode: "light" | "dark") => {
     ?.setAttribute("content", mode === "dark" ? PAGE_DARK : PAGE_LIGHT);
 };
 
+// The page colours, shared with the theme (index.html repeats the dark one)
 export const PAGE_LIGHT = "#EEEDE9";
 export const PAGE_DARK = "#15171C";
 
