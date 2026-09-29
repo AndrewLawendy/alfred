@@ -29,3 +29,8 @@ test("days in words", () => {
   expect(describeDays([0, 1, 2, 3, 4, 5, 6])).toBe("every day");
   expect(describeDays([2, 0])).toBe("Sun, Tue");
 });
+
+test("a run across the weekend reads from its first day", () => {
+  expect(describeDays([0, 5, 6])).toBe("Fri–Sun");
+  expect(describeDays([0, 6])).toBe("Sat, Sun");
+});

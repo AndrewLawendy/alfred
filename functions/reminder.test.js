@@ -101,3 +101,14 @@ test("warm, no weather, and missing pieces", () => {
     "Tap to see it."
   );
 });
+
+test("a late-evening time still goes out just after midnight, once", () => {
+  // Sunday 23:50 in Cairo; the run at 00:10 Monday is still in its hour
+  const late = { ...cairo, time: "23:50", days: [0] };
+  const afterMidnight = new Date("2026-09-27T21:10:00Z");
+  assert.equal(isDue(late, afterMidnight), true);
+  assert.equal(
+    isDue({ ...late, lastSentFor: "2026-09-27 23:50" }, afterMidnight),
+    false
+  );
+});

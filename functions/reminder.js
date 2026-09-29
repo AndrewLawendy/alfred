@@ -30,20 +30,28 @@ const localParts = (now, timeZone) => {
 // stops a second send, yet lets a changed time go out again that day.
 const WINDOW_MINUTES = 60;
 
+// The latest start of this reminder's time: today, or yesterday when a late
+// time's hour runs past midnight. Its date and weekday are the reminder's.
+const occurrence = (reminder, now) => {
+  const timeZone = reminder.timeZone || "UTC";
+  const [hour, minute] = (reminder.time || "07:30").split(":").map(Number);
+  const since =
+    (localParts(now, timeZone).minutes - (hour * 60 + minute) + 1440) % 1440;
+  return {
+    since,
+    ...localParts(new Date(now.getTime() - since * 60000), timeZone),
+  };
+};
+
 const sentKey = (reminder, now) =>
-  `${localParts(now, reminder.timeZone || "UTC").date} ${
-    reminder.time || "07:30"
-  }`;
+  `${occurrence(reminder, now).date} ${reminder.time || "07:30"}`;
 
 const isDue = (reminder, now) => {
   if (!reminder.tokens || reminder.tokens.length === 0) return false;
-  const { day, minutes } = localParts(now, reminder.timeZone || "UTC");
-  const [hour, minute] = (reminder.time || "07:30").split(":").map(Number);
-  const start = hour * 60 + minute;
+  const { since, day } = occurrence(reminder, now);
   return (
     (reminder.days || []).includes(day) &&
-    minutes >= start &&
-    minutes < start + WINDOW_MINUTES &&
+    since < WINDOW_MINUTES &&
     reminder.lastSentFor !== sentKey(reminder, now)
   );
 };
@@ -61,7 +69,7 @@ const weatherLine = ({ weather, jackets, chosen }) => {
   if (jackets.length === 0) return `${sky}.`;
 
   const suitable = jackets.filter(
-    ({ maxTemperature }) => maxTemperature >= weather.temp
+    ({ maxTemperature }) => Number(maxTemperature) >= Math.round(weather.temp)
   );
   if (suitable.length === 0) return `${sky} — no jacket needed.`;
   if (suitable.length === 1)

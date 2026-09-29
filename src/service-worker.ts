@@ -160,12 +160,14 @@ self.addEventListener("notificationclick", (event) => {
       const open = windows.find((client) =>
         client.url.startsWith(self.location.origin)
       );
-      if (open) {
-        await open.focus();
-        await open.navigate(url);
-      } else {
-        await self.clients.openWindow(url);
-      }
+      // navigate() rejects on a window this worker doesn't control yet
+      const navigated = open
+        ? await open
+            .focus()
+            .then(() => open.navigate(url))
+            .catch(() => null)
+        : null;
+      if (!navigated) await self.clients.openWindow(url);
     })()
   );
 });

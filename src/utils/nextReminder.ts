@@ -30,13 +30,23 @@ export const nextReminder = (now: Date, time: string, days: number[]) => {
   return null;
 };
 
-// "Sun–Thu", "every day", or a list like "Sun, Tue"
+// "Sun–Thu", "Fri–Sun", "every day", or a list like "Sun, Tue"
 export const describeDays = (days: number[]) => {
-  const sorted = [...days].sort();
+  const picked = new Set(days);
+  if (picked.size === 7) return "every day";
   const short = (day: number) => dayNames[day].slice(0, 3);
-  if (sorted.length === 7) return "every day";
-  const isRun = sorted.every((day, i) => i === 0 || day === sorted[i - 1] + 1);
-  if (isRun && sorted.length > 2)
-    return `${short(sorted[0])}–${short(sorted[sorted.length - 1])}`;
-  return sorted.map(short).join(", ");
+  // Start from a picked day whose day before isn't, so a run across the
+  // weekend reads in order
+  const week = [0, 1, 2, 3, 4, 5, 6];
+  const first =
+    week.find((day) => picked.has(day) && !picked.has((day + 6) % 7)) ?? 0;
+  const ordered = week
+    .map((i) => (first + i) % 7)
+    .filter((day) => picked.has(day));
+  const isRun = ordered.every(
+    (day, i) => i === 0 || day === (ordered[i - 1] + 1) % 7
+  );
+  if (isRun && ordered.length > 2)
+    return `${short(ordered[0])}–${short(ordered[ordered.length - 1])}`;
+  return ordered.map(short).join(", ");
 };

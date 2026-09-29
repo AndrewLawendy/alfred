@@ -69,7 +69,6 @@ const MorningReminder = () => {
         : next
         ? `Next one: ${next}.`
         : undefined,
-      isClosable: true,
     });
   };
 
@@ -85,7 +84,6 @@ const MorningReminder = () => {
         status: "error",
         title: "Couldn't save the reminder",
         description: "Nothing was changed. Please try again.",
-        isClosable: true,
       });
     } finally {
       setIsBusy(false);
@@ -103,14 +101,12 @@ const MorningReminder = () => {
         description: `It should arrive on ${data.sent} device${
           data.sent === 1 ? "" : "s"
         } in a few seconds.`,
-        isClosable: true,
       });
     } catch (error) {
       toast({
         status: "error",
         title: "Couldn't send a test",
         description: (error as Error).message,
-        isClosable: true,
       });
     } finally {
       setIsBusy(false);
@@ -145,7 +141,6 @@ const MorningReminder = () => {
         description: navigator.onLine
           ? "Please try again."
           : "You're offline. Try again once you're back online.",
-        isClosable: true,
       });
     } finally {
       setIsBusy(false);
@@ -196,7 +191,8 @@ const MorningReminder = () => {
             size="lg"
             colorScheme="brand"
             isChecked={isOn}
-            isDisabled={isBusy}
+            // Switching on needs at least one day ("Pick at least one day")
+            isDisabled={isBusy || (!isOn && shown.days.length === 0)}
             onChange={onToggle}
             sx={{ mt: 1 }}
           />
@@ -281,7 +277,7 @@ const MorningReminder = () => {
               </Button>
             </Flex>
           )}
-          {isDirty && shown.days.length === 0 && (
+          {shown.days.length === 0 && (
             <Text sx={{ mt: 2, fontSize: "sm", color: "gray.600" }}>
               Pick at least one day.
             </Text>
