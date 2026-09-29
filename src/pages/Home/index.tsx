@@ -45,6 +45,7 @@ import useBackToClose from "hooks/useBackToClose";
 
 import useData from "resources/useData";
 import useUpdateDocument from "resources/useUpdateDocument";
+import useUpdateOutfits from "resources/useUpdateOutfits";
 import useWeather from "resources/useWeather";
 
 import { openNewOutfit, openOutfit, replaceSearch } from "utils/history";
@@ -136,6 +137,7 @@ const Home = () => {
   );
   const [updateOutfit, isUpdateOutfitLoading] =
     useUpdateDocument<Outfit>("outfits");
+  const [updateOutfits, isUpdateOutfitsLoading] = useUpdateOutfits();
   const activeOutfit = useMemo(() => {
     const [firstOutfit] = outfits || [];
     return outfits?.find(({ active }) => active) || firstOutfit;
@@ -189,8 +191,10 @@ const Home = () => {
     if (outfits.length === 1) return onSingleOutfitOpen();
 
     const next = nextOutfit(outfits, activeOutfit);
-    updateOutfit(next.id, { active: true });
-    updateOutfit(activeOutfit.id, { active: false, jacket: null });
+    updateOutfits([
+      { id: next.id, changes: { active: true } },
+      { id: activeOutfit.id, changes: { active: false, jacket: null } },
+    ]);
   };
 
   // Wear the next outfit today and push this one to right after it
@@ -199,11 +203,12 @@ const Home = () => {
 
     if (outfits.length === 1) return onSingleOutfitOpen();
 
-    swapWithNext(outfits, activeOutfit).forEach(({ id, changes }) =>
-      updateOutfit(
+    updateOutfits(
+      swapWithNext(outfits, activeOutfit).map(({ id, changes }) => ({
         id,
-        id === activeOutfit.id ? { ...changes, jacket: null } : changes
-      )
+        changes:
+          id === activeOutfit.id ? { ...changes, jacket: null } : changes,
+      }))
     );
   };
 
@@ -520,7 +525,7 @@ const Home = () => {
                   variant="outline"
                   leftIcon={<Icon as={HiSwitchVertical} />}
                   onClick={onSwitchCurrentOutfit}
-                  isDisabled={isUpdateOutfitLoading}
+                  isDisabled={isUpdateOutfitLoading || isUpdateOutfitsLoading}
                   sx={{ flex: 1, px: 4 }}
                 >
                   Swap with next
@@ -531,7 +536,7 @@ const Home = () => {
                   colorScheme="brand"
                   rightIcon={<Icon as={MdArrowForward} />}
                   onClick={onFetchNextOutfit}
-                  isLoading={isUpdateOutfitLoading}
+                  isLoading={isUpdateOutfitLoading || isUpdateOutfitsLoading}
                   sx={{ flex: 1, px: 4 }}
                 >
                   Next outfit

@@ -26,7 +26,7 @@ import PageHeader from "components/PageHeader";
 import EmptyState from "components/EmptyState";
 
 import useData from "resources/useData";
-import useUpdateDocument from "resources/useUpdateDocument";
+import useUpdateOutfits from "resources/useUpdateOutfits";
 
 const fields = ["shirt", "belt", "pants", "shoes"] as const;
 
@@ -35,7 +35,7 @@ const Outfits = () => {
     "outfits",
     orderBy("order")
   );
-  const [updateOutfit] = useUpdateDocument("outfits");
+  const [updateOutfits] = useUpdateOutfits();
   // With no clothes yet, the wardrobe comes before any outfit
   const [items] = useData<Item>("wardrobe-items");
 
@@ -48,9 +48,12 @@ const Outfits = () => {
     reordered.splice(destination.index, 0, dropped);
 
     // Only write the outfits whose position actually changed
-    reordered.forEach((outfit, order) => {
-      if (outfit.order !== order) updateOutfit(outfit.id, { order });
-    });
+    updateOutfits(
+      reordered
+        .map((outfit, order) => ({ id: outfit.id, order, old: outfit.order }))
+        .filter(({ order, old }) => order !== old)
+        .map(({ id, order }) => ({ id, changes: { order } }))
+    );
   };
 
   return (

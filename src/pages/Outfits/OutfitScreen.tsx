@@ -26,10 +26,11 @@ import {
 import PickedMark, { pickedRing } from "components/PickedMark";
 
 import useBackToClose from "hooks/useBackToClose";
+import useNotice from "hooks/useNotice";
 import useAddDocument from "resources/useAddDocument";
 import useData from "resources/useData";
-import useDeleteDocument from "resources/useDeleteDocument";
 import useUpdateDocument from "resources/useUpdateDocument";
+import useUpdateOutfits from "resources/useUpdateOutfits";
 import { db } from "utils/firebase";
 import { openNewItem } from "utils/history";
 import { openItemFromPhoto } from "utils/photoTransition";
@@ -252,7 +253,8 @@ const OutfitEditor = ({
   const [picks, setPicks] = useState<Picks>(() => picksOf(outfit));
   const [addOutfit, isAdding] = useAddDocument<Outfit>("outfits");
   const [updateOutfit, isUpdating] = useUpdateDocument<Outfit>("outfits");
-  const [deleteOutfit, isDeleting] = useDeleteDocument("outfits");
+  const [updateOutfits, isDeleting] = useUpdateOutfits();
+  const toast = useNotice();
   const isLoading = isAdding || isUpdating || isDeleting;
 
   const isEditing = mode === "edit";
@@ -274,28 +276,42 @@ const OutfitEditor = ({
       ])
     ) as Pick<Outfit, SlotKey>;
 
-    if (outfit) {
-      await updateOutfit(outfit.id, references);
-      setMode("view");
-    } else {
-      await addOutfit({
-        ...references,
-        order: nextOrder(outfits),
-        // The first outfit becomes today's
-        active: outfits.length === 0,
+    try {
+      if (outfit) {
+        await updateOutfit(outfit.id, references);
+        setMode("view");
+      } else {
+        await addOutfit({
+          ...references,
+          order: nextOrder(outfits),
+          // The first outfit becomes today's
+          active: outfits.length === 0,
+        });
+        closeOutfit();
+      }
+    } catch {
+      toast({
+        status: "error",
+        title: "Couldn't save the outfit",
+        description: "Nothing was changed. Please try again.",
+        isClosable: true,
       });
-      closeOutfit();
     }
   };
 
-  const onDelete = async () => {
+  // The screen closes first, then the outfit goes, with the rest renumbered in
+  // the same write
+  const onDelete = () => {
     if (!outfit) return;
-    const updates = afterDelete(outfits, outfit.id);
-    await deleteOutfit(outfit.id);
-    await Promise.all(
-      updates.map(({ id, changes }) => updateOutfit(id, changes))
-    );
     closeOutfit();
+    updateOutfits(afterDelete(outfits, outfit.id), outfit.id).catch(() =>
+      toast({
+        status: "error",
+        title: "Couldn't delete the outfit",
+        description: "It's still in your rotation. Please try again.",
+        isClosable: true,
+      })
+    );
   };
 
   const heading = !outfit
@@ -464,6 +480,9 @@ export const OutfitPanel = ({
 }) => {
   const [outfits] = useData<Outfit>("outfits", orderBy("order"));
   const [items] = useData<Item>("wardrobe-items");
+  // The last time this outfit was found, so a screen closing on its own
+  // delete keeps showing it as it slides away
+  const lastSeen = useRef<{ outfit: Outfit; number: number }>();
 
   if (!outfits || !items) {
     return (
@@ -474,6 +493,18 @@ export const OutfitPanel = ({
   }
 
   const index = outfits.findIndex(({ id }) => id === param);
+  if (index !== -1)
+    lastSeen.current = { outfit: outfits[index], number: index + 1 };
+  if (param !== "new" && index === -1 && lastSeen.current) {
+    return (
+      <OutfitEditor
+        {...lastSeen.current}
+        outfits={outfits}
+        items={items}
+        headingRef={headingRef}
+      />
+    );
+  }
   if (param !== "new" && index === -1) {
     return (
       <ScreenBody sx={{ pt: 16, textAlign: "center", color: "gray.600" }}>
