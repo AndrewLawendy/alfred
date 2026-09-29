@@ -147,7 +147,12 @@ const Home = () => {
       (items || []).filter((item): item is Jacket => item.type === "jacket"),
     [items]
   );
-  const chosen = activeOutfit?.jacket;
+  // The outfit keeps a copy of today's jacket: show the jacket as it is now
+  // (renamed, new photo), and ask again if it was deleted. Until the wardrobe
+  // loads, the copy stands in, so the prompt doesn't open early.
+  const saved = activeOutfit?.jacket;
+  const chosen =
+    saved && items ? jackets.find(({ id }) => id === saved.id) ?? null : saved;
   const {
     suitable: temperatureJackets,
     options,

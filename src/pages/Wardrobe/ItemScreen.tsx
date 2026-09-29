@@ -119,6 +119,9 @@ const ItemEditor = ({ type, item, headingRef, sharedPhoto }: EditorProps) => {
       )
     )
     .map(({ number }) => `No. ${number}`);
+  const isTodaysJacket = (outfits || []).some(
+    ({ jacket }) => item && jacket && jacket.id === item.id
+  );
 
   // The picked photo's preview URL. One at a time: the previous one is
   // released on every new pick and when the editor closes.
@@ -373,6 +376,12 @@ const ItemEditor = ({ type, item, headingRef, sharedPhoto }: EditorProps) => {
                               )} use it, and keep their place in the rotation`
                             : `Outfit ${usedIn[0]} uses it, and keeps its place in the rotation`}{" "}
                           with a gap until you pick another {type}.
+                        </Text>
+                      )}
+                      {isTodaysJacket && (
+                        <Text sx={{ mt: 2, color: "red.600" }}>
+                          It&apos;s today&apos;s jacket, so Alfred will ask
+                          again which one to wear.
                         </Text>
                       )}
                     </>
