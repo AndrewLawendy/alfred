@@ -10,7 +10,7 @@ const Logout = (props: Omit<ButtonProps, "onClick">) => (
     message={
       <>
         <Heading sx={{ fontSize: "2xl" }}>Sign out of Alfred?</Heading>
-        <Text sx={{ mt: 2, color: "gray.600" }}>
+        <Text sx={{ mt: 2, color: "muted" }}>
           Your wardrobe and outfits stay safe in your account. Sign in again any
           time.
         </Text>

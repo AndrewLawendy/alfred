@@ -89,7 +89,7 @@ const PhotoInput = ({
               gap: 2,
               px: 6,
               textAlign: "center",
-              color: "gray.600",
+              color: "muted",
             }}
           >
             <Icon as={MdAddAPhoto} w={10} h={10} />
@@ -138,7 +138,7 @@ const PhotoInput = ({
             <Text
               sx={{
                 mt: 2,
-                color: "red.600",
+                color: "dangerText",
                 fontSize: "sm",
                 lineHeight: "normal",
               }}

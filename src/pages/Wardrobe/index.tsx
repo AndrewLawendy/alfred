@@ -87,15 +87,15 @@ const Wardrobe = () => {
               sx={{
                 flexShrink: 0,
                 fontWeight: "medium",
-                backgroundColor: isActive ? "brand.500" : "card",
-                color: isActive ? "card" : "brand.500",
-                _hover: { backgroundColor: isActive ? "brand.500" : "card" },
+                backgroundColor: isActive ? "ink" : "card",
+                color: isActive ? "card" : "ink",
+                _hover: { backgroundColor: isActive ? "ink" : "card" },
               }}
             >
               {label}
               <Text
                 as="span"
-                sx={{ ml: 1.5, color: isActive ? "gray.300" : "gray.600" }}
+                sx={{ ml: 1.5, color: isActive ? "onInkMuted" : "muted" }}
               >
                 {counts[type] || 0}
               </Text>

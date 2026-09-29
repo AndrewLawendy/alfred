@@ -57,7 +57,7 @@ const labelStyle = {
   fontWeight: "semibold",
   textTransform: "uppercase",
   letterSpacing: "0.12em",
-  color: "gray.600",
+  color: "muted",
 } as const;
 
 // One piece of the outfit: its photo, opening the item. A deleted piece is a
@@ -229,7 +229,7 @@ const Carousel = ({
             border: "1.5px dashed",
             borderColor: "line",
             borderRadius: "card",
-            color: "gray.600",
+            color: "muted",
             fontSize: "sm",
           }}
         >
@@ -361,7 +361,7 @@ const OutfitEditor = ({
 
       <ScreenBody sx={{ pt: 2, pb: 5, ...(isEditing && { px: 0 }) }}>
         {isEditing && (
-          <Text sx={{ px: 4, mb: 5, color: "gray.600" }}>
+          <Text sx={{ px: 4, mb: 5, color: "muted" }}>
             Choose one of each. Jackets are picked on the day, based on the
             weather.
           </Text>
@@ -416,11 +416,11 @@ const OutfitEditor = ({
                   <Heading sx={{ fontSize: "2xl" }}>
                     Delete Outfit No. {number}?
                   </Heading>
-                  <Text sx={{ mt: 2, color: "gray.600" }}>
+                  <Text sx={{ mt: 2, color: "muted" }}>
                     It leaves the rotation. Its clothes stay in your wardrobe.
                   </Text>
                   {outfit.active && (
-                    <Text sx={{ mt: 2, color: "red.600" }}>
+                    <Text sx={{ mt: 2, color: "dangerText" }}>
                       It&apos;s today&apos;s outfit, so the next one in the
                       rotation takes its place.
                     </Text>
@@ -456,7 +456,7 @@ const OutfitEditor = ({
           }}
         >
           {missing.length > 0 && (
-            <Text sx={{ mb: 3, fontSize: "sm", color: "gray.600" }}>
+            <Text sx={{ mb: 3, fontSize: "sm", color: "muted" }}>
               Still missing:{" "}
               {missing.map(({ label }) => label.toLowerCase()).join(", ")}
             </Text>
@@ -522,7 +522,7 @@ export const OutfitPanel = ({
   }
   if (param !== "new" && index === -1) {
     return (
-      <ScreenBody sx={{ pt: 16, textAlign: "center", color: "gray.600" }}>
+      <ScreenBody sx={{ pt: 16, textAlign: "center", color: "muted" }}>
         This outfit no longer exists.
       </ScreenBody>
     );

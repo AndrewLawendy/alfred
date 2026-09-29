@@ -38,7 +38,7 @@ const FormInput = ({
         {isOptional && (
           <Text
             as="span"
-            sx={{ ml: "auto", fontWeight: "normal", color: "gray.600" }}
+            sx={{ ml: "auto", fontWeight: "normal", color: "muted" }}
           >
             Optional
           </Text>
@@ -60,7 +60,7 @@ const FormInput = ({
         )}
       </AnimatePresence>
       {helper && (
-        <Text sx={{ mt: 2, fontSize: "sm", color: "gray.600" }}>{helper}</Text>
+        <Text sx={{ mt: 2, fontSize: "sm", color: "muted" }}>{helper}</Text>
       )}
     </FormControl>
   );

@@ -23,7 +23,7 @@ const Header = () => {
         height: "env(safe-area-inset-top)",
         backgroundColor: "page",
         borderBottom: "1px solid",
-        borderColor: isScrolled ? "gray.200" : "transparent",
+        borderColor: isScrolled ? "line" : "transparent",
         transition: "border-color 0.2s",
       }}
     />

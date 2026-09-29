@@ -333,7 +333,7 @@ const Home = () => {
                     alignItems: "center",
                     justifyContent: "center",
                     backgroundColor: "surface",
-                    color: "accent.600",
+                    color: "accentText",
                   }}
                 >
                   <Icon as={GiSleevelessJacket} sx={{ w: 7, h: 7 }} />
@@ -406,10 +406,7 @@ const Home = () => {
                   />
                 ))}
               </Flex>
-              <Icon
-                as={MdChevronRight}
-                sx={{ w: 5, h: 5, color: "gray.600" }}
-              />
+              <Icon as={MdChevronRight} sx={{ w: 5, h: 5, color: "muted" }} />
             </Flex>
           )}
 
@@ -428,7 +425,7 @@ const Home = () => {
                       sx={{
                         alignItems: "center",
                         gap: 1,
-                        color: "accent.600",
+                        color: "accentText",
                         fontFamily: "body",
                         fontSize: "xs",
                         fontWeight: "semibold",
@@ -450,7 +447,7 @@ const Home = () => {
                   </Heading>
                 </DrawerHeader>
                 <DrawerBody>
-                  <Text sx={{ color: "gray.600", mb: 4 }}>
+                  <Text sx={{ color: "muted", mb: 4 }}>
                     {temperatureJackets.length > 0
                       ? `${count(temperatureJackets.length)} of your jackets ${
                           temperatureJackets.length === 1 ? "suits" : "suit"
@@ -496,7 +493,7 @@ const Home = () => {
                           >
                             {option.title}
                           </Text>
-                          <Text sx={{ fontSize: "sm", color: "gray.600" }}>
+                          <Text sx={{ fontSize: "sm", color: "muted" }}>
                             Up to {option.maxTemperature}°
                           </Text>
                         </Box>
@@ -579,7 +576,7 @@ const Home = () => {
               <PopoverBody>
                 Alfred rotates between outfits, so there&apos;s nothing to move
                 on to yet. Add another in{" "}
-                <Link color="accent.600" as={WouterLink} to="/outfits">
+                <Link color="accentText" as={WouterLink} to="/outfits">
                   Outfits
                 </Link>
                 .

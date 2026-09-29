@@ -26,7 +26,7 @@ const useInstallOffer = () => {
 };
 
 const IosSteps = () => (
-  <Text sx={{ color: "gray.600" }}>
+  <Text sx={{ color: "muted" }}>
     Tap{" "}
     <Icon as={MdIosShare} aria-label="Share" sx={{ verticalAlign: "-2px" }} />{" "}
     Share, then <b>Add to Home Screen</b>.
@@ -54,7 +54,7 @@ export const InstallCard = () => {
       />
       <Box sx={{ flex: 1 }}>
         <Heading sx={{ fontSize: "xl" }}>Install Alfred</Heading>
-        <Text sx={{ mt: 1, mb: 3, color: "gray.600" }}>
+        <Text sx={{ mt: 1, mb: 3, color: "muted" }}>
           Full screen, quicker to open, and your outfits work offline.
         </Text>
         {offer === "prompt" ? (
@@ -99,7 +99,7 @@ export const useInstallHint = () => {
               mt: "env(safe-area-inset-top)",
               p: 4,
               borderRadius: "card",
-              backgroundColor: "brand.500",
+              backgroundColor: "ink",
               color: "card",
             }}
           >
@@ -114,14 +114,14 @@ export const useInstallHint = () => {
                     // Dismissing the browser's own prompt rejects: nothing to do
                     install().catch(() => undefined);
                   }}
-                  sx={{ bg: "card", color: "brand.500" }}
+                  sx={{ bg: "card", color: "ink" }}
                 >
                   Install
                 </Button>
                 <Button
                   variant="ghost"
                   onClick={() => toastProps.onClose()}
-                  sx={{ color: "card", _hover: { bg: "whiteAlpha.200" } }}
+                  sx={{ color: "card", _hover: { bg: "inkHover" } }}
                 >
                   Not now
                 </Button>
@@ -134,7 +134,7 @@ export const useInstallHint = () => {
                 <Button
                   variant="ghost"
                   onClick={() => toastProps.onClose()}
-                  sx={{ color: "card", _hover: { bg: "whiteAlpha.200" } }}
+                  sx={{ color: "card", _hover: { bg: "inkHover" } }}
                 >
                   OK
                 </Button>

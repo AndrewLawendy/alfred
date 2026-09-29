@@ -53,13 +53,49 @@ const theme = extendTheme({
     body: `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif`,
     heading: `"Bodoni Moda", "Didot", Georgia, serif`,
   },
+  config: {
+    // The mode itself comes from the Appearance setting (utils/appearance)
+    initialColorMode: "light",
+    useSystemColorMode: false,
+  },
+  // Each colour the screens use, in light and dark. Light: a warm stone page
+  // with near-white cards, depth from tone rather than shadows, ink for text
+  // and actions, brass for small accents. Dark mirrors it: ink becomes the
+  // light colour, so ink fills (chips, notices, buttons) turn light.
+  semanticTokens: {
+    colors: {
+      page: { default: "#EEEDE9", _dark: "#15171C" },
+      card: { default: "#FAFAF8", _dark: "#1E2026" },
+      surface: { default: "#E3E2DD", _dark: "#272A30" },
+      line: { default: "#D6D4CE", _dark: "#33363D" },
+      ink: { default: "#15171C", _dark: "#ECEAE5" },
+      // Secondary text (5:1 on the page in both)
+      muted: { default: "#62656C", _dark: "#A8A6A0" },
+      accentText: { default: "accent.600", _dark: "accent.300" },
+      dangerText: { default: "red.600", _dark: "red.200" },
+      // A light edge on secondary buttons
+      outlineEdge: {
+        default: "rgba(21, 23, 28, 0.15)",
+        _dark: "rgba(236, 234, 229, 0.18)",
+      },
+      // Blurred labels on photos, the bottom nav, and loading overlays
+      frost: {
+        default: "rgba(250, 250, 248, 0.9)",
+        _dark: "rgba(30, 32, 38, 0.85)",
+      },
+      pageGlass: {
+        default: "rgba(238, 237, 233, 0.9)",
+        _dark: "rgba(21, 23, 28, 0.9)",
+      },
+      // Icons on the notices (ink cards, so light in dark mode)
+      noticeSuccess: { default: "accent.300", _dark: "accent.600" },
+      noticeError: { default: "red.200", _dark: "red.600" },
+      // Quiet text or icons on an ink fill
+      onInkMuted: { default: "gray.300", _dark: "gray.600" },
+      inkHover: { default: "whiteAlpha.200", _dark: "blackAlpha.100" },
+    },
+  },
   colors: {
-    // Warm stone page with near-white cards: depth from tone, not shadows.
-    // Ink for text and actions, brass for small accents.
-    page: "#EEEDE9",
-    card: "#FAFAF8",
-    surface: "#E3E2DD",
-    line: "#D6D4CE",
     // Warm greys; 600 is the secondary text colour (5:1 on the page)
     gray: {
       50: "#F5F4F1",
@@ -160,11 +196,11 @@ const theme = extendTheme({
             borderColor: "line",
             _hover: { borderColor: "gray.300" },
             _focusVisible: {
-              borderColor: "brand.500",
-              boxShadow: "0 0 0 1px var(--chakra-colors-brand-500)",
+              borderColor: "ink",
+              boxShadow: "0 0 0 1px var(--chakra-colors-ink)",
             },
           },
-          addon: { bg: "card", borderColor: "line", color: "gray.600" },
+          addon: { bg: "card", borderColor: "line", color: "muted" },
         },
       },
     },
@@ -178,11 +214,31 @@ const theme = extendTheme({
         lg: { h: 12, fontSize: "md" },
       },
       variants: {
+        // Primary actions are ink, so they flip with the mode
+        solid: ({ colorScheme }: { colorScheme: string }) =>
+          colorScheme === "brand"
+            ? {
+                bg: "ink",
+                color: "card",
+                _hover: { bg: "ink", _disabled: { bg: "ink" } },
+                _active: { bg: "ink" },
+              }
+            : colorScheme === "red"
+              ? {
+                  // Chakra's dark red is a pale pink; keep it a deep red
+                  _dark: {
+                    bg: "red.500",
+                    color: "white",
+                    _hover: { bg: "red.400" },
+                    _active: { bg: "red.400" },
+                  },
+                }
+              : {},
         // Secondary actions: a near-white pill with a faint ink edge
         outline: {
           bg: "card",
-          color: "brand.500",
-          borderColor: "rgba(21, 23, 28, 0.15)",
+          color: "ink",
+          borderColor: "outlineEdge",
           _hover: { bg: "card" },
           _active: { bg: "surface" },
         },
@@ -191,11 +247,11 @@ const theme = extendTheme({
   },
 });
 
-// A near-white, blurred label that sits on a photo
+// A blurred label that sits on a photo
 export const frosted = {
-  backgroundColor: "rgba(250, 250, 248, 0.9)",
+  backgroundColor: "frost",
   backdropFilter: "blur(8px)",
-  color: "brand.500",
+  color: "ink",
 } as const;
 
 export default theme;

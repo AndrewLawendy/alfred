@@ -149,7 +149,7 @@ const Outfits = () => {
                             minH: 20,
                             alignItems: "center",
                             justifyContent: "center",
-                            color: "gray.600",
+                            color: "muted",
                             flexShrink: 0,
                           }}
                           {...provided.dragHandleProps}
@@ -170,7 +170,7 @@ const Outfits = () => {
                                 fontSize: "xs",
                                 fontWeight: "semibold",
                                 letterSpacing: "0.12em",
-                                color: "accent.600",
+                                color: "accentText",
                               }}
                             >
                               TODAY

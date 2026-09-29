@@ -20,7 +20,7 @@ export const Eyebrow = ({ children }: { children: ReactNode }) => (
       fontWeight: "semibold",
       letterSpacing: "0.12em",
       textTransform: "uppercase",
-      color: "gray.600",
+      color: "muted",
     }}
   >
     {children}
@@ -49,9 +49,7 @@ const PageHeader = ({
       </Box>
       {action}
     </Flex>
-    {description && (
-      <Text sx={{ mt: 3, color: "gray.600" }}>{description}</Text>
-    )}
+    {description && <Text sx={{ mt: 3, color: "muted" }}>{description}</Text>}
   </Box>
 );
 

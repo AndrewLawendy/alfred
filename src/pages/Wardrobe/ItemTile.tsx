@@ -59,7 +59,7 @@ const ItemTile = ({ item, onClick }: ItemTileProps) => (
     >
       {item.title}
     </Text>
-    <Text noOfLines={1} sx={{ minH: 5, fontSize: "sm", color: "gray.600" }}>
+    <Text noOfLines={1} sx={{ minH: 5, fontSize: "sm", color: "muted" }}>
       {item.description}
     </Text>
   </Box>
