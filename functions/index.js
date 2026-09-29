@@ -55,15 +55,20 @@ const compose = async (uid, reminder) => {
     .map((slot) => titles[outfit[slot]?.id])
     .filter(Boolean);
   const jackets = itemsSnapshot.docs
-    .map((doc) => doc.data())
+    .map((doc) => ({ ...doc.data(), id: doc.id }))
     .filter(({ type }) => type === "jacket");
+  // The outfit keeps a copy of its jacket: use the jacket as it is now, and
+  // treat a deleted one as not decided yet
+  const chosen = outfit.jacket
+    ? jackets.find(({ id }) => id === outfit.jacket.id) ?? null
+    : outfit.jacket;
   const weather = await getWeather(reminder.coords || CAIRO).catch((error) => {
     logger.warn("No weather for the reminder", { uid, error: error.message });
     return undefined;
   });
 
   return {
-    ...describe({ isNudge, pieces, weather, jackets, chosen: outfit.jacket }),
+    ...describe({ isNudge, pieces, weather, jackets, chosen }),
     // "Wear it" moves the rotation on, like the Next outfit shortcut
     ...(isNudge && { action: "/?action=next" }),
   };
@@ -109,7 +114,19 @@ exports.morningReminder = onSchedule("*/5 * * * *", async () => {
   const snapshot = await db.collection("reminders").get();
   await Promise.all(
     snapshot.docs
-      .filter((doc) => isDue(doc.data(), now))
+      // A reminder with unreadable settings (a bad time zone or time) is
+      // skipped and logged, never allowed to stop everyone else's
+      .filter((doc) => {
+        try {
+          return isDue(doc.data(), now);
+        } catch (error) {
+          logger.error("Unreadable reminder", {
+            uid: doc.id,
+            error: error.message,
+          });
+          return false;
+        }
+      })
       .map((doc) =>
         remind(doc.ref, doc.data(), now).catch((error) =>
           logger.error("Reminder failed", { uid: doc.id, error: error.message })
