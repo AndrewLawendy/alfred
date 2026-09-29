@@ -1,9 +1,21 @@
-import { Box, Avatar, Text, Icon } from "@chakra-ui/react";
-import { BiLogOut } from "react-icons/bi";
+import {
+  Flex,
+  Avatar,
+  Box,
+  Heading,
+  Image,
+  Text,
+  Icon,
+} from "@chakra-ui/react";
+import { TbLogout } from "react-icons/tb";
+
+import PageHeader from "components/PageHeader";
+import { InstallCard } from "components/Install";
+import useAuth from "hooks/useAuth";
+import Logo from "assets/alfred-mark.svg";
 
 import Logout from "./Logout";
-
-import useAuth from "hooks/useAuth";
+import MorningReminder from "./MorningReminder";
 
 const Account = () => {
   const [user] = useAuth();
@@ -12,20 +24,55 @@ const Account = () => {
 
   return (
     <>
-      <Box sx={{ display: "flex", gap: 4, mb: 10 }}>
+      <PageHeader title="Account" />
+      <Flex
+        sx={{
+          alignItems: "center",
+          gap: 4,
+          p: 4,
+          borderRadius: "card",
+          backgroundColor: "card",
+        }}
+      >
         <Avatar
           size="lg"
           name={user.displayName || "User"}
           src={user.photoURL || ""}
+          // Chakra colours initials from the name; keep them ink
+          bg="brand.500"
+          color="card"
+          sx={{ fontFamily: "heading" }}
         />
-        <Text sx={{ fontWeight: "semibold" }}>{user.displayName}</Text>
-      </Box>
+        <Box sx={{ minW: 0 }}>
+          <Heading noOfLines={1} sx={{ fontSize: "xl" }}>
+            {user.displayName}
+          </Heading>
+          {user.email && (
+            <Text noOfLines={1} sx={{ color: "gray.600" }}>
+              {user.email}
+            </Text>
+          )}
+        </Box>
+      </Flex>
+
+      <MorningReminder />
+      <InstallCard />
 
       <Logout
-        sx={{ width: "100%", color: "black", justifyContent: "flex-start" }}
-        colorScheme="whiteAlpha"
-        leftIcon={<Icon w={5} h={5} as={BiLogOut} />}
+        sx={{ width: "100%", mt: 5 }}
+        size="lg"
+        variant="outline"
+        leftIcon={<Icon w={5} h={5} as={TbLogout} />}
       />
+
+      <Flex
+        sx={{ flexDirection: "column", alignItems: "center", gap: 2, mt: 10 }}
+      >
+        <Image src={Logo} alt="" sx={{ h: 8, opacity: 0.7 }} />
+        <Text sx={{ fontSize: "sm", color: "gray.600" }}>
+          Alfred {process.env.REACT_APP_VERSION}
+        </Text>
+      </Flex>
     </>
   );
 };

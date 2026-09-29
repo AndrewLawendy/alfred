@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+/functions/node_modules
 /.pnp
 .pnp.js
 
@@ -25,3 +26,9 @@ yarn-error.log*
 .firebase
 firebase-debug.log
 .env
+
+# Local agent plans
+/tasks/
+
+# Firebase emulator logs
+*-debug.log

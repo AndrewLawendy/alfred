@@ -1,148 +1,114 @@
-import { useState } from "react";
-import {
-  Heading,
-  Accordion,
-  AccordionItem,
-  AccordionButton,
-  AccordionPanel,
-  AccordionIcon,
-  ExpandedIndex,
-} from "@chakra-ui/react";
+import { useEffect, useMemo } from "react";
+import { useLocation, useRoute } from "wouter";
+import { Box, Button, Flex, Icon, Text } from "@chakra-ui/react";
+import { MdAdd } from "react-icons/md";
 
-import { IconType } from "react-icons";
-import { RiShirtFill } from "react-icons/ri";
-import {
-  GiSleevelessJacket,
-  GiBelt,
-  GiTrousers,
-  GiRunningShoe,
-} from "react-icons/gi";
-
+import PageHeader from "components/PageHeader";
+import useData from "resources/useData";
+import { openNewItem } from "utils/history";
 import { Item } from "utils/types";
 
-import AddItemsBtn from "./AddItemsBtn";
 import WardrobeItem from "./WardrobeItem";
-import JacketsForm from "./JacketsForm";
+import AddChooser from "./AddChooser";
 
-export interface AddOption extends Pick<Item, "type"> {
-  label: string;
-  icon: IconType;
-}
-
-const addOptions: AddOption[] = [
-  { label: "Add Shirt", type: "shirt", icon: RiShirtFill },
-  { label: "Add Jacket", type: "jacket", icon: GiSleevelessJacket },
-  { label: "Add Bel", type: "belt", icon: GiBelt },
-  { label: "Add Pants", type: "pants", icon: GiTrousers },
-  { label: "Add Shoes", type: "shoes", icon: GiRunningShoe },
+const tabs: { type: Item["type"]; label: string; singular: string }[] = [
+  { type: "shirt", label: "Shirts", singular: "shirt" },
+  { type: "jacket", label: "Jackets", singular: "jacket" },
+  { type: "belt", label: "Belts", singular: "belt" },
+  { type: "pants", label: "Pants", singular: "pants" },
+  { type: "shoes", label: "Shoes", singular: "shoes" },
 ];
 
 const Wardrobe = () => {
-  const [activeItem, setActiveItem] = useState<ExpandedIndex>(0);
-
-  const pickActiveDrawer = (index: number) => {
-    if (index === activeItem) {
-      setActiveItem([]);
-    } else {
-      setActiveItem(index);
-    }
-  };
+  const [, navigate] = useLocation();
+  // The tab lives in the URL (/wardrobe/:type/...), so deep links open the right one
+  const [, params] = useRoute("/:type/:rest*");
+  const active = tabs.find(({ type }) => type === params?.type) || tabs[0];
+  // Old item links (/wardrobe/<type>/<id> or /new) now open the item on top of the tab
+  const [isOldItemLink, oldLink] = useRoute("/:type/:item");
+  useEffect(() => {
+    if (!isOldItemLink || !oldLink) return;
+    const query =
+      oldLink.item === "new"
+        ? `new=${oldLink.type}`
+        : `item=${encodeURIComponent(oldLink.item)}`;
+    navigate(`/${oldLink.type}?${query}`, { replace: true });
+  }, [isOldItemLink, oldLink?.type, oldLink?.item]);
+  const [allItems] = useData<Item>("wardrobe-items");
+  const counts = useMemo(
+    () =>
+      (allItems || []).reduce<Record<string, number>>((acc, { type }) => {
+        acc[type] = (acc[type] || 0) + 1;
+        return acc;
+      }, {}),
+    [allItems]
+  );
 
   return (
     <>
-      <Accordion index={activeItem} sx={{ backgroundColor: "white" }}>
-        <AccordionItem>
-          <AccordionButton
-            onClick={() => pickActiveDrawer(0)}
-            sx={{ boxShadow: activeItem === 0 ? "material" : undefined }}
+      <PageHeader
+        title="Wardrobe"
+        eyebrow={
+          allItems
+            ? `${allItems.length} piece${allItems.length === 1 ? "" : "s"}`
+            : undefined
+        }
+        action={
+          <Button
+            onClick={() => openNewItem(active.type)}
+            leftIcon={<Icon as={MdAdd} sx={{ w: 5, h: 5 }} />}
+            colorScheme="brand"
+            sx={{ flexShrink: 0 }}
           >
-            <Heading as="h5" size="md" flex="1" textAlign="left">
-              Shirts
-            </Heading>
-            <AccordionIcon />
-          </AccordionButton>
-
-          <AccordionPanel>
-            <WardrobeItem type="shirt" />
-          </AccordionPanel>
-        </AccordionItem>
-
-        <AccordionItem>
-          <AccordionButton
-            onClick={() => pickActiveDrawer(1)}
-            sx={{ boxShadow: activeItem === 1 ? "material" : undefined }}
-          >
-            <Heading as="h5" size="md" flex="1" textAlign="left">
-              Jackets
-            </Heading>
-            <AccordionIcon />
-          </AccordionButton>
-
-          <AccordionPanel>
-            <WardrobeItem
-              type="jacket"
-              formData={{
-                maxTemperature: { initialValue: "", isRequired: true },
+            Add {active.singular}
+          </Button>
+        }
+      />
+      <Flex
+        role="tablist"
+        sx={{
+          gap: 2,
+          mx: -3,
+          px: 3,
+          mb: 5,
+          overflowX: "auto",
+          scrollbarWidth: "none",
+          "&::-webkit-scrollbar": { display: "none" },
+        }}
+      >
+        {tabs.map(({ type, label }) => {
+          const isActive = type === active.type;
+          return (
+            <Button
+              key={type}
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => navigate(`/${type}`, { replace: true })}
+              sx={{
+                flexShrink: 0,
+                fontWeight: "medium",
+                backgroundColor: isActive ? "brand.500" : "card",
+                color: isActive ? "card" : "brand.500",
+                _hover: { backgroundColor: isActive ? "brand.500" : "card" },
               }}
             >
-              {(props) => <JacketsForm {...props} />}
-            </WardrobeItem>
-          </AccordionPanel>
-        </AccordionItem>
+              {label}
+              <Text
+                as="span"
+                sx={{ ml: 1.5, color: isActive ? "gray.300" : "gray.600" }}
+              >
+                {counts[type] || 0}
+              </Text>
+            </Button>
+          );
+        })}
+      </Flex>
 
-        <AccordionItem>
-          <AccordionButton
-            onClick={() => pickActiveDrawer(2)}
-            sx={{ boxShadow: activeItem === 2 ? "material" : undefined }}
-          >
-            <Heading as="h5" size="md" flex="1" textAlign="left">
-              Belts
-            </Heading>
-            <AccordionIcon />
-          </AccordionButton>
+      <Box role="tabpanel">
+        <WardrobeItem key={active.type} type={active.type} />
+      </Box>
 
-          <AccordionPanel>
-            <WardrobeItem type="belt" />
-          </AccordionPanel>
-        </AccordionItem>
-
-        <AccordionItem>
-          <AccordionButton
-            onClick={() => pickActiveDrawer(3)}
-            sx={{ boxShadow: activeItem === 3 ? "material" : undefined }}
-          >
-            <Heading as="h5" size="md" flex="1" textAlign="left">
-              Pants
-            </Heading>
-            <AccordionIcon />
-          </AccordionButton>
-
-          <AccordionPanel>
-            <WardrobeItem type="pants" />
-          </AccordionPanel>
-        </AccordionItem>
-
-        <AccordionItem>
-          <AccordionButton
-            onClick={() => pickActiveDrawer(4)}
-            sx={{ boxShadow: activeItem === 4 ? "material" : undefined }}
-          >
-            <Heading as="h5" size="md" flex="1" textAlign="left">
-              Shoes
-            </Heading>
-            <AccordionIcon />
-          </AccordionButton>
-
-          <AccordionPanel>
-            <WardrobeItem type="shoes" />
-          </AccordionPanel>
-        </AccordionItem>
-      </Accordion>
-
-      <AddItemsBtn
-        sx={{ position: "fixed", bottom: 16, right: 3 }}
-        addOptions={addOptions}
-      />
+      <AddChooser />
     </>
   );
 };

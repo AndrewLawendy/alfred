@@ -1,57 +1,32 @@
-import { Link } from "wouter";
-import {
-  Flex,
-  IconButton,
-  Image,
-  Text,
-  Link as ChakraLink,
-  Icon,
-} from "@chakra-ui/react";
-import { IoMdNotifications } from "react-icons/io";
+import { useEffect, useState } from "react";
+import { Box } from "@chakra-ui/react";
 
-import Logo from "assets/logo.png";
-
+// No app bar: pages carry their own titles. This strip only keeps content out
+// from under the status bar and draws a hairline once the page has scrolled.
 const Header = () => {
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setIsScrolled(window.scrollY > 0);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   return (
-    <Flex
+    <Box
       as="header"
       sx={{
-        height: 16,
-        p: 2,
-        justifyContent: "space-between",
-        alignItems: "center",
-        boxShadow: "material",
         position: "sticky",
         top: 0,
-        backgroundColor: "white",
+        zIndex: "sticky",
+        height: "env(safe-area-inset-top)",
+        backgroundColor: "page",
+        borderBottom: "1px solid",
+        borderColor: isScrolled ? "gray.200" : "transparent",
+        transition: "border-color 0.2s",
       }}
-    >
-      <ChakraLink
-        as={Link}
-        to="/"
-        sx={{ display: "flex", alignItems: "center", gap: 3 }}
-      >
-        <Image src={Logo} sx={{ maxH: 9 }} />
-        <Text
-          sx={{
-            fontFamily: "advent",
-            fontSize: "2xl",
-            lineHeight: 6,
-          }}
-        >
-          Alfred{" "}
-          <Text as="span" fontSize="md">
-            v{process.env.REACT_APP_VERSION}
-          </Text>
-        </Text>
-      </ChakraLink>
-
-      <IconButton
-        aria-label="Open Notification"
-        icon={<Icon as={IoMdNotifications} w={6} h={6} />}
-        variant="ghost"
-      />
-    </Flex>
+    />
   );
 };
 

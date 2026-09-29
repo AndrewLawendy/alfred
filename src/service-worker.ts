@@ -9,10 +9,11 @@
 // service worker, and the Workbox build step will be skipped.
 
 import { clientsClaim } from "workbox-core";
+import { CacheableResponsePlugin } from "workbox-cacheable-response";
 import { ExpirationPlugin } from "workbox-expiration";
 import { precacheAndRoute, createHandlerBoundToURL } from "workbox-precaching";
 import { registerRoute } from "workbox-routing";
-import { StaleWhileRevalidate } from "workbox-strategies";
+import { CacheFirst, StaleWhileRevalidate } from "workbox-strategies";
 
 declare const self: ServiceWorkerGlobalScope;
 
@@ -70,8 +71,107 @@ registerRoute(
   })
 );
 
+// Wardrobe photos from Firebase Storage, so outfits still show offline.
+// A photo's URL changes when it is replaced, so cache-first never goes stale.
+registerRoute(
+  ({ url, request }) =>
+    url.hostname === "firebasestorage.googleapis.com" &&
+    request.destination === "image",
+  new CacheFirst({
+    cacheName: "wardrobe-photos",
+    plugins: [
+      // <img> requests are cross-origin without CORS, so responses are opaque (status 0)
+      new CacheableResponsePlugin({ statuses: [0, 200] }),
+      // Opaque responses count heavily against storage quota: keep the cache bounded
+      new ExpirationPlugin({
+        maxEntries: 150,
+        maxAgeSeconds: 60 * 24 * 60 * 60,
+        purgeOnQuotaError: true,
+      }),
+    ],
+  })
+);
+
 // This allows the web app to trigger skipWaiting via
 // registration.waiting.postMessage({type: 'SKIP_WAITING'})
+// A photo shared into Alfred from another app (manifest share_target): keep it
+// for the app to pick up, then open the "What are you adding?" chooser
+self.addEventListener("fetch", (event) => {
+  const url = new URL(event.request.url);
+  if (event.request.method !== "POST" || url.pathname !== "/share-target") {
+    return;
+  }
+  event.respondWith(
+    (async () => {
+      const form = await event.request.formData();
+      const photo = form.get("photo");
+      if (photo instanceof File) {
+        const cache = await caches.open("shared");
+        await cache.put(
+          "/shared-photo",
+          new Response(photo, { headers: { "Content-Type": photo.type } })
+        );
+      }
+      return Response.redirect("/wardrobe?add=1&shared=1", 303);
+    })()
+  );
+});
+
+// The morning reminder, sent as a data-only push by the scheduled function.
+// Every push must show a notification (iOS stops delivering otherwise).
+self.addEventListener("push", (event) => {
+  let payload: { data?: Record<string, string> } & Record<string, string> = {};
+  try {
+    payload = event.data?.json() ?? {};
+  } catch {
+    // Not JSON: fall back to a plain reminder
+  }
+  const data = payload.data ?? payload;
+  event.waitUntil(
+    self.registration.showNotification(data.title || "Alfred", {
+      body: data.body,
+      icon: "/icons/icon-192.png",
+      tag: "morning-reminder",
+      // A new reminder replaces the last one in the tray; still buzz for it
+      renotify: true,
+      vibrate: [200, 100, 200],
+      data: { url: data.url || "/", action: data.action },
+      // Android shows the button; iOS just opens the app on tap
+      ...(data.action && { actions: [{ action: "wear", title: "Wear it" }] }),
+    } as NotificationOptions)
+  );
+});
+
+// Tapping it opens Today, reusing an open Alfred window when there is one
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  // "Wear it" moves the rotation on; tapping the notification just opens Today
+  const { url: openUrl = "/", action } = event.notification.data || {};
+  const url = new URL(
+    event.action === "wear" && action ? action : openUrl,
+    self.location.origin
+  ).href;
+  event.waitUntil(
+    (async () => {
+      const windows = await self.clients.matchAll({
+        type: "window",
+        includeUncontrolled: true,
+      });
+      const open = windows.find((client) =>
+        client.url.startsWith(self.location.origin)
+      );
+      // navigate() rejects on a window this worker doesn't control yet
+      const navigated = open
+        ? await open
+            .focus()
+            .then(() => open.navigate(url))
+            .catch(() => null)
+        : null;
+      if (!navigated) await self.clients.openWindow(url);
+    })()
+  );
+});
+
 self.addEventListener("message", (event) => {
   if (event.data && event.data.type === "SKIP_WAITING") {
     self.skipWaiting();

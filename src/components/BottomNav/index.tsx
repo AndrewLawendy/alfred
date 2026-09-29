@@ -1,7 +1,5 @@
 import { Box, Flex } from "@chakra-ui/react";
-import { MdHome } from "react-icons/md";
-import { GiClothes } from "react-icons/gi";
-import { FaTshirt, FaUser } from "react-icons/fa";
+import { TbShirt, TbStack2, TbSun, TbUser } from "react-icons/tb";
 
 import BottomNavItem from "components/BottomNavItem";
 
@@ -14,15 +12,19 @@ const BottomNav = () => {
         bottom: 0,
         left: 0,
         width: "100%",
-        backgroundColor: "white",
-        boxShadow: "0px -1px var(--chakra-colors-chakra-border-color)",
+        // Translucent so the page shows through as it scrolls underneath
+        backgroundColor: "rgba(238, 237, 233, 0.9)",
+        backdropFilter: "blur(12px)",
+        borderTop: "1px solid",
+        borderColor: "line",
+        pb: "env(safe-area-inset-bottom)",
       }}
     >
-      <Flex as="nav" justify="space-between" sx={{ p: 1 }}>
-        <BottomNavItem to="/" label="Home" icon={MdHome} />
-        <BottomNavItem to="/outfits" label="Outfits" icon={FaTshirt} />
-        <BottomNavItem to="/wardrobe" label="Wardrobe" icon={GiClothes} />
-        <BottomNavItem to="/account" label="Account" icon={FaUser} />
+      <Flex as="nav" aria-label="Main">
+        <BottomNavItem to="/" label="Today" icon={TbSun} />
+        <BottomNavItem to="/outfits" label="Outfits" icon={TbStack2} />
+        <BottomNavItem to="/wardrobe" label="Wardrobe" icon={TbShirt} />
+        <BottomNavItem to="/account" label="Account" icon={TbUser} />
       </Flex>
     </Box>
   );

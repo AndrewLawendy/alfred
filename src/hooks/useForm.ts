@@ -24,6 +24,8 @@ export type FormConfig = {
   [fieldName: string]: {
     initialValue: string;
     isRequired?: boolean;
+    // Shown when a required field is left empty
+    requiredMessage?: string;
   };
 };
 
@@ -119,7 +121,8 @@ export const useForm = <T extends FormConfig>(
     for (const name in values) {
       if (!values[name] && touched[name] && initialForm[name].isRequired) {
         isFormValid = false;
-        validationErrors[name] = `${name} is a required field`;
+        validationErrors[name] =
+          initialForm[name].requiredMessage || "This field is required";
       } else {
         validationErrors[name] = null;
       }

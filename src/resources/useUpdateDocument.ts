@@ -3,6 +3,7 @@ import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { useState } from "react";
 
 import { db } from "utils/firebase";
+import settle from "resources/settle";
 
 import { Common } from "utils/types";
 
@@ -17,13 +18,14 @@ const useUpdateDocument = <T>(
     documentId: string,
     data: Partial<Omit<T, keyof Common>>
   ) => {
-    setLoading(true);
+    setLoading(navigator.onLine);
     const documentRef = doc(db, collectionName, documentId);
-
-    return updateDoc(documentRef, {
+    const write = updateDoc(documentRef, {
       ...data,
       updatedAt: serverTimestamp(),
-    }).finally(() => setLoading(false));
+    });
+
+    return settle(write, undefined).finally(() => setLoading(false));
   };
   return [updateDocument, isLoading];
 };

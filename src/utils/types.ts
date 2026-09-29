@@ -50,7 +50,8 @@ export interface Outfit extends Common {
   belt: DocumentReference<DocumentData>;
   pants: DocumentReference<DocumentData>;
   shoes: DocumentReference<DocumentData>;
-  jacket?: Jacket | null;
+  // Today's jacket: missing or null until decided, false for "no jacket today"
+  jacket?: Jacket | null | false;
   order: number;
   active: boolean;
 }

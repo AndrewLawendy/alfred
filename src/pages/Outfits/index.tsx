@@ -1,18 +1,13 @@
-import { useState } from "react";
 import { orderBy } from "@firebase/firestore";
 import {
   Box,
   Grid,
   Heading,
   Stack,
-  IconButton,
+  Button,
   Icon,
   Flex,
-  Alert,
-  AlertIcon,
-  AlertTitle,
-  AlertDescription,
-  useDisclosure,
+  Text,
 } from "@chakra-ui/react";
 import {
   DragDropContext,
@@ -20,60 +15,82 @@ import {
   Draggable,
   DropResult,
 } from "react-beautiful-dnd";
-import { MdAdd, MdAutoAwesome } from "react-icons/md";
-import { GrDrag } from "react-icons/gr";
+import { MdAdd, MdDragIndicator } from "react-icons/md";
 
-import { Outfit } from "utils/types";
+import { openNewOutfit, openOutfit } from "utils/history";
+import { Item, Outfit } from "utils/types";
 
 import OutfitReference from "components/OutfitReference";
 import Loading from "components/Loading";
+import PageHeader from "components/PageHeader";
+import EmptyState from "components/EmptyState";
 
 import useData from "resources/useData";
-import useUpdateDocument from "resources/useUpdateDocument";
+import useUpdateOutfits from "resources/useUpdateOutfits";
 
-import OutfitDetails from "./OutfitDetails";
+const fields = ["shirt", "belt", "pants", "shoes"] as const;
 
 const Outfits = () => {
-  const [currentOutfit, setCurrentOutfit] = useState<Outfit>();
   const [outfits, isOutfitsLoading] = useData<Outfit>(
     "outfits",
     orderBy("order")
   );
-  const [updateOutfit] = useUpdateDocument("outfits");
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [updateOutfits] = useUpdateOutfits();
+  // With no clothes yet, the wardrobe comes before any outfit
+  const [items] = useData<Item>("wardrobe-items");
 
   const onDragEnd = (result: DropResult) => {
     const { destination, source } = result;
     if (!destination || !outfits) return;
 
-    const [droppedItem] = outfits.splice(source.index, 1);
-    outfits.splice(destination.index, 0, droppedItem);
+    const reordered = [...outfits];
+    const [dropped] = reordered.splice(source.index, 1);
+    reordered.splice(destination.index, 0, dropped);
 
-    outfits.forEach((outfit, index) =>
-      updateOutfit(outfit.id, { ...outfit, order: index })
+    // Only write the outfits whose position actually changed
+    updateOutfits(
+      reordered
+        .map((outfit, order) => ({ id: outfit.id, order, old: outfit.order }))
+        .filter(({ order, old }) => order !== old)
+        .map(({ id, order }) => ({ id, changes: { order } }))
     );
   };
 
   return (
     <>
+      <PageHeader
+        eyebrow="Rotation"
+        title="Outfits"
+        description="Alfred wears these in order, top to bottom, then starts again. Hold the handle and drag to change the order."
+        action={
+          <Button
+            onClick={openNewOutfit}
+            leftIcon={<Icon as={MdAdd} sx={{ w: 5, h: 5 }} />}
+            colorScheme="brand"
+            sx={{ flexShrink: 0 }}
+          >
+            New
+          </Button>
+        }
+      />
       {isOutfitsLoading || !outfits ? (
-        <Loading message="Loading your outfits, please wait" />
+        <Loading message="Loading your outfits" columns={1} />
       ) : outfits.length === 0 ? (
-        <Alert
-          status="warning"
-          flexDirection="column"
-          alignItems="center"
-          justifyContent="center"
-          textAlign="center"
-        >
-          <AlertIcon boxSize="30px" mr={0} />
-          <AlertTitle mt={4} mb={1} fontSize="lg">
-            No outfits
-          </AlertTitle>
-          <AlertDescription maxWidth="sm">
-            Click on Add and gather your outfit
-          </AlertDescription>
-        </Alert>
+        items && items.length === 0 ? (
+          <EmptyState
+            title="Your wardrobe comes first"
+            description="Outfits are made from your own clothes. Add a shirt, belt, pants and shoes to your wardrobe, then come back here."
+            actionLabel="Go to Wardrobe"
+            to="/wardrobe"
+          />
+        ) : (
+          <EmptyState
+            title="No outfits yet"
+            description="Put together a shirt, belt, pants and shoes. Each outfit you make joins the rotation."
+            actionLabel="Create an outfit"
+            onAction={openNewOutfit}
+          />
+        )
       ) : (
         <DragDropContext onDragEnd={onDragEnd}>
           <Droppable droppableId="outfits">
@@ -81,122 +98,103 @@ const Outfits = () => {
               <Stack
                 {...provided.droppableProps}
                 ref={provided.innerRef}
-                sx={{ pb: 14 }}
+                spacing={3}
+                sx={{ pb: 4 }}
               >
-                {outfits.map((outfit, index) => {
-                  return (
-                    <Draggable
-                      key={outfit.id}
-                      draggableId={outfit.id}
-                      index={index}
-                    >
-                      {(provided, snapshot) => (
-                        <Box
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          onClick={() => {
-                            setCurrentOutfit(outfit);
-                            onOpen();
+                {outfits.map((outfit, index) => (
+                  <Draggable
+                    key={outfit.id}
+                    draggableId={outfit.id}
+                    index={index}
+                  >
+                    {(provided, snapshot) => (
+                      <Flex
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        onClick={() => openOutfit(outfit.id)}
+                        role="button"
+                        aria-label={`Outfit No. ${index + 1}`}
+                        sx={{
+                          alignItems: "center",
+                          gap: 2,
+                          py: 3,
+                          pr: 3,
+                          borderRadius: "card",
+                          backgroundColor: "card",
+                          border: "1px solid",
+                          // Today's outfit is edged in brass
+                          borderColor: outfit.active
+                            ? "accent.500"
+                            : "transparent",
+                          transition: "transform 0.15s",
+                          transform: snapshot.isDragging
+                            ? "scale(1.02)"
+                            : undefined,
+                        }}
+                      >
+                        <Flex
+                          aria-label={`Reorder outfit ${index + 1}`}
+                          sx={{
+                            // A tall handle: easy to find with a thumb
+                            w: 10,
+                            alignSelf: "stretch",
+                            minH: 20,
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: "gray.600",
+                            flexShrink: 0,
                           }}
+                          {...provided.dragHandleProps}
                         >
-                          <Box
-                            sx={{
-                              borderTopRadius: 6,
-                              transition: "all 0.15s",
-                              transform: snapshot.isDragging
-                                ? "scale(1.01)"
-                                : undefined,
-                              boxShadow: snapshot.isDragging
-                                ? "material"
-                                : undefined,
-                            }}
+                          <Icon as={MdDragIndicator} sx={{ w: 6, h: 6 }} />
+                        </Flex>
+                        <Box sx={{ w: 12, flexShrink: 0 }}>
+                          <Heading
+                            as="h2"
+                            sx={{ fontSize: "3xl", lineHeight: 1 }}
                           >
-                            <Box
+                            {index + 1}
+                          </Heading>
+                          {outfit.active && (
+                            <Text
                               sx={{
-                                p: 2,
-                                backgroundColor: "white",
-                                borderTopRadius: 6,
-                                borderTop: "1px solid",
-                                borderX: "1px solid",
-                                borderColor: "gray.100",
-                                display: "flex",
-                                justifyContent: "space-between",
+                                mt: 1.5,
+                                fontSize: "xs",
+                                fontWeight: "semibold",
+                                letterSpacing: "0.12em",
+                                color: "accent.600",
                               }}
                             >
-                              <Heading as="h6" size="sm">
-                                #{index + 1}
-                              </Heading>
-
-                              <Flex sx={{ gap: 2 }}>
-                                {outfit.active && <Icon as={MdAutoAwesome} />}
-
-                                <Box
-                                  as="i"
-                                  sx={{ height: "16px" }}
-                                  {...provided.dragHandleProps}
-                                >
-                                  <Icon as={GrDrag} />
-                                </Box>
-                              </Flex>
-                            </Box>
-                            {Object.values(outfit).length > 0 && (
-                              <Grid
-                                templateColumns="repeat(4, 1fr)"
-                                sx={{ backgroundColor: "white" }}
-                                pointerEvents="none"
-                              >
-                                <OutfitReference reference={outfit.shirt} />
-                                <OutfitReference reference={outfit.belt} />
-                                <OutfitReference reference={outfit.pants} />
-                                <OutfitReference reference={outfit.shoes} />
-                              </Grid>
-                            )}
-                          </Box>
+                              TODAY
+                            </Text>
+                          )}
                         </Box>
-                      )}
-                    </Draggable>
-                  );
-                })}
+                        <Grid
+                          templateColumns="repeat(4, 1fr)"
+                          gap={1.5}
+                          sx={{ flex: 1, minW: 0 }}
+                          pointerEvents="none"
+                        >
+                          {fields.map((field) => (
+                            <OutfitReference
+                              key={field}
+                              reference={outfit[field]}
+                              slot={field}
+                              aspectRatio={1}
+                              radius="thumb"
+                            />
+                          ))}
+                        </Grid>
+                      </Flex>
+                    )}
+                  </Draggable>
+                ))}
                 {provided.placeholder}
               </Stack>
             )}
           </Droppable>
         </DragDropContext>
       )}
-
-      <IconButton
-        onClick={onOpen}
-        aria-label="Add Outfit"
-        size="lg"
-        colorScheme="teal"
-        icon={
-          <Icon
-            as={MdAdd}
-            color="white"
-            sx={{
-              width: 7,
-              height: 7,
-            }}
-          />
-        }
-        sx={{
-          boxShadow: "material",
-          position: "fixed",
-          bottom: 16,
-          right: 3,
-          borderRadius: "full",
-        }}
-      />
-
-      <OutfitDetails
-        isOpen={isOpen}
-        onClose={() => {
-          onClose();
-          setCurrentOutfit(undefined);
-        }}
-        currentOutfit={currentOutfit}
-        outfits={outfits}
-      />
     </>
   );
 };

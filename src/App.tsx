@@ -1,5 +1,6 @@
-import { Route } from "wouter";
+import { Route, useLocation } from "wouter";
 import { ChakraProvider, Box } from "@chakra-ui/react";
+import { motion, MotionConfig } from "framer-motion";
 
 import NestedRoute from "components/NestedRoute";
 import Authorized from "components/Authorized";
@@ -11,28 +12,48 @@ import Account from "pages/Account";
 
 import Header from "components/Header";
 import BottomNav from "components/BottomNav";
+import UpdatePrompt from "components/UpdatePrompt";
+import OfflineBanner from "components/OfflineBanner";
+import ScreenStack from "components/ScreenStack";
 
 import theme from "utils/theme";
+import { useInstantMotion } from "utils/photoTransition";
 
-import "@fontsource/advent-pro";
-import "@fontsource/roboto";
+import "@fontsource/bodoni-moda";
 
 function App() {
+  const [location] = useLocation();
+  const tab = location.split("/")[1].toLowerCase();
+  // A photo growing into its page takes over the motion (utils/photoTransition)
+  const isInstantMotion = useInstantMotion();
+
   return (
     <ChakraProvider theme={theme}>
-      <Route path="/login" component={Login} />
-      <Authorized>
-        <Header />
-        <Box sx={{ pt: 6, px: 3, pb: 16, flexGrow: 1 }} as="main">
-          <Route path="/" component={Home} />
-          <Route path="/Outfits" component={Outfits} />
-          <NestedRoute base="/wardrobe">
-            <Wardrobe />
-          </NestedRoute>
-          <Route path="/account" component={Account} />
-        </Box>
-        <BottomNav />
-      </Authorized>
+      <MotionConfig reducedMotion={isInstantMotion ? "always" : "user"}>
+        <UpdatePrompt />
+        <OfflineBanner />
+        <Route path="/login" component={Login} />
+        <Authorized>
+          <Header />
+          <Box sx={{ pt: 6, px: 3, pb: "nav", flexGrow: 1 }} as="main">
+            <motion.div
+              key={tab}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Route path="/" component={Home} />
+              <Route path="/Outfits" component={Outfits} />
+              <NestedRoute base="/wardrobe">
+                <Wardrobe />
+              </NestedRoute>
+              <Route path="/account" component={Account} />
+            </motion.div>
+          </Box>
+          <BottomNav />
+          <ScreenStack />
+        </Authorized>
+      </MotionConfig>
     </ChakraProvider>
   );
 }
