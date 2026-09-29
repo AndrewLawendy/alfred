@@ -6,6 +6,7 @@ import {
   FacebookAuthProvider,
   signInWithRedirect,
   signInWithPopup,
+  getRedirectResult,
 } from "firebase/auth";
 import { Box, Button, Image, Text, Icon, Spinner } from "@chakra-ui/react";
 import useNotice from "hooks/useNotice";
@@ -71,15 +72,21 @@ const Login = () => {
   const [, setLocation] = useLocation();
   const toast = useNotice();
 
+  const onSignInError = (error: { code?: string; message: string }) =>
+    toast({
+      status: "error",
+      title: "Couldn't sign you in",
+      description: friendlyError(error.code) || error.code || error.message,
+      isClosable: true,
+    });
+
   const onSignIn = (provider: AuthProvider) =>
-    signIn(auth, provider).catch((error) =>
-      toast({
-        status: "error",
-        title: "Couldn't sign you in",
-        description: friendlyError(error.code) || error.code || error.message,
-        isClosable: true,
-      })
-    );
+    signIn(auth, provider).catch(onSignInError);
+
+  // A redirect sign-in lands back here; its errors only surface through this
+  useEffect(() => {
+    getRedirectResult(auth).catch(onSignInError);
+  }, []);
 
   useEffect(() => {
     if (user) {
