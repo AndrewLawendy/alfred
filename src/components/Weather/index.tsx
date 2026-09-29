@@ -66,7 +66,7 @@ const Weather = ({ weatherData, isLoading, verdict }: WeatherProps) => {
         py: 2,
         borderRadius: "card",
         backgroundColor: "card",
-        color: "brand.500",
+        color: "ink",
       }}
     >
       <Icon
@@ -78,7 +78,7 @@ const Weather = ({ weatherData, isLoading, verdict }: WeatherProps) => {
         {Math.round(weatherData.main.temp)}°
       </Text>
       <Box sx={{ minW: 0, lineHeight: "short" }}>
-        <Text sx={{ fontSize: "sm", color: "gray.600" }}>{weather.main}</Text>
+        <Text sx={{ fontSize: "sm", color: "muted" }}>{weather.main}</Text>
         {verdict && (
           <Text noOfLines={1} sx={{ fontWeight: "medium" }}>
             {verdict}

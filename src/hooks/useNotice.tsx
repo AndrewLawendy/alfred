@@ -9,9 +9,9 @@ type Notice = {
 };
 
 const icons = {
-  success: { as: MdCheck, color: "accent.300" },
-  error: { as: MdErrorOutline, color: "red.200" },
-  info: { as: MdInfoOutline, color: "gray.300" },
+  success: { as: MdCheck, color: "noticeSuccess" },
+  error: { as: MdErrorOutline, color: "noticeError" },
+  info: { as: MdInfoOutline, color: "onInkMuted" },
 };
 
 // Every short message in Alfred: an ink card at the top, like the update
@@ -35,7 +35,7 @@ const useNotice = () => {
             p: 4,
             pr: 2,
             borderRadius: "card",
-            backgroundColor: "brand.500",
+            backgroundColor: "ink",
             color: "card",
           }}
         >

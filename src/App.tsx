@@ -17,9 +17,17 @@ import OfflineBanner from "components/OfflineBanner";
 import ScreenStack from "components/ScreenStack";
 
 import theme from "utils/theme";
+import { appearanceManager } from "utils/appearance";
+import { useApplyAppearance } from "hooks/useAppearance";
 import { useInstantMotion } from "utils/photoTransition";
 
 import "@fontsource/bodoni-moda";
+
+// Light or dark, from the Appearance setting in Account
+const ApplyAppearance = () => {
+  useApplyAppearance();
+  return null;
+};
 
 function App() {
   const [location] = useLocation();
@@ -28,7 +36,8 @@ function App() {
   const isInstantMotion = useInstantMotion();
 
   return (
-    <ChakraProvider theme={theme}>
+    <ChakraProvider theme={theme} colorModeManager={appearanceManager}>
+      <ApplyAppearance />
       <MotionConfig reducedMotion={isInstantMotion ? "always" : "user"}>
         <UpdatePrompt />
         <OfflineBanner />

@@ -35,7 +35,7 @@ const UpdatePrompt = () => {
               py: 3,
               mt: "env(safe-area-inset-top)",
               borderRadius: "card",
-              backgroundColor: "brand.500",
+              backgroundColor: "ink",
               color: "card",
             }}
           >
@@ -45,7 +45,7 @@ const UpdatePrompt = () => {
             <Button
               size="sm"
               onClick={reload}
-              sx={{ backgroundColor: "card", color: "brand.500" }}
+              sx={{ backgroundColor: "card", color: "ink" }}
             >
               Reload
             </Button>

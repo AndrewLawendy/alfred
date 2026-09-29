@@ -121,11 +121,12 @@ const Login = () => {
           <Image
             src={Lockup}
             alt="Alfred Wardrobe"
-            sx={{ h: 56, mx: "auto" }}
+            // The ink logo turns stone on a dark page
+            sx={{ h: 56, mx: "auto", _dark: { filter: "invert(1)" } }}
           />
         </motion.div>
         <motion.div variants={item}>
-          <Text sx={{ mt: 2, fontSize: "lg", color: "gray.600" }}>
+          <Text sx={{ mt: 2, fontSize: "lg", color: "muted" }}>
             Your own wardrobe stylist
           </Text>
         </motion.div>
@@ -165,7 +166,7 @@ const Login = () => {
         </Button>
       </motion.div>
       <motion.div variants={item}>
-        <Text sx={{ mt: 4, fontSize: "sm", color: "gray.600" }}>
+        <Text sx={{ mt: 4, fontSize: "sm", color: "muted" }}>
           New here? Signing in creates your account.
         </Text>
       </motion.div>
@@ -178,7 +179,7 @@ const Login = () => {
             left: 0,
             width: "100%",
             height: "100%",
-            backgroundColor: "rgba(238, 237, 233, 0.85)",
+            backgroundColor: "pageGlass",
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
@@ -187,8 +188,8 @@ const Login = () => {
           <Spinner
             thickness="4px"
             speed="0.65s"
-            emptyColor="gray.200"
-            color="brand.500"
+            emptyColor="surface"
+            color="ink"
             size="xl"
           />
         </Box>

@@ -4,7 +4,7 @@ import { MdCheck } from "react-icons/md";
 // The ring and tick on a chosen photo (outfit editor, jacket sheet)
 export const pickedRing = {
   outline: "2px solid",
-  outlineColor: "brand.500",
+  outlineColor: "ink",
   outlineOffset: "2px",
 } as const;
 
@@ -20,7 +20,7 @@ const PickedMark = () => (
       alignItems: "center",
       justifyContent: "center",
       borderRadius: "full",
-      backgroundColor: "brand.500",
+      backgroundColor: "ink",
       color: "card",
     }}
   >

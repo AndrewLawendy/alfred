@@ -171,7 +171,7 @@ const MorningReminder = () => {
               Morning reminder
             </Heading>
           </FormLabel>
-          <Text sx={{ mt: 1, color: "gray.600" }}>
+          <Text sx={{ mt: 1, color: "muted" }}>
             A nudge to move on to the next outfit, with the weather.
           </Text>
           {support !== "unsupported" && support !== "denied" && (
@@ -246,10 +246,10 @@ const MorningReminder = () => {
                     flex: 1,
                     minW: 0,
                     px: 0,
-                    backgroundColor: isPicked ? "brand.500" : "page",
-                    color: isPicked ? "card" : "brand.500",
+                    backgroundColor: isPicked ? "ink" : "page",
+                    color: isPicked ? "card" : "ink",
                     _hover: {
-                      backgroundColor: isPicked ? "brand.500" : "page",
+                      backgroundColor: isPicked ? "ink" : "page",
                     },
                   }}
                 >
@@ -280,14 +280,14 @@ const MorningReminder = () => {
             </Flex>
           )}
           {shown.days.length === 0 && (
-            <Text sx={{ mt: 2, fontSize: "sm", color: "gray.600" }}>
+            <Text sx={{ mt: 2, fontSize: "sm", color: "muted" }}>
               Pick at least one day.
             </Text>
           )}
 
           {isOn && !isDirty && (
             <Flex sx={{ mt: 4, alignItems: "center", gap: 3 }}>
-              <Text sx={{ flex: 1, fontSize: "sm", color: "gray.600" }}>
+              <Text sx={{ flex: 1, fontSize: "sm", color: "muted" }}>
                 {lastSentAt
                   ? `Last sent ${lastSentAt.toLocaleString("en-GB", {
                       weekday: "short",

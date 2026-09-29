@@ -15,6 +15,7 @@ import useAuth from "hooks/useAuth";
 import Logo from "assets/alfred-mark.svg";
 
 import Logout from "./Logout";
+import Appearance from "./Appearance";
 import MorningReminder from "./MorningReminder";
 
 const Account = () => {
@@ -39,7 +40,7 @@ const Account = () => {
           name={user.displayName || "User"}
           src={user.photoURL || ""}
           // Chakra colours initials from the name; keep them ink
-          bg="brand.500"
+          bg="ink"
           color="card"
           sx={{ fontFamily: "heading" }}
         />
@@ -48,13 +49,14 @@ const Account = () => {
             {user.displayName}
           </Heading>
           {user.email && (
-            <Text noOfLines={1} sx={{ color: "gray.600" }}>
+            <Text noOfLines={1} sx={{ color: "muted" }}>
               {user.email}
             </Text>
           )}
         </Box>
       </Flex>
 
+      <Appearance />
       <MorningReminder />
       <InstallCard />
 
@@ -68,8 +70,12 @@ const Account = () => {
       <Flex
         sx={{ flexDirection: "column", alignItems: "center", gap: 2, mt: 10 }}
       >
-        <Image src={Logo} alt="" sx={{ h: 8, opacity: 0.7 }} />
-        <Text sx={{ fontSize: "sm", color: "gray.600" }}>
+        <Image
+          src={Logo}
+          alt=""
+          sx={{ h: 8, opacity: 0.7, _dark: { filter: "invert(1)" } }}
+        />
+        <Text sx={{ fontSize: "sm", color: "muted" }}>
           Alfred {__APP_VERSION__}
         </Text>
       </Flex>

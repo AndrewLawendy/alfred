@@ -33,9 +33,13 @@ const EmptyState = ({
       borderRadius: "card",
     }}
   >
-    <Image src={Logo} alt="" sx={{ h: 12, mb: 3 }} />
+    <Image
+      src={Logo}
+      alt=""
+      sx={{ h: 12, mb: 3, _dark: { filter: "invert(1)" } }}
+    />
     <Heading sx={{ fontSize: "2xl" }}>{title}</Heading>
-    <Text sx={{ color: "gray.600", maxW: "xs" }}>{description}</Text>
+    <Text sx={{ color: "muted", maxW: "xs" }}>{description}</Text>
     <Button
       {...(to ? { as: Link, to } : { onClick: onAction })}
       colorScheme="brand"

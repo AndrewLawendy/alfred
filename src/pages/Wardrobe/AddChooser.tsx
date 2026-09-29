@@ -123,10 +123,7 @@ const AddChooser = () => {
                 <Text sx={{ flex: 1, fontFamily: "heading", fontSize: "xl" }}>
                   {label}
                 </Text>
-                <Icon
-                  as={MdChevronRight}
-                  sx={{ w: 5, h: 5, color: "gray.600" }}
-                />
+                <Icon as={MdChevronRight} sx={{ w: 5, h: 5, color: "muted" }} />
               </Flex>
             ))}
           </DrawerBody>

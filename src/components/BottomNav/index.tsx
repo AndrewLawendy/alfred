@@ -13,7 +13,7 @@ const BottomNav = () => {
         left: 0,
         width: "100%",
         // Translucent so the page shows through as it scrolls underneath
-        backgroundColor: "rgba(238, 237, 233, 0.9)",
+        backgroundColor: "pageGlass",
         backdropFilter: "blur(12px)",
         borderTop: "1px solid",
         borderColor: "line",

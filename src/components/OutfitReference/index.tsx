@@ -44,7 +44,7 @@ const MissingPiece = ({
       borderRadius: radius,
       border: "1.5px dashed",
       borderColor: "line",
-      color: "gray.600",
+      color: "muted",
       ...(aspectRatio
         ? { aspectRatio: `${aspectRatio}` }
         : { height: "var(--outfit-photo-height, 162px)" }),

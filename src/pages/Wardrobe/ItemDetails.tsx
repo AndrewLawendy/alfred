@@ -47,7 +47,7 @@ const ItemDetails = ({ item }: { item: Item }) => {
           {item.title}
         </Heading>
         {item.description && (
-          <Text sx={{ mt: 2, fontSize: "md", color: "gray.600" }}>
+          <Text sx={{ mt: 2, fontSize: "md", color: "muted" }}>
             {item.description}
           </Text>
         )}
@@ -71,7 +71,7 @@ const ItemDetails = ({ item }: { item: Item }) => {
                 <Text sx={{ fontWeight: "semibold" }}>
                   Suggested at {item.maxTemperature}° or cooler
                 </Text>
-                <Text sx={{ mt: 1, color: "gray.600" }}>
+                <Text sx={{ mt: 1, color: "muted" }}>
                   Jackets go with any outfit. When it&apos;s cold enough, Home
                   asks which one to wear with the day&apos;s outfit.
                 </Text>

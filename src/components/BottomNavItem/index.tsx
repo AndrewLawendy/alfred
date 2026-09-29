@@ -31,7 +31,7 @@ const BottomNavItem = ({ to, label, icon, ...rest }: BottomNavItemProps) => {
         minHeight: 16,
         fontSize: "xs",
         fontWeight: "medium",
-        color: isActive ? "brand.500" : "gray.600",
+        color: isActive ? "ink" : "muted",
 
         "&:hover": {
           textDecoration: "none",

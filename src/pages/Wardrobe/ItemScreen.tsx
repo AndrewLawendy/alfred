@@ -368,12 +368,12 @@ const ItemEditor = ({ type, item, headingRef, sharedPhoto }: EditorProps) => {
                       <Heading sx={{ fontSize: "2xl" }}>
                         Delete {item.title}?
                       </Heading>
-                      <Text sx={{ mt: 2, color: "gray.600" }}>
+                      <Text sx={{ mt: 2, color: "muted" }}>
                         This removes the {type} and its photo from your
                         wardrobe. You can&apos;t undo this.
                       </Text>
                       {usedIn.length > 0 && (
-                        <Text sx={{ mt: 2, color: "red.600" }}>
+                        <Text sx={{ mt: 2, color: "dangerText" }}>
                           {usedIn.length > 1
                             ? `Outfits ${usedIn
                                 .slice(0, -1)
@@ -385,7 +385,7 @@ const ItemEditor = ({ type, item, headingRef, sharedPhoto }: EditorProps) => {
                         </Text>
                       )}
                       {isTodaysJacket && (
-                        <Text sx={{ mt: 2, color: "red.600" }}>
+                        <Text sx={{ mt: 2, color: "dangerText" }}>
                           It&apos;s today&apos;s jacket, so Alfred will ask
                           again which one to wear.
                         </Text>
@@ -487,7 +487,7 @@ export const ItemPanel = ({
   }
   if (!item) {
     return (
-      <ScreenBody sx={{ pt: 16, textAlign: "center", color: "gray.600" }}>
+      <ScreenBody sx={{ pt: 16, textAlign: "center", color: "muted" }}>
         This item no longer exists.
       </ScreenBody>
     );
