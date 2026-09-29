@@ -1,21 +1,30 @@
 {
   "compilerOptions": {
-    "target": "es2017",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
+    "target": "ES2020",
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "types": ["vite/client", "vitest/globals", "node"],
     "skipLibCheck": true,
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
-    "module": "esnext",
-    "moduleResolution": "node",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "baseUrl": "./src"
+    // The folders in src import by name, as in vite.config.ts
+    "paths": {
+      "assets/*": ["./src/assets/*"],
+      "components/*": ["./src/components/*"],
+      "hooks/*": ["./src/hooks/*"],
+      "pages/*": ["./src/pages/*"],
+      "resources/*": ["./src/resources/*"],
+      "utils/*": ["./src/utils/*"],
+      // wouter 2's package exports leave out its types
+      "wouter": ["./node_modules/wouter/types/ts4.1/index.d.ts"]
+    }
   },
-  "include": ["src"]
+  "include": ["src", "vite.config.ts"]
 }

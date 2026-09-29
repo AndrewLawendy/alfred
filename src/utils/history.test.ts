@@ -32,9 +32,7 @@ test("pages, and anything opened inside the app, are left alone", () => {
 });
 
 test("after a reload, Back isn't spent on layers that are no longer open", () => {
-  const go = jest
-    .spyOn(window.history, "go")
-    .mockImplementation(() => undefined);
+  const go = vi.spyOn(window.history, "go").mockImplementation(() => undefined);
   // An item screen (depth 1) in edit mode (depth 2), then a reload
   window.history.replaceState(
     { depth: 2, stack: [{ kind: "item", id: "a", depth: 1 }] },

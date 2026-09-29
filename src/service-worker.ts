@@ -1,12 +1,4 @@
 /// <reference lib="webworker" />
-/* eslint-disable no-restricted-globals */
-
-// This service worker can be customized!
-// See https://developers.google.com/web/tools/workbox/modules
-// for the list of available Workbox modules, or add any other
-// code you'd like.
-// You can also remove this file if you'd prefer not to use a
-// service worker, and the Workbox build step will be skipped.
 
 import { clientsClaim } from "workbox-core";
 import { CacheableResponsePlugin } from "workbox-cacheable-response";
@@ -51,7 +43,7 @@ registerRoute(
     // Return true to signal that we want to use the handler.
     return true;
   },
-  createHandlerBoundToURL(process.env.PUBLIC_URL + "/index.html")
+  createHandlerBoundToURL(import.meta.env.BASE_URL + "index.html")
 );
 
 // An example runtime caching route for requests that aren't handled by the
@@ -122,7 +114,7 @@ self.addEventListener("fetch", (event) => {
 self.addEventListener("push", (event) => {
   let payload: { data?: Record<string, string> } & Record<string, string> = {};
   try {
-    payload = event.data?.json() ?? {};
+    payload = (event.data?.json() ?? {}) as typeof payload;
   } catch {
     // Not JSON: fall back to a plain reminder
   }
@@ -146,7 +138,10 @@ self.addEventListener("push", (event) => {
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   // "Wear it" moves the rotation on; tapping the notification just opens Today
-  const { url: openUrl = "/", action } = event.notification.data || {};
+  const { url: openUrl = "/", action } = (event.notification.data ?? {}) as {
+    url?: string;
+    action?: string;
+  };
   const url = new URL(
     event.action === "wear" && action ? action : openUrl,
     self.location.origin
@@ -173,8 +168,8 @@ self.addEventListener("notificationclick", (event) => {
 });
 
 self.addEventListener("message", (event) => {
-  if (event.data && event.data.type === "SKIP_WAITING") {
-    self.skipWaiting();
+  if ((event.data as { type?: string } | null)?.type === "SKIP_WAITING") {
+    void self.skipWaiting();
   }
 });
 
