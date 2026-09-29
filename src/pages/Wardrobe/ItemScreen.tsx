@@ -137,6 +137,8 @@ const ItemEditor = ({ type, item, headingRef, sharedPhoto }: EditorProps) => {
     setFieldValue,
     setFieldTouched,
     destroyForm,
+    reInitializeForm,
+    setFormValues,
   } = form;
 
   const isView = mode === "view" && item !== undefined;
@@ -196,6 +198,11 @@ const ItemEditor = ({ type, item, headingRef, sharedPhoto }: EditorProps) => {
           ? await uploadPhoto(item.imageUrl)
           : item.imageUrl;
         await updateItem(item.id, { ...values, imageUrl });
+        // What was saved is the form's new starting point: Back from the next
+        // edit returns to it, and the photo no longer counts as new
+        const saved = { ...values, imageUrl };
+        reInitializeForm(saved);
+        setFormValues(saved);
         onEditSaved();
       } else {
         const imageUrl = await uploadPhoto();
@@ -216,9 +223,11 @@ const ItemEditor = ({ type, item, headingRef, sharedPhoto }: EditorProps) => {
   const onDelete = async () => {
     if (!item || needsConnection("Deleting")) return;
     try {
-      await deleteItemImage(item.imageUrl);
       await deleteItem(item.id);
       closeItem();
+      // The photo goes last: if that fails it's only an unused file, where a
+      // missing photo left an item that could never be deleted
+      deleteItemImage(item.imageUrl).catch(() => undefined);
     } catch {
       toast({
         status: "error",
@@ -398,10 +407,12 @@ export const ItemPanel = ({
   const [sharedPhoto, setSharedPhoto] = useState<File | null>();
   useEffect(() => {
     if (!newType || !isShared) return;
-    readSharedPhoto().then((file) => {
-      setSharedPhoto(file || null);
-      clearSharedPhoto();
-    });
+    readSharedPhoto()
+      .catch(() => undefined)
+      .then((file) => {
+        setSharedPhoto(file || null);
+        clearSharedPhoto();
+      });
   }, []);
   const item = data && itemId ? ({ ...data, id: itemId } as Item) : undefined;
 
