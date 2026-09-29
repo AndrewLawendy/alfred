@@ -1,0 +1,27 @@
+rules_version = '2';
+
+// Photos carry their owner in their metadata (`owner`). Only the owner can
+// replace or delete one, and only images up to 10 MB go in. Showing a photo
+// uses its download link, which carries its own access token.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{name} {
+      allow read: if request.auth != null
+        && resource.metadata.owner == request.auth.uid;
+      // An upload over an existing photo is a create too: only its owner
+      allow create: if isOwnPhoto()
+        && (resource == null || resource.metadata.owner == request.auth.uid);
+      allow update: if resource.metadata.owner == request.auth.uid
+        && isOwnPhoto();
+      allow delete: if request.auth != null
+        && resource.metadata.owner == request.auth.uid;
+    }
+
+    function isOwnPhoto() {
+      return request.auth != null
+        && request.resource.metadata.owner == request.auth.uid
+        && request.resource.contentType.matches("image/.*")
+        && request.resource.size < 10 * 1024 * 1024;
+    }
+  }
+}
