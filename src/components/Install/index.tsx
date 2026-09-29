@@ -93,7 +93,7 @@ export const useInstallHint = () => {
         id: "install",
         position: "top",
         duration: 12000,
-        render: ({ onClose }) => (
+        render: (toastProps) => (
           <Box
             sx={{
               mt: "env(safe-area-inset-top)",
@@ -110,8 +110,9 @@ export const useInstallHint = () => {
               <Flex sx={{ mt: 3, gap: 2 }}>
                 <Button
                   onClick={() => {
-                    onClose();
-                    install();
+                    toastProps.onClose();
+                    // Dismissing the browser's own prompt rejects: nothing to do
+                    install().catch(() => undefined);
                   }}
                   sx={{ bg: "card", color: "brand.500" }}
                 >
@@ -119,7 +120,7 @@ export const useInstallHint = () => {
                 </Button>
                 <Button
                   variant="ghost"
-                  onClick={onClose}
+                  onClick={() => toastProps.onClose()}
                   sx={{ color: "card", _hover: { bg: "whiteAlpha.200" } }}
                 >
                   Not now
@@ -132,7 +133,7 @@ export const useInstallHint = () => {
                 </Text>
                 <Button
                   variant="ghost"
-                  onClick={onClose}
+                  onClick={() => toastProps.onClose()}
                   sx={{ color: "card", _hover: { bg: "whiteAlpha.200" } }}
                 >
                   OK

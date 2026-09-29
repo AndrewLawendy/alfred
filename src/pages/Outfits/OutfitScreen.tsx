@@ -44,7 +44,7 @@ const slots = [
   { key: "shoes", label: "Shoes", icon: GiRunningShoe },
 ] as const;
 
-type SlotKey = typeof slots[number]["key"];
+type SlotKey = (typeof slots)[number]["key"];
 type Picks = Partial<Record<SlotKey, string>>;
 
 const picksOf = (outfit?: Outfit): Picks =>
@@ -132,7 +132,7 @@ const Carousel = ({
   selectedId,
   onPick,
 }: {
-  slot: typeof slots[number];
+  slot: (typeof slots)[number];
   items: Item[];
   selectedId?: string;
   onPick: (id: string) => void;
@@ -323,8 +323,8 @@ const OutfitEditor = ({
   const heading = !outfit
     ? "New outfit"
     : isEditing
-    ? `Edit No. ${number}`
-    : `Outfit No. ${number}`;
+      ? `Edit No. ${number}`
+      : `Outfit No. ${number}`;
 
   return (
     <>
@@ -487,9 +487,20 @@ export const OutfitPanel = ({
 }) => {
   const [outfits] = useData<Outfit>("outfits", orderBy("order"));
   const [items] = useData<Item>("wardrobe-items");
+  const index = outfits?.findIndex(({ id }) => id === param) ?? -1;
+  const found =
+    outfits && index !== -1
+      ? { outfit: outfits[index], number: index + 1 }
+      : undefined;
   // The last time this outfit was found, so a screen closing on its own
   // delete keeps showing it as it slides away
-  const lastSeen = useRef<{ outfit: Outfit; number: number }>();
+  const [lastSeen, setLastSeen] = useState(found);
+  if (
+    found &&
+    (found.outfit !== lastSeen?.outfit || found.number !== lastSeen.number)
+  ) {
+    setLastSeen(found);
+  }
 
   if (!outfits || !items) {
     return (
@@ -499,13 +510,10 @@ export const OutfitPanel = ({
     );
   }
 
-  const index = outfits.findIndex(({ id }) => id === param);
-  if (index !== -1)
-    lastSeen.current = { outfit: outfits[index], number: index + 1 };
-  if (param !== "new" && index === -1 && lastSeen.current) {
+  if (param !== "new" && index === -1 && lastSeen) {
     return (
       <OutfitEditor
-        {...lastSeen.current}
+        {...lastSeen}
         outfits={outfits}
         items={items}
         headingRef={headingRef}

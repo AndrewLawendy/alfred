@@ -137,7 +137,13 @@ const ItemEditor = ({ type, item, headingRef, sharedPhoto }: EditorProps) => {
     },
     []
   );
-  const [sharedUrl] = useState(() => sharedPhoto && showPhoto(sharedPhoto));
+  const [sharedUrl] = useState(
+    () => sharedPhoto && URL.createObjectURL(sharedPhoto)
+  );
+  // Released like any other preview: on the next pick or when this closes
+  useEffect(() => {
+    if (sharedUrl) previewUrl.current = sharedUrl;
+  }, [sharedUrl]);
   useEffect(() => {
     if (sharedPhoto) photoFile.current = resizeImage(sharedPhoto);
   }, []);
@@ -371,9 +377,9 @@ const ItemEditor = ({ type, item, headingRef, sharedPhoto }: EditorProps) => {
                           {usedIn.length > 1
                             ? `Outfits ${usedIn
                                 .slice(0, -1)
-                                .join(", ")} and ${usedIn.slice(
-                                -1
-                              )} use it, and keep their place in the rotation`
+                                .join(
+                                  ", "
+                                )} and ${usedIn[usedIn.length - 1]} use it, and keep their place in the rotation`
                             : `Outfit ${usedIn[0]} uses it, and keeps its place in the rotation`}{" "}
                           with a gap until you pick another {type}.
                         </Text>
@@ -450,8 +456,9 @@ export const ItemPanel = ({
       .catch(() => undefined)
       .then((file) => {
         setSharedPhoto(file || null);
-        clearSharedPhoto();
-      });
+        return clearSharedPhoto();
+      })
+      .catch(() => undefined);
   }, []);
   const item = data && itemId ? ({ ...data, id: itemId } as Item) : undefined;
 

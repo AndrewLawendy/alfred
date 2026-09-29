@@ -43,11 +43,13 @@ const AddChooser = () => {
   useEffect(() => {
     if (!isOpen || !isShared) return;
     let url: string | undefined;
-    readSharedPhoto().then((file) => {
-      if (!file) return;
-      url = URL.createObjectURL(file);
-      setPreview(url);
-    });
+    readSharedPhoto()
+      .then((file) => {
+        if (!file) return;
+        url = URL.createObjectURL(file);
+        setPreview(url);
+      })
+      .catch(() => undefined);
     return () => {
       if (url) URL.revokeObjectURL(url);
     };
@@ -64,7 +66,7 @@ const AddChooser = () => {
   const onClose = () => {
     if (layerDepth() > 0) window.history.back();
     else replaceSearch("");
-    clearSharedPhoto();
+    clearSharedPhoto().catch(() => undefined);
   };
 
   return (

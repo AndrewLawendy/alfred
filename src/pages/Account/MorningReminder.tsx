@@ -67,8 +67,8 @@ const MorningReminder = () => {
       description: !isOnHere
         ? "Switch it on to get it on this phone."
         : next
-        ? `Next one: ${next}.`
-        : undefined,
+          ? `Next one: ${next}.`
+          : undefined,
     });
   };
 
@@ -114,10 +114,12 @@ const MorningReminder = () => {
   };
 
   useEffect(() => {
-    pushSupport().then((state) => {
-      setSupport(state);
-      setIsOn(state === "granted" && Boolean(deviceToken()));
-    });
+    pushSupport()
+      .then((state) => {
+        setSupport(state);
+        setIsOn(state === "granted" && Boolean(deviceToken()));
+      })
+      .catch(() => setSupport("unsupported"));
   }, []);
 
   const onToggle = async () => {
@@ -134,7 +136,7 @@ const MorningReminder = () => {
           confirm(shown, true);
         } else setSupport(Notification.permission);
       }
-    } catch (error) {
+    } catch {
       toast({
         status: "error",
         title: "Couldn't change the reminder",

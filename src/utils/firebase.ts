@@ -24,7 +24,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-setPersistence(auth, browserLocalPersistence);
+setPersistence(auth, browserLocalPersistence).catch(() => undefined);
 // Serve Firestore data from IndexedDB first so screens open instantly.
 // Rejects on browsers without IndexedDB; the app then stays online-only.
 enableMultiTabIndexedDbPersistence(db).catch(() => undefined);

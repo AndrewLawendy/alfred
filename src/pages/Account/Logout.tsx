@@ -22,6 +22,7 @@ const Logout = (props: Omit<ButtonProps, "onClick">) => (
       turnOff()
         .catch(() => undefined)
         .then(() => signOut(auth))
+        .catch(() => undefined)
     }
     okText="Sign out"
     okType="red"

@@ -25,7 +25,7 @@ const useNotice = () => {
       id,
       position: "top",
       duration: 5000,
-      render: ({ onClose }) => (
+      render: (toastProps) => (
         <Flex
           // Chakra's toast list is already a polite live region; errors interrupt
           role={status === "error" ? "alert" : undefined}
@@ -55,7 +55,11 @@ const useNotice = () => {
               <Text sx={{ mt: 0.5, opacity: 0.8 }}>{description}</Text>
             )}
           </Box>
-          <CloseButton aria-label="Close" onClick={onClose} sx={{ mt: -1 }} />
+          <CloseButton
+            aria-label="Close"
+            onClick={() => toastProps.onClose()}
+            sx={{ mt: -1 }}
+          />
         </Flex>
       ),
     });

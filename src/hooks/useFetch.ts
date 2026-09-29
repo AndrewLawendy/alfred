@@ -2,12 +2,11 @@ import { useState, useEffect } from "react";
 
 const useFetch = <T>(request: () => Promise<T>) => {
   const [data, setData] = useState<T>();
-  const [isLoading, setIsLoading] = useState(false);
+  // The request starts on mount, so it's loading from the first render
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState();
 
   useEffect(() => {
-    setIsLoading(true);
-
     request()
       .then(setData)
       .catch(setError)

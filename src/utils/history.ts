@@ -21,7 +21,8 @@ type LayerState = { depth?: number; stack?: StackEntry[] };
 // Search params that describe a screen (the rest belong to the page)
 const screenParams = ["item", "new", "outfit", "shared"];
 
-const current = (): LayerState => window.history.state || {};
+const current = (): LayerState =>
+  (window.history.state as LayerState | null) || {};
 
 export const layerDepth = () => current().depth ?? 0;
 

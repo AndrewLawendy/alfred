@@ -26,6 +26,7 @@ import PageHeader from "components/PageHeader";
 import EmptyState from "components/EmptyState";
 
 import useData from "resources/useData";
+import useNotice from "hooks/useNotice";
 import useUpdateOutfits from "resources/useUpdateOutfits";
 
 const fields = ["shirt", "belt", "pants", "shoes"] as const;
@@ -36,6 +37,7 @@ const Outfits = () => {
     orderBy("order")
   );
   const [updateOutfits] = useUpdateOutfits();
+  const toast = useNotice();
   // With no clothes yet, the wardrobe comes before any outfit
   const [items] = useData<Item>("wardrobe-items");
 
@@ -53,6 +55,12 @@ const Outfits = () => {
         .map((outfit, order) => ({ id: outfit.id, order, old: outfit.order }))
         .filter(({ order, old }) => order !== old)
         .map(({ id, order }) => ({ id, changes: { order } }))
+    ).catch(() =>
+      toast({
+        status: "error",
+        title: "Couldn't save the new order",
+        description: "Your outfits keep their old order. Please try again.",
+      })
     );
   };
 
