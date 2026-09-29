@@ -50,7 +50,7 @@ import useWeather from "resources/useWeather";
 import { openNewOutfit, openOutfit, replaceSearch } from "utils/history";
 import { jacketState } from "utils/jacket";
 import { openItemFromPhoto } from "utils/photoTransition";
-import { nextOutfit } from "utils/rotation";
+import { nextOutfit, swapWithNext } from "utils/rotation";
 import { Item, Jacket, Outfit } from "utils/types";
 
 const slots = ["shirt", "belt", "pants", "shoes"] as const;
@@ -183,7 +183,8 @@ const Home = () => {
   };
 
   const onFetchNextOutfit = () => {
-    if (!outfits) return;
+    // The Next shortcut can open before there's anything to move on to
+    if (!outfits?.length) return;
 
     if (outfits.length === 1) return onSingleOutfitOpen();
 
@@ -194,17 +195,16 @@ const Home = () => {
 
   // Wear the next outfit today and push this one to right after it
   const onSwitchCurrentOutfit = () => {
-    if (!outfits) return;
+    if (!outfits?.length) return;
 
     if (outfits.length === 1) return onSingleOutfitOpen();
 
-    const next = nextOutfit(outfits, activeOutfit);
-    updateOutfit(next.id, { active: true, order: activeOutfit.order });
-    updateOutfit(activeOutfit.id, {
-      order: next.order,
-      active: false,
-      jacket: null,
-    });
+    swapWithNext(outfits, activeOutfit).forEach(({ id, changes }) =>
+      updateOutfit(
+        id,
+        id === activeOutfit.id ? { ...changes, jacket: null } : changes
+      )
+    );
   };
 
   // The "Next outfit" app shortcut opens /?action=next. Drop the parameter

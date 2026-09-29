@@ -45,3 +45,28 @@ export const afterDelete = (
     }))
     .filter(({ changes }) => Object.keys(changes).length > 0);
 };
+
+// What to write to wear the next outfit today and put today's right after it.
+// Trades list positions and renumbers everything 0..n-1, since swapping the
+// stored `order` values does nothing when two of them are equal.
+export const swapWithNext = (
+  outfits: Pick<Outfit, "id" | "order" | "active">[],
+  current: Pick<Outfit, "id">
+): Update[] => {
+  const index = outfits.findIndex(({ id }) => id === current.id);
+  if (index === -1 || outfits.length < 2) return [];
+  const nextIndex = (index + 1) % outfits.length;
+  const positionOf = (position: number) =>
+    position === index ? nextIndex : position === nextIndex ? index : position;
+
+  return outfits
+    .map(({ id, order, active }, position) => ({
+      id,
+      changes: {
+        ...(order !== positionOf(position) && { order: positionOf(position) }),
+        ...(position === index && active && { active: false }),
+        ...(position === nextIndex && !active && { active: true }),
+      },
+    }))
+    .filter(({ changes }) => Object.keys(changes).length > 0);
+};
