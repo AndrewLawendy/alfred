@@ -122,6 +122,7 @@ const ItemDetails = ({ item }: { item: Item }) => {
                     <OutfitReference
                       key={slot}
                       reference={outfit[slot]}
+                      slot={slot}
                       aspectRatio={1}
                       radius="thumb"
                     />

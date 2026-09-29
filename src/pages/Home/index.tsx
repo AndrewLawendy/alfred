@@ -269,7 +269,9 @@ const Home = () => {
               <OutfitReference
                 key={slot}
                 reference={activeOutfit[slot]}
+                slot={slot}
                 isLabelled
+                onMissing={() => openOutfit(activeOutfit.id)}
               />
             ))}
           </Grid>

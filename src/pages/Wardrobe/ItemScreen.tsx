@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef, RefObject } from "react";
-import { doc } from "firebase/firestore";
+import { doc, orderBy } from "firebase/firestore";
 import { useDocumentData } from "react-firebase-hooks/firestore";
 import {
   Button,
@@ -31,12 +31,13 @@ import useUploadImage from "resources/useUploadImage";
 import useDeleteImage from "resources/useDeleteImage";
 import useUpdateDocument from "resources/useUpdateDocument";
 import useDeleteDocument from "resources/useDeleteDocument";
+import useData from "resources/useData";
 import { db } from "utils/firebase";
 import { useSearchParam } from "utils/history";
 import { clearSharedPhoto, readSharedPhoto } from "utils/sharedPhoto";
 import geFileURL from "utils/geFileURL";
 import resizeImage from "utils/resizeImage";
-import { Item } from "utils/types";
+import { Item, Outfit } from "utils/types";
 
 import ItemDetails from "./ItemDetails";
 import JacketsForm from "./JacketsForm";
@@ -108,6 +109,16 @@ const ItemEditor = ({ type, item, headingRef, sharedPhoto }: EditorProps) => {
   const [uploadItemImage, isItemImageUploading, uploadSnapshot] =
     useUploadImage();
   const [deleteItemImage, isDeleteItemImageLoading] = useDeleteImage();
+  // The outfits this piece is in, by their number, to warn before a delete
+  const [outfits] = useData<Outfit>("outfits", orderBy("order"));
+  const usedIn = (outfits || [])
+    .map((outfit, index) => ({ outfit, number: index + 1 }))
+    .filter(({ outfit }) =>
+      (["shirt", "belt", "pants", "shoes"] as const).some(
+        (slot) => item && outfit[slot]?.id === item.id
+      )
+    )
+    .map(({ number }) => `No. ${number}`);
 
   // The picked photo's preview URL. One at a time: the previous one is
   // released on every new pick and when the editor closes.
@@ -345,6 +356,18 @@ const ItemEditor = ({ type, item, headingRef, sharedPhoto }: EditorProps) => {
                         This removes the {type} and its photo from your
                         wardrobe. You can&apos;t undo this.
                       </Text>
+                      {usedIn.length > 0 && (
+                        <Text sx={{ mt: 2, color: "red.600" }}>
+                          {usedIn.length > 1
+                            ? `Outfits ${usedIn
+                                .slice(0, -1)
+                                .join(", ")} and ${usedIn.slice(
+                                -1
+                              )} use it, and keep their place in the rotation`
+                            : `Outfit ${usedIn[0]} uses it, and keeps its place in the rotation`}{" "}
+                          with a gap until you pick another {type}.
+                        </Text>
+                      )}
                     </>
                   }
                   onConfirm={onDelete}

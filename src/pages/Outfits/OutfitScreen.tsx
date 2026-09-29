@@ -60,21 +60,25 @@ const labelStyle = {
   color: "gray.600",
 } as const;
 
-// One piece of the outfit: its photo, opening the item
+// One piece of the outfit: its photo, opening the item. A deleted piece is a
+// gap that opens the editor to pick another.
 const Slot = ({
   label,
   icon,
   item,
+  onMissing,
 }: {
   label: string;
   icon: IconType;
   item?: Item;
+  onMissing: () => void;
 }) => (
   <Box
     as="button"
     onClick={(event: React.MouseEvent<HTMLElement>) =>
-      item &&
-      openItemFromPhoto(item.id, event.currentTarget.querySelector("img"))
+      item
+        ? openItemFromPhoto(item.id, event.currentTarget.querySelector("img"))
+        : onMissing()
     }
     sx={{
       textAlign: "left",
@@ -92,6 +96,7 @@ const Slot = ({
         justifyContent: "center",
         color: "gray.400",
         backgroundColor: "surface",
+        ...(!item && { border: "1.5px dashed", borderColor: "line" }),
       }}
     >
       {item ? (
@@ -110,7 +115,10 @@ const Slot = ({
       noOfLines={1}
       sx={{ fontFamily: "heading", fontSize: "lg", lineHeight: 1.3, minH: 6 }}
     >
-      {item?.title || "Missing"}
+      {item?.title ||
+        `Pick ${
+          label === "Pants" || label === "Shoes" ? "" : "a "
+        }${label.toLowerCase()}`}
     </Text>
   </Box>
 );
@@ -396,6 +404,7 @@ const OutfitEditor = ({
                 label={slot.label}
                 icon={slot.icon}
                 item={itemById(picks[slot.key])}
+                onMissing={() => setMode("edit")}
               />
             ))}
           </Grid>

@@ -179,6 +179,7 @@ const Outfits = () => {
                             <OutfitReference
                               key={field}
                               reference={outfit[field]}
+                              slot={field}
                               aspectRatio={1}
                               radius="thumb"
                             />
