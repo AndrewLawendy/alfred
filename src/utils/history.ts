@@ -91,6 +91,20 @@ export const putPageUnderLink = () => {
   }
 };
 
+// After a reload, layers that were open over the top screen or page (a sheet,
+// edit mode) are closed, but their history entries remain, so Back would seem
+// to do nothing. Step back to the entry of what's actually showing.
+export const dropClosedLayers = () => {
+  const { depth, stack } = current();
+  if (!depth || !stack) return;
+  // The Add chooser lives in the URL, so it's still open
+  if (new URLSearchParams(window.location.search).get("add")) return;
+  const top = stack[stack.length - 1];
+  if (top && top.depth === null) return;
+  const target = top?.depth ?? 0;
+  if (depth > target) window.history.go(target - depth);
+};
+
 // A screen already in the stack is gone back to, never opened twice, so
 // item → outfit → item can't loop and Back stays a few steps
 const openScreen = (screen: Screen) => {
@@ -147,7 +161,7 @@ export const closeScreen = (entry: StackEntry) => {
   // No entry of its own: drop it (and anything above) from the stack in place
   const stack = currentStack();
   const index = stack.findIndex(
-    (screen) => screen.kind === entry.kind && screen.depth === entry.depth
+    (screen) => nameOf(screen) === nameOf(entry) && screen.depth === entry.depth
   );
   const remaining = index === -1 ? stack : stack.slice(0, index);
   window.history.replaceState(

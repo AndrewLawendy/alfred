@@ -1,4 +1,4 @@
-import { putPageUnderLink } from "utils/history";
+import { dropClosedLayers, putPageUnderLink } from "utils/history";
 
 const openFromOutside = (url: string) =>
   window.history.replaceState(null, "", url);
@@ -29,4 +29,37 @@ test("pages, and anything opened inside the app, are left alone", () => {
   window.history.replaceState({ depth: 2, stack: [] }, "", "/?item=a");
   putPageUnderLink();
   expect(window.history.length).toBe(before);
+});
+
+test("after a reload, Back isn't spent on layers that are no longer open", () => {
+  const go = jest
+    .spyOn(window.history, "go")
+    .mockImplementation(() => undefined);
+  // An item screen (depth 1) in edit mode (depth 2), then a reload
+  window.history.replaceState(
+    { depth: 2, stack: [{ kind: "item", id: "a", depth: 1 }] },
+    "",
+    "/wardrobe?item=a"
+  );
+  dropClosedLayers();
+  expect(go).toHaveBeenCalledWith(-1);
+
+  // A sheet over a page, with no screens open
+  go.mockClear();
+  window.history.replaceState({ depth: 1, stack: [] }, "", "/");
+  dropClosedLayers();
+  expect(go).toHaveBeenCalledWith(-1);
+
+  // Already on the screen's own entry, or on the Add chooser: nothing to do
+  go.mockClear();
+  window.history.replaceState(
+    { depth: 1, stack: [{ kind: "item", id: "a", depth: 1 }] },
+    "",
+    "/wardrobe?item=a"
+  );
+  dropClosedLayers();
+  window.history.replaceState({ depth: 1, stack: [] }, "", "/wardrobe?add=1");
+  dropClosedLayers();
+  expect(go).not.toHaveBeenCalled();
+  go.mockRestore();
 });

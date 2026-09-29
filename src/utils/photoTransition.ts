@@ -83,10 +83,12 @@ export const openItemFromPhoto = (id: string, photo?: HTMLElement | null) => {
     target = await waitForTarget(id);
     setName(target, NAME);
   });
-  transition.finished.finally(() => {
-    setName(target, "");
-    setInstant(false);
-  });
+  transition.finished
+    .finally(() => {
+      setName(target, "");
+      setInstant(false);
+    })
+    .catch(() => undefined);
 };
 
 // The tile to shrink back into: the last visible one for this item, which
@@ -123,7 +125,7 @@ export const closeItemToPhoto = (id: string, remove: () => void) => {
     flushSync(remove);
     setName(source, NAME);
   });
-  transition.finished.finally(() => setName(source, ""));
+  transition.finished.finally(() => setName(source, "")).catch(() => undefined);
   return true;
 };
 

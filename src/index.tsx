@@ -4,9 +4,10 @@ import App from "./App";
 import * as serviceWorkerRegistration from "./serviceWorkerRegistration";
 import reportWebVitals from "./reportWebVitals";
 import "./utils/pwa";
-import { putPageUnderLink } from "./utils/history";
+import { dropClosedLayers, putPageUnderLink } from "./utils/history";
 
 putPageUnderLink();
+dropClosedLayers();
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement

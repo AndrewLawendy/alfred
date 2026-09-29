@@ -100,13 +100,12 @@ const ScreenStack = () => {
     // tile is on screen; otherwise (or after a swipe) it slides away
     const [popped] = removed;
     if (removed.length === 1 && popped.entry.kind === "item" && !wasSwiped()) {
+      // Drops only the item, from the list as it is by then: a second Back
+      // during the morph has already updated it
       const isMorphing = closeItemToPhoto(popped.entry.id, () =>
-        setRendered([
-          ...open,
-          ...leaving.filter(
-            ({ entry }) => keyOf(entry) !== keyOf(popped.entry)
-          ),
-        ])
+        setRendered((current) =>
+          current.filter(({ entry }) => keyOf(entry) !== keyOf(popped.entry))
+        )
       );
       if (isMorphing) return;
     }
