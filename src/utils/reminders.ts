@@ -15,6 +15,7 @@ import {
 } from "firebase/messaging";
 
 import { auth, db } from "utils/firebase";
+import settle from "resources/settle";
 
 // Each person's morning reminder: when (their time, their days, in their
 // timezone) and which devices get it. The scheduled function reads these.
@@ -36,7 +37,7 @@ export const reminderRef = (uid: string) => doc(db, "reminders", uid);
 const save = (changes: Partial<Record<keyof Reminder, unknown>>) => {
   const uid = auth.currentUser?.uid;
   if (!uid) return Promise.resolve();
-  return setDoc(
+  const write = setDoc(
     reminderRef(uid),
     {
       user: uid,
@@ -46,6 +47,7 @@ const save = (changes: Partial<Record<keyof Reminder, unknown>>) => {
     },
     { merge: true }
   );
+  return settle(write, undefined);
 };
 
 export const saveSchedule = (schedule: Pick<Reminder, "time" | "days">) =>

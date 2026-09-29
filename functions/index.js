@@ -22,12 +22,12 @@ const getWeather = async ({ lat, lon }) => {
   return { temp: json.main.temp, description: json.weather[0].description };
 };
 
-// A device that's gone (app uninstalled, notifications revoked)
+// A device that's gone (app uninstalled, notifications revoked). Not
+// "invalid-argument": a bad message returns it too, for every device.
 const isGone = (error) =>
   [
     "messaging/registration-token-not-registered",
     "messaging/invalid-registration-token",
-    "messaging/invalid-argument",
   ].includes(error?.code);
 
 // Title and body for this person's reminder right now, or null without outfits

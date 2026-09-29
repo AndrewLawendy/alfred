@@ -3,6 +3,7 @@ import { signOut } from "firebase/auth";
 
 import Confirm from "components/Confirm";
 import { auth } from "utils/firebase";
+import { turnOff } from "utils/reminders";
 
 const Logout = (props: Omit<ButtonProps, "onClick">) => (
   <Confirm
@@ -15,7 +16,13 @@ const Logout = (props: Omit<ButtonProps, "onClick">) => (
         </Text>
       </>
     }
-    onConfirm={() => signOut(auth)}
+    // This phone stops getting the reminder, and the next person to sign in
+    // here doesn't find it switched on
+    onConfirm={() =>
+      turnOff()
+        .catch(() => undefined)
+        .then(() => signOut(auth))
+    }
     okText="Sign out"
     okType="red"
     cancelText="Cancel"

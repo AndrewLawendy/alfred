@@ -80,6 +80,13 @@ const MorningReminder = () => {
       await saveSchedule(draft);
       setDraft(null);
       confirm(draft, isOn);
+    } catch {
+      toast({
+        status: "error",
+        title: "Couldn't save the reminder",
+        description: "Nothing was changed. Please try again.",
+        isClosable: true,
+      });
     } finally {
       setIsBusy(false);
     }
