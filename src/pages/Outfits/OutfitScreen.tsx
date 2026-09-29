@@ -302,7 +302,6 @@ const OutfitEditor = ({
         status: "error",
         title: "Couldn't save the outfit",
         description: "Nothing was changed. Please try again.",
-        isClosable: true,
       });
     }
   };
@@ -317,7 +316,6 @@ const OutfitEditor = ({
         status: "error",
         title: "Couldn't delete the outfit",
         description: "It's still in your rotation. Please try again.",
-        isClosable: true,
       })
     );
   };

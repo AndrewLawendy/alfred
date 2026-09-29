@@ -93,7 +93,6 @@ export const useInstallHint = () => {
         id: "install",
         position: "top",
         duration: 12000,
-        isClosable: true,
         render: ({ onClose }) => (
           <Box
             sx={{

@@ -18,8 +18,8 @@ const JacketsForm = ({
       error={errors.maxTemperature}
       onChange={onChange}
       onBlur={onBlur}
+      // No inputMode: iPhone's numeric keypad has no minus for cold days
       type="number"
-      inputMode="numeric"
       suffix="°C"
       placeholder="e.g. 18"
       isReadOnly={mode === "view"}

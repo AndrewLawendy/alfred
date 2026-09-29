@@ -20,7 +20,7 @@ const BottomNav = () => {
         pb: "env(safe-area-inset-bottom)",
       }}
     >
-      <Flex as="nav">
+      <Flex as="nav" aria-label="Main">
         <BottomNavItem to="/" label="Today" icon={TbSun} />
         <BottomNavItem to="/outfits" label="Outfits" icon={TbStack2} />
         <BottomNavItem to="/wardrobe" label="Wardrobe" icon={TbShirt} />

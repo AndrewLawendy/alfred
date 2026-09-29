@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import {
   AuthProvider,
@@ -77,11 +77,16 @@ const Login = () => {
       status: "error",
       title: "Couldn't sign you in",
       description: friendlyError(error.code) || error.code || error.message,
-      isClosable: true,
     });
 
-  const onSignIn = (provider: AuthProvider) =>
-    signIn(auth, provider).catch(onSignInError);
+  // The provider being signed in with, while its window or redirect is open
+  const [pending, setPending] = useState<string>();
+  const onSignIn = (provider: AuthProvider) => {
+    setPending(provider.providerId);
+    signIn(auth, provider)
+      .catch(onSignInError)
+      .finally(() => setPending(undefined));
+  };
 
   // A redirect sign-in lands back here; its errors only surface through this
   useEffect(() => {
@@ -139,6 +144,8 @@ const Login = () => {
           size="lg"
           variant="outline"
           onClick={() => onSignIn(googleAuthProvider)}
+          isLoading={pending === googleAuthProvider.providerId}
+          isDisabled={pending !== undefined}
           leftIcon={<Icon as={GoogleLogo} />}
         >
           Continue with Google
@@ -150,6 +157,8 @@ const Login = () => {
           size="lg"
           colorScheme="facebook"
           onClick={() => onSignIn(facebookAuthProvider)}
+          isLoading={pending === facebookAuthProvider.providerId}
+          isDisabled={pending !== undefined}
           leftIcon={<Icon as={FaFacebookSquare} />}
         >
           Continue with Facebook

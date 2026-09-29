@@ -3,13 +3,13 @@ import { Link as ChakraLink, LinkProps, Icon, Text } from "@chakra-ui/react";
 import { IconType } from "react-icons";
 import { motion } from "framer-motion";
 
-interface SideNavItemProps extends LinkProps {
+interface BottomNavItemProps extends LinkProps {
   to: string;
   label: string;
   icon: IconType;
 }
 
-const BottomNavItem = ({ to, label, icon, ...rest }: SideNavItemProps) => {
+const BottomNavItem = ({ to, label, icon, ...rest }: BottomNavItemProps) => {
   // Match nested routes too, e.g. /wardrobe/shirt/new
   const [isActive] = useRoute(to === "/" ? "/" : `${to}/:rest*`);
 

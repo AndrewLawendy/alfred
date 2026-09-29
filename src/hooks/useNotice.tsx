@@ -6,7 +6,6 @@ type Notice = {
   status?: "success" | "error" | "info";
   title: string;
   description?: string;
-  isClosable?: boolean;
 };
 
 const icons = {
@@ -28,7 +27,8 @@ const useNotice = () => {
       duration: 5000,
       render: ({ onClose }) => (
         <Flex
-          role={status === "error" ? "alert" : "status"}
+          // Chakra's toast list is already a polite live region; errors interrupt
+          role={status === "error" ? "alert" : undefined}
           sx={{
             mt: "env(safe-area-inset-top)",
             gap: 3,

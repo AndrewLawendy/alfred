@@ -7,10 +7,12 @@ export const jacketState = (
   temperature: number | undefined,
   chosen: Outfit["jacket"]
 ) => {
+  // Compared at the whole degrees shown, so "15°" and "up to 15°" agree
+  const shown = temperature === undefined ? undefined : Math.round(temperature);
   const suitable =
-    temperature === undefined
+    shown === undefined
       ? []
-      : jackets.filter(({ maxTemperature }) => maxTemperature >= temperature);
+      : jackets.filter(({ maxTemperature }) => Number(maxTemperature) >= shown);
   const isSkipped = chosen === false;
   // Jackets that suit the weather (all of them if it didn't load), plus
   // today's pick even if the weather has since warmed up

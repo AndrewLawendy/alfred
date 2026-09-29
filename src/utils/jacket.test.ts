@@ -48,3 +48,9 @@ test("no weather: offer every jacket without prompting", () => {
   expect(state.options).toEqual(jackets);
   expect(state.needsChoice).toBe(false);
 });
+
+test("compared at the whole degrees shown", () => {
+  // 20.4° shows as 20°, which the blazer ("up to 20°") suits
+  expect(jacketState(jackets, 20.4, null).suitable).toEqual([blazer]);
+  expect(jacketState(jackets, 20.6, null).suitable).toEqual([]);
+});

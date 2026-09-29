@@ -182,14 +182,15 @@ const ItemEditor = ({ type, item, headingRef, sharedPhoto }: EditorProps) => {
       status: "info",
       title: "You're offline",
       description: `${action} needs a connection. Try again once you're back online.`,
-      isClosable: true,
     });
     return true;
   };
 
   // Upload the photo (to `path` when replacing one) and return its URL
   const uploadPhoto = async (path?: string) => {
-    const file = await photoFile.current;
+    const file = await photoFile.current?.catch(() => {
+      throw new Error("Unreadable photo");
+    });
     if (!file) throw new Error("No photo to upload");
     const response = await uploadItemImage(file, path);
     if (!response) throw new Error("Photo upload failed");
@@ -202,13 +203,19 @@ const ItemEditor = ({ type, item, headingRef, sharedPhoto }: EditorProps) => {
     const isNewPhoto = values.imageUrl !== item?.imageUrl;
     if (isNewPhoto && needsConnection("A new photo")) return;
 
+    // The form works in text; a jacket's temperature is stored as a number
+    const fields =
+      type === "jacket"
+        ? { ...values, maxTemperature: Number(values.maxTemperature) }
+        : values;
+
     setIsSaving(true);
     try {
       if (item) {
         const imageUrl = isNewPhoto
           ? await uploadPhoto(item.imageUrl)
           : item.imageUrl;
-        await updateItem(item.id, { ...values, imageUrl });
+        await updateItem(item.id, { ...fields, imageUrl });
         // What was saved is the form's new starting point: Back from the next
         // edit returns to it, and the photo no longer counts as new
         const saved = { ...values, imageUrl };
@@ -217,7 +224,7 @@ const ItemEditor = ({ type, item, headingRef, sharedPhoto }: EditorProps) => {
         onEditSaved();
       } else {
         const imageUrl = await uploadPhoto();
-        await addItem({ ...values, type, imageUrl });
+        await addItem({ ...fields, type, imageUrl });
         closeItem();
       }
     } catch {

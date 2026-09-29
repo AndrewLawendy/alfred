@@ -28,7 +28,6 @@ import { HiSwitchVertical } from "react-icons/hi";
 import { MdArrowForward, MdChevronRight } from "react-icons/md";
 import { WiThermometer } from "react-icons/wi";
 import { orderBy } from "@firebase/firestore";
-import { useDocumentData } from "react-firebase-hooks/firestore";
 import { Link as WouterLink } from "wouter";
 
 import PageHeader, { Eyebrow } from "components/PageHeader";
@@ -74,28 +73,26 @@ const greeting = () => {
   return "Good evening";
 };
 
-const Swatch = ({ reference }: { reference: Outfit["shirt"] }) => {
-  const [item] = useDocumentData(reference);
-  return (
-    <Box
-      sx={{
-        w: 10,
-        h: 10,
-        borderRadius: "thumb",
-        overflow: "hidden",
-        backgroundColor: "surface",
-      }}
-    >
-      {item && (
-        <Image
-          src={(item as Item).imageUrl}
-          alt=""
-          sx={{ w: "100%", h: "100%", objectFit: "cover" }}
-        />
-      )}
-    </Box>
-  );
-};
+// Uses the wardrobe Home already has, rather than a listener per swatch
+const Swatch = ({ item }: { item?: Item }) => (
+  <Box
+    sx={{
+      w: 10,
+      h: 10,
+      borderRadius: "thumb",
+      overflow: "hidden",
+      backgroundColor: "surface",
+    }}
+  >
+    {item && (
+      <Image
+        src={item.imageUrl}
+        alt=""
+        sx={{ w: "100%", h: "100%", objectFit: "cover" }}
+      />
+    )}
+  </Box>
+);
 
 // Outfit whose jacket prompt was shown; survives tab switches, resets on reload
 let promptedFor: string | undefined;
@@ -156,9 +153,11 @@ const Home = () => {
     options,
     jacket,
     isSkipped,
-    hasCard: hasJacketCard,
+    hasCard,
     needsChoice,
   } = jacketState(jackets, weatherData?.main.temp, chosen);
+  // Held back while the weather loads, so it can't show and then vanish
+  const hasJacketCard = hasCard && !isWeatherLoading;
   const needsJacketChoice = !!activeOutfit && needsChoice;
 
   // Without any jackets we can't tell whether one is needed, so say nothing
@@ -237,7 +236,11 @@ const Home = () => {
     <>
       <PageHeader
         eyebrow={`Today · ${today()}`}
-        title={`${greeting()}, ${user.displayName?.split(" ")[0]}.`}
+        title={
+          user.displayName
+            ? `${greeting()}, ${user.displayName.split(" ")[0]}.`
+            : `${greeting()}.`
+        }
         titleSize="3xl"
       />
       <Box sx={{ mt: -2, mb: 3 }}>
@@ -319,7 +322,10 @@ const Home = () => {
                 </Flex>
               )}
               <Box sx={{ flex: 1, minW: 0 }}>
-                <Eyebrow>Today&apos;s jacket</Eyebrow>
+                {/* A lone suitable jacket is only a suggestion until picked */}
+                <Eyebrow>
+                  {jacket && !chosen ? "Suggested jacket" : "Today's jacket"}
+                </Eyebrow>
                 <Text
                   noOfLines={1}
                   sx={{
@@ -337,11 +343,11 @@ const Home = () => {
               </Box>
               <Button
                 onClick={onJacketSheetOpen}
-                {...(jacket || isSkipped
+                {...(chosen != null
                   ? { variant: "outline" }
                   : { colorScheme: "brand" })}
               >
-                {jacket || isSkipped ? "Change" : "Choose"}
+                {chosen != null ? "Change" : "Choose"}
               </Button>
             </Flex>
           )}
@@ -376,7 +382,10 @@ const Home = () => {
               </Box>
               <Flex sx={{ gap: 1.5 }}>
                 {slots.map((slot) => (
-                  <Swatch key={slot} reference={upNext[slot]} />
+                  <Swatch
+                    key={slot}
+                    item={items?.find(({ id }) => id === upNext[slot]?.id)}
+                  />
                 ))}
               </Flex>
               <Icon
