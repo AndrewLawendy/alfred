@@ -2,7 +2,7 @@ import { jacketState } from "utils/jacket";
 import { Jacket } from "utils/types";
 
 const jacket = (id: string, maxTemperature: number) =>
-  ({ id, title: id, maxTemperature } as Jacket);
+  ({ id, title: id, maxTemperature }) as Jacket;
 const coat = jacket("coat", 10);
 const blazer = jacket("blazer", 20);
 const jackets = [coat, blazer];

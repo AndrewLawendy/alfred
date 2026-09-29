@@ -1,12 +1,15 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 
 import { layerDepth, pushLayer } from "utils/history";
 
 // While `isOpen`, the layer owns a history entry: Back (gesture, button or
 // browser) calls `onClose`, and closing it any other way removes the entry.
 const useBackToClose = (isOpen: boolean, onClose: () => void) => {
+  // The latest onClose, for the popstate listener set up below
   const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
+  useLayoutEffect(() => {
+    onCloseRef.current = onClose;
+  });
 
   useEffect(() => {
     if (!isOpen) return;

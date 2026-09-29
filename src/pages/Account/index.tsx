@@ -70,7 +70,7 @@ const Account = () => {
       >
         <Image src={Logo} alt="" sx={{ h: 8, opacity: 0.7 }} />
         <Text sx={{ fontSize: "sm", color: "gray.600" }}>
-          Alfred {process.env.REACT_APP_VERSION}
+          Alfred {__APP_VERSION__}
         </Text>
       </Flex>
     </>

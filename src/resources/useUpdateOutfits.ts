@@ -16,7 +16,7 @@ export type OutfitUpdate = {
 // together or not at all: never two outfits marked "today"
 const useUpdateOutfits = (): [
   (updates: OutfitUpdate[], deletedId?: string) => Promise<void>,
-  boolean
+  boolean,
 ] => {
   const [isLoading, setLoading] = useState(false);
 

@@ -61,7 +61,7 @@ type RequestPayload = {
 
 function getWeather({ lat = "30.0444", long = "31.2357" }) {
   return fetch(
-    `https://api.openweathermap.org/data/2.5/weather?units=metric&lat=${lat}&lon=${long}&appid=${process.env.REACT_APP_WEATHER_API_ID}`
+    `https://api.openweathermap.org/data/2.5/weather?units=metric&lat=${lat}&lon=${long}&appid=${import.meta.env.VITE_WEATHER_API_ID}`
   ).then((res) => {
     if (!res.ok) throw new Error(`Weather request failed: ${res.status}`);
     return res.json();

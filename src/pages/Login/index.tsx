@@ -43,7 +43,7 @@ const friendlyError = (code?: string) =>
       "Alfred couldn't reach the internet. Check your connection and try again.",
     "auth/account-exists-with-different-credential":
       "This email already signs in another way. Try the other button.",
-  }[code || ""]);
+  })[code || ""];
 
 const container = {
   hidden: { opacity: 0, y: -10 },

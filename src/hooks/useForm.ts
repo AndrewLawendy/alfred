@@ -43,13 +43,16 @@ export const useForm = <T extends FormConfig>(
         {
           initialValue: string;
           isRequired?: boolean;
-        }
+        },
       ][]
-    ).reduce((formValues, [fieldName, config]) => {
-      formValues[fieldName] = config.initialValue;
+    ).reduce(
+      (formValues, [fieldName, config]) => {
+        formValues[fieldName] = config.initialValue;
 
-      return formValues;
-    }, {} as { [key in keyof T]: string })
+        return formValues;
+      },
+      {} as { [key in keyof T]: string }
+    )
   );
   const [initialValues, setInitialValues] = useState(
     initialFormValueRef.current

@@ -35,8 +35,9 @@ Live: https://alfred-wardrobe-stylist.web.app
 
 ## Stack
 
-- React 18 and TypeScript on Create React App 5, with a Workbox service
-  worker (`src/service-worker.ts`)
+- React 18 and TypeScript 6, built with Vite; the Workbox service worker
+  (`src/service-worker.ts`) is built by vite-plugin-pwa
+- Vitest and Testing Library; ESLint 9 and Prettier 3
 - Chakra UI v2 (theme in `src/utils/theme.ts`) and framer-motion
 - Firebase: Auth (Google, Facebook), Firestore, Storage, Hosting, Cloud
   Messaging, and a scheduled Cloud Function for the morning reminder
@@ -55,20 +56,20 @@ yarn install
 Create a `.env` file in the project root with an OpenWeather API key:
 
 ```sh
-REACT_APP_WEATHER_API_ID=<your OpenWeather key>
+VITE_WEATHER_API_ID=<your OpenWeather key>
 ```
 
 Then:
 
 ```sh
-yarn start   # http://localhost:3000
+yarn start   # opens http://localhost:3000
 ```
 
 The service worker (offline, install, shortcuts, sharing, notifications) only
 runs in a production build. To try those locally:
 
 ```sh
-yarn build && npx serve -s build -l 5055
+yarn build && yarn preview   # http://localhost:5055
 ```
 
 The Cloud Function needs its own `functions/.env` (not committed) with the same
@@ -90,13 +91,15 @@ Authorized domains**, or sign-in fails with `auth/unauthorized-domain`.
 
 ## Scripts
 
-| Command       | What it does                                              |
-| ------------- | --------------------------------------------------------- |
-| `yarn start`  | Dev server with hot reload                                |
-| `yarn test`   | Jest in watch mode (`CI=true yarn test` for a single run) |
-| `yarn build`  | Production build in `build/`                              |
-| `yarn lint`   | ESLint with fixes                                         |
-| `yarn format` | Prettier over `src/`                                      |
+| Command           | What it does                                                   |
+| ----------------- | -------------------------------------------------------------- |
+| `yarn start`      | Vite dev server with hot reload; opens the browser             |
+| `yarn build`      | Type-check, then a production build in `build/`                |
+| `yarn preview`    | Serve that build on port 5055 (service worker included)        |
+| `yarn test`       | Vitest in watch mode (`yarn test run` for a single run)        |
+| `yarn test:rules` | Firestore and Storage rules against the emulators (needs Java) |
+| `yarn lint`       | ESLint 9 with type-aware and React Compiler rules, with fixes  |
+| `yarn format`     | Prettier over `src/`                                           |
 
 The app version shown on the Account page comes from `version` in
 `package.json`.

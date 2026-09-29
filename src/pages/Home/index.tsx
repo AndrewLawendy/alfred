@@ -41,6 +41,7 @@ import Swipeable from "components/Swipeable";
 
 import useAuth from "hooks/useAuth";
 import useBackToClose from "hooks/useBackToClose";
+import useNotice from "hooks/useNotice";
 
 import useData from "resources/useData";
 import useUpdateDocument from "resources/useUpdateDocument";
@@ -152,7 +153,9 @@ const Home = () => {
   // loads, the copy stands in, so the prompt doesn't open early.
   const saved = activeOutfit?.jacket;
   const chosen =
-    saved && items ? jackets.find(({ id }) => id === saved.id) ?? null : saved;
+    saved && items
+      ? (jackets.find(({ id }) => id === saved.id) ?? null)
+      : saved;
   const {
     suitable: temperatureJackets,
     options,
@@ -169,10 +172,10 @@ const Home = () => {
   const verdict = !jackets.length
     ? undefined
     : temperatureJackets.length === 0
-    ? "No jacket needed"
-    : temperatureJackets.length === 1
-    ? `Your ${temperatureJackets[0].title} would suit`
-    : `${count(temperatureJackets.length)} jackets would suit`;
+      ? "No jacket needed"
+      : temperatureJackets.length === 1
+        ? `Your ${temperatureJackets[0].title} would suit`
+        : `${count(temperatureJackets.length)} jackets would suit`;
 
   // Ask once per outfit when it becomes today's (on opening Home, Next or
   // Swap); primitive deps so Firestore refreshes don't reopen it
@@ -183,8 +186,18 @@ const Home = () => {
     }
   }, [needsJacketChoice, activeOutfit?.id]);
 
+  // Offline, changes queue and count as done; this is a change the server
+  // turned down
+  const toast = useNotice();
+  const onWriteError = () =>
+    toast({
+      status: "error",
+      title: "Couldn't update your outfits",
+      description: "Nothing was changed. Please try again.",
+    });
+
   const onPickJacket = (pick: Jacket | false) => {
-    updateOutfit(activeOutfit.id, { jacket: pick });
+    updateOutfit(activeOutfit.id, { jacket: pick }).catch(onWriteError);
     onJacketSheetClose();
   };
 
@@ -198,7 +211,7 @@ const Home = () => {
     updateOutfits([
       { id: next.id, changes: { active: true } },
       { id: activeOutfit.id, changes: { active: false, jacket: null } },
-    ]);
+    ]).catch(onWriteError);
   };
 
   // Wear the next outfit today and push this one to right after it
@@ -213,7 +226,7 @@ const Home = () => {
         changes:
           id === activeOutfit.id ? { ...changes, jacket: null } : changes,
       }))
-    );
+    ).catch(onWriteError);
   };
 
   // The "Next outfit" app shortcut opens /?action=next. Drop the parameter
@@ -342,8 +355,8 @@ const Home = () => {
                   {jacket
                     ? jacket.title
                     : isSkipped
-                    ? "No jacket today"
-                    : "Which one today?"}
+                      ? "No jacket today"
+                      : "Which one today?"}
                 </Text>
               </Box>
               <Button

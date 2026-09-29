@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Drawer, DrawerContent, DrawerOverlay } from "@chakra-ui/react";
 
 import { ScreenContext } from "components/Screen";
@@ -82,9 +82,12 @@ const ScreenStack = () => {
     stack.map((entry) => ({ entry, isOpen: true }))
   );
 
-  // Mirrors `rendered` for the effect below, which runs per stack change
+  // Mirrors `rendered` for the effect below, which runs per stack change.
+  // Updated in a layout effect, which runs before that (passive) effect.
   const renderedRef = useRef(rendered);
-  renderedRef.current = rendered;
+  useLayoutEffect(() => {
+    renderedRef.current = rendered;
+  });
 
   useEffect(() => {
     const keys = new Set(stack.map(keyOf));

@@ -22,8 +22,8 @@ export const nextReminder = (now: Date, time: string, days: number[]) => {
         ahead === 0
           ? "today"
           : ahead === 1
-          ? "tomorrow"
-          : `on ${dayNames[date.getDay()]}`;
+            ? "tomorrow"
+            : `on ${dayNames[date.getDay()]}`;
       return `${when} at ${time}`;
     }
   }

@@ -13,13 +13,8 @@ import { isInStack, openItem } from "utils/history";
 // moment of the transition, since two elements can't share it.
 const NAME = "item-photo";
 
-type ViewTransition = { finished: Promise<void> };
-type WithViewTransitions = Document & {
-  startViewTransition?: (update: () => void | Promise<void>) => ViewTransition;
-};
-
 const isSupported = () =>
-  Boolean((document as WithViewTransitions).startViewTransition) &&
+  "startViewTransition" in document &&
   !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 // While a photo morphs, screens appear in place instead of sliding in: the
@@ -66,15 +61,14 @@ const waitForTarget = async (id: string) => {
 };
 
 export const openItemFromPhoto = (id: string, photo?: HTMLElement | null) => {
-  const start = (document as WithViewTransitions).startViewTransition;
   // Already open further down: Back to it, as usual, with no morph
-  if (!photo || !start || !isSupported() || isInStack({ kind: "item", id })) {
+  if (!photo || !isSupported() || isInStack({ kind: "item", id })) {
     openItem(id);
     return;
   }
   let target: HTMLElement | null = null;
   setName(photo, NAME);
-  const transition = start.call(document, async () => {
+  const transition = document.startViewTransition(async () => {
     setName(photo, "");
     flushSync(() => {
       setInstant(true);
@@ -109,7 +103,6 @@ const findSource = (id: string, closing: Element | null) =>
 // takes the page out of the DOM at once (no slide). False when there's
 // nothing to morph between, so the caller slides it away instead.
 export const closeItemToPhoto = (id: string, remove: () => void) => {
-  const start = (document as WithViewTransitions).startViewTransition;
   const target = document.querySelector<HTMLElement>(
     `[data-photo-target="${id}"]`
   );
@@ -117,10 +110,10 @@ export const closeItemToPhoto = (id: string, remove: () => void) => {
     id,
     target?.closest(".chakra-modal__content") ?? null
   );
-  if (!start || !isSupported() || !target || !source) return false;
+  if (!isSupported() || !target || !source) return false;
 
   setName(target, NAME);
-  const transition = start.call(document, () => {
+  const transition = document.startViewTransition(() => {
     setName(target, "");
     flushSync(remove);
     setName(source, NAME);
