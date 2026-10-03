@@ -9,7 +9,9 @@ import { Outfit } from "utils/types";
 
 export type OutfitUpdate = {
   id: string;
-  changes: Partial<Pick<Outfit, "order" | "active" | "jacket">>;
+  changes: Partial<
+    Pick<Outfit, "order" | "active" | "jacket" | "pickedOn" | "heldTurn">
+  >;
 };
 
 // Changes to several outfits (and a delete) as one write, so they land
