@@ -21,6 +21,7 @@ import useNotice from "hooks/useNotice";
 import useData from "resources/useData";
 import useLimits from "resources/useLimits";
 import useUpdateOutfits from "resources/useUpdateOutfits";
+import useLaundryDone from "resources/useLaundryDone";
 import {
   hamperGroups,
   inHamper,
@@ -43,6 +44,7 @@ const HamperSheet = ({ isOpen, onClose }: HamperSheetProps) => {
   const limits = useLimits();
   const [updateOutfits, isSaving] = useUpdateOutfits();
   const toast = useNotice();
+  const laundryDone = useLaundryDone();
   const hamper = inHamper(items || [], limits);
   const save = (updates: ReturnType<typeof washed>[]) =>
     updateOutfits([], undefined, updates).catch(() =>
@@ -171,7 +173,7 @@ const HamperSheet = ({ isOpen, onClose }: HamperSheetProps) => {
                 size="lg"
                 colorScheme="brand"
                 isLoading={isSaving}
-                onClick={() => save(hamper.map(washed))}
+                onClick={() => laundryDone(hamper)}
                 sx={{ w: "100%" }}
               >
                 Laundry done · {hamper.length}

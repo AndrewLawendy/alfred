@@ -35,6 +35,7 @@ import useAuth from "hooks/useAuth";
 import useBackToClose from "hooks/useBackToClose";
 import useNotice from "hooks/useNotice";
 import useToday from "hooks/useToday";
+import useLaundryDone from "resources/useLaundryDone";
 
 import useData from "resources/useData";
 import useUpdateDocument from "resources/useUpdateDocument";
@@ -227,6 +228,7 @@ const Home = () => {
   // Offline, changes queue and count as done; this is a change the server
   // turned down
   const toast = useNotice();
+  const laundryDone = useLaundryDone();
   const onWriteError = () =>
     toast({
       status: "error",
@@ -368,11 +370,7 @@ const Home = () => {
                 </Button>
                 <Button
                   colorScheme="brand"
-                  onClick={() =>
-                    updateOutfits([], undefined, hamper.map(washed)).catch(
-                      onWriteError
-                    )
-                  }
+                  onClick={() => laundryDone(hamper)}
                   sx={{ flex: 1 }}
                 >
                   Yes, reset all
