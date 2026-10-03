@@ -96,16 +96,42 @@ const cleanCount = (outfits, items, limits) =>
     )
   ).length;
 
-// What Pick today's brings up: the outfit holding its turn, or the next one
-const upNext = (outfits) => {
+const isWearable = (outfit, items, limits) =>
+  ["shirt", "pants"].every(
+    (slot) => !isInHamper(items[outfit[slot]?.id], limits)
+  );
+
+// What Pick today's brings up: the outfit holding its turn, otherwise the one
+// after today's, skipping any with a piece in the hamper once today's outfit
+// has counted its wear. With nothing clean, the next one anyway.
+const upNext = (outfits, items, limits) => {
   const index = Math.max(
     0,
     outfits.findIndex(({ active }) => active)
   );
+  const current = outfits[index];
+  if (outfits.length === 1) return current;
+  const worn = { ...items };
+  ["shirt", "pants"].forEach((slot) => {
+    const id = current[slot]?.id;
+    const limit = id && worn[id] ? limits[worn[id].type] : undefined;
+    if (limit === undefined || !["shirt", "pants"].includes(worn[id].type)) {
+      return;
+    }
+    worn[id] = {
+      ...worn[id],
+      wears: Math.min(limit, (worn[id].wears ?? 0) + 1),
+    };
+  });
   const holder = outfits.find(({ heldTurn }) => heldTurn);
-  return holder && holder !== outfits[index]
-    ? holder
-    : outfits[(index + 1) % outfits.length];
+  const start =
+    holder && holder !== current ? outfits.indexOf(holder) : index + 1;
+  const at = (i) => outfits[i % outfits.length];
+  for (let step = 0; step < outfits.length; step++) {
+    const outfit = at(start + step);
+    if (outfit !== current && isWearable(outfit, worn, limits)) return outfit;
+  }
+  return at(start) === current ? at(start + 1) : at(start);
 };
 
 const laundryLine = ({ clean, hasHamper }) =>

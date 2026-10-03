@@ -182,7 +182,10 @@ const Home = () => {
   const itemsById = useMemo(() => byId(items || []), [items]);
   const date = useToday();
   const isPickedToday = activeOutfit?.pickedOn === date;
-  const comingUp = outfits && outfits.length > 1 ? upNext(outfits) : undefined;
+  const comingUp =
+    outfits && outfits.length > 1
+      ? upNext(outfits, itemsById, limits)
+      : undefined;
   const blocked = activeOutfit
     ? hamperPieces(activeOutfit, itemsById, limits)
     : [];
@@ -264,7 +267,7 @@ const Home = () => {
   const onPickToday = () => {
     if (!outfits?.length || !items || !isCountReady || isPickedToday) return;
     const result = pick({ outfits, items: itemsById, limits, date });
-    const broughtUp = upNext(outfits).id;
+    const broughtUp = upNext(outfits, itemsById, limits).id;
     const undo = {
       outfits: undoOf(outfits, result.outfits),
       items: undoOf(items, result.items),

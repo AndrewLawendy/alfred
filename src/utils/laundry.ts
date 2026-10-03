@@ -124,14 +124,31 @@ type Move<O extends Queued> = {
 const holderOf = <O extends Queued>(outfits: O[]) =>
   outfits.find(({ heldTurn }) => heldTurn);
 
-// The outfit Pick today's brings up: the one whose turn Not today held,
-// otherwise the one after today's, blocked or not (Today asks about it)
-export const upNext = <O extends Queued>(outfits: O[]) => {
-  const current = outfits[activeIndex(outfits)];
-  const holder = holderOf(outfits);
-  return holder && holder !== current
-    ? holder
-    : outfits[(outfits.indexOf(current) + 1) % outfits.length];
+// What comes up after `current` in `queue`: the outfit holding its turn,
+// otherwise the one after today's, skipping any with a piece in the hamper.
+// The first one skipped holds its turn. With nothing clean, the next outfit
+// comes up anyway and Today asks about its pieces.
+const comingUp = <O extends Queued>(
+  queue: O[],
+  current: O,
+  holder: O | undefined,
+  items: Map<string, Counted>,
+  limits: Limits
+): { next: O; skipped?: O } => {
+  if (queue.length === 1) return { next: current };
+  const at = (index: number) => queue[index % queue.length];
+  const start =
+    holder && holder !== current
+      ? queue.indexOf(holder)
+      : queue.indexOf(current) + 1;
+  let skipped: O | undefined;
+  for (let step = 0; step < queue.length; step++) {
+    const outfit = at(start + step);
+    if (outfit === current) continue;
+    if (isWearable(outfit, items, limits)) return { next: outfit, skipped };
+    skipped ??= outfit;
+  }
+  return { next: at(start) === current ? at(start + 1) : at(start) };
 };
 
 // Pick today's: count the outfit on screen as worn and bring up the next one.
@@ -146,7 +163,6 @@ export const pick = <O extends Queued>({
 }: Move<O>): { outfits: OutfitUpdate[]; items: ItemUpdate[] } => {
   const current = outfits[activeIndex(outfits)];
   const holder = holderOf(outfits);
-  const next = upNext(outfits);
   const queue =
     holder && holder !== current
       ? outfits
@@ -155,21 +171,6 @@ export const pick = <O extends Queued>({
             outfit === holder ? [current, outfit] : [outfit]
           )
       : outfits;
-
-  const outfitUpdates = queue
-    .map((outfit, position): OutfitUpdate => ({
-      id: outfit.id,
-      changes: {
-        ...(outfit.order !== position && { order: position }),
-        ...(outfit === current && outfit !== next && { active: false }),
-        // The jacket was for the day it was worn
-        ...(outfit === current && outfit.jacket != null && { jacket: null }),
-        ...(outfit === next && !outfit.active && { active: true }),
-        ...(outfit === next && outfit.pickedOn !== date && { pickedOn: date }),
-        ...(outfit.heldTurn && { heldTurn: false }),
-      },
-    }))
-    .filter(({ changes }) => Object.keys(changes).length > 0);
 
   // Dated to the day it came on screen, however long it stayed there
   const wornOn = current.pickedOn ?? date;
@@ -188,7 +189,46 @@ export const pick = <O extends Queued>({
     ];
   });
 
+  // What comes up is judged after this wear, which can fill the hamper
+  const worn = new Map<string, Counted>(items);
+  itemUpdates.forEach(({ id, changes }) => {
+    const piece = worn.get(id);
+    if (piece) worn.set(id, { ...piece, ...changes });
+  });
+  const { next, skipped } = comingUp(queue, current, holder, worn, limits);
+
+  const outfitUpdates = queue
+    .map((outfit, position): OutfitUpdate => ({
+      id: outfit.id,
+      changes: {
+        ...(outfit.order !== position && { order: position }),
+        ...(outfit === current && outfit !== next && { active: false }),
+        // The jacket was for the day it was worn
+        ...(outfit === current && outfit.jacket != null && { jacket: null }),
+        ...(outfit === next && !outfit.active && { active: true }),
+        ...(outfit === next && outfit.pickedOn !== date && { pickedOn: date }),
+        // A clean outfit's turn is used; a skipped dirty one keeps its turn
+        ...(outfit === skipped
+          ? !outfit.heldTurn && { heldTurn: true }
+          : outfit.heldTurn && { heldTurn: false }),
+      },
+    }))
+    .filter(({ changes }) => Object.keys(changes).length > 0);
+
   return { outfits: outfitUpdates, items: itemUpdates };
+};
+
+// The outfit Pick today's would bring up now (for the Up next card)
+export const upNext = <O extends Queued>(
+  outfits: O[],
+  items: Map<string, Counted>,
+  limits: Limits
+): O => {
+  const { outfits: updates } = pick({ outfits, items, limits, date: "" });
+  const id = updates.find(({ changes }) => changes.active)?.id;
+  return (
+    outfits.find((outfit) => outfit.id === id) ?? outfits[activeIndex(outfits)]
+  );
 };
 
 // Not today: bring up the next wearable outfit, counting nothing; Wear today

@@ -64,7 +64,7 @@ const compose = async (uid, reminder, now) => {
   const today = localParts(now, reminder.timeZone || "UTC").date;
   // Nudge towards picking today's, unless it's picked or there's only one
   const isNudge = outfits.length > 1 && current.pickedOn !== today;
-  const outfit = isNudge ? upNext(outfits) : current;
+  const outfit = isNudge ? upNext(outfits, items, limits) : current;
   const pieces = ["shirt", "belt", "pants", "shoes"]
     .map((slot) => items[outfit[slot]?.id]?.title)
     .filter(Boolean);

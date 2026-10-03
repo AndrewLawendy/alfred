@@ -258,17 +258,40 @@ test("Wear today jumps to a chosen outfit, and everything it jumped keeps its tu
   ).toBeUndefined();
 });
 
-test("Pick today's brings up the next outfit even with a piece in the hamper", () => {
-  const result = pick({
-    outfits: queue(),
-    items: wardrobe({ sb: 1 }),
-    limits,
-    date: TUE,
-  });
-  expect(result.outfits[1]).toEqual({
-    id: "b",
-    changes: { active: true, pickedOn: TUE },
-  });
+test("Pick today's skips an outfit with a piece in the hamper, which keeps its turn", () => {
+  const dirty = wardrobe({ sb: 1 });
+  let outfits = apply(
+    queue(),
+    pick({ outfits: queue(), items: dirty, limits, date: TUE }).outfits
+  );
+  expect(onScreen(outfits)).toBe("c");
+  expect(outfits.find(({ id }) => id === "b")?.heldTurn).toBe(true);
+  // B's shirt washed: B comes up next, and C moves into its slot
+  outfits = apply(
+    outfits,
+    pick({ outfits, items: wardrobe(), limits, date: WED }).outfits
+  );
+  expect(outfits.map(({ id }) => id)).toEqual(["a", "c", "b", "d"]);
+  expect(onScreen(outfits)).toBe("b");
+});
+
+test("the wear just counted can rule out the next outfit", () => {
+  // A and B share the chinos, at 2 of 3: wearing A puts them in the hamper
+  const items = byId([
+    item("sa", "shirt"),
+    item("sb", "shirt"),
+    item("sc", "shirt"),
+    item("chinos", "pants", 2),
+    item("jeans", "pants"),
+  ]);
+  const outfits = [
+    outfit("a", 0, "sa", "chinos", { active: true, pickedOn: MON }),
+    outfit("b", 1, "sb", "chinos"),
+    outfit("c", 2, "sc", "jeans"),
+  ];
+  const result = pick({ outfits, items, limits, date: TUE });
+  expect(onScreen(apply(outfits, result.outfits))).toBe("c");
+  expect(upNext(outfits, items, limits).id).toBe("c");
 });
 
 test("nothing clean: Not today has nowhere to go, Pick today's still moves on", () => {
@@ -338,16 +361,19 @@ test("undo writes back every changed field, null where there was none", () => {
 });
 
 test("up next is the outfit holding its turn, otherwise the one after today's", () => {
-  expect(upNext(queue()).id).toBe("b");
-  expect(
-    upNext(
-      queue({
-        a: { active: false },
-        c: { active: true },
-        b: { heldTurn: true },
-      })
-    ).id
-  ).toBe("b");
+  expect(upNext(queue(), wardrobe(), limits).id).toBe("b");
+  const held = queue({
+    a: { active: false },
+    c: { active: true },
+    b: { heldTurn: true },
+  });
+  expect(upNext(held, wardrobe(), limits).id).toBe("b");
+});
+
+test("up next skips outfits with a piece in the hamper", () => {
+  expect(upNext(queue(), wardrobe({ sb: 1 }), limits).id).toBe("c");
+  // Nothing clean: the outfit after today's, which Today then asks about
+  expect(upNext(queue(), wardrobe({ p: 3 }), limits).id).toBe("b");
 });
 
 test("since labels use the weekday this week, the date before that", () => {

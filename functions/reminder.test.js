@@ -127,18 +127,57 @@ const fit = (id, shirt, pants, extra = {}) => ({
 });
 
 test("up next is the outfit holding its turn, otherwise the one after today's", () => {
+  const clean = {
+    x: { type: "shirt" },
+    y: { type: "shirt" },
+    z: { type: "shirt" },
+  };
   assert.equal(
-    upNext([fit("a", "s2", "q", { active: true }), fit("b", "s2", "q")]).id,
+    upNext(
+      [fit("a", "x", "q", { active: true }), fit("b", "y", "q")],
+      clean,
+      limits
+    ).id,
     "b"
   );
   assert.equal(
-    upNext([
-      fit("a", "s2", "q", { heldTurn: true }),
-      fit("b", "s2", "q", { active: true }),
-      fit("c", "s2", "q"),
-    ]).id,
+    upNext(
+      [
+        fit("a", "x", "q", { heldTurn: true }),
+        fit("b", "y", "q", { active: true }),
+        fit("c", "z", "q"),
+      ],
+      clean,
+      limits
+    ).id,
     "a"
   );
+});
+
+test("up next skips outfits with a piece in the hamper, as Pick today's does", () => {
+  const items = {
+    x: { type: "shirt" },
+    y: { type: "shirt", wears: 1 },
+    z: { type: "shirt" },
+    chinos: { type: "pants", wears: 2 },
+  };
+  // B's shirt is in the hamper
+  const skipDirty = [
+    fit("a", "x", "q", { active: true }),
+    fit("b", "y", "q"),
+    fit("c", "z", "q"),
+  ];
+  assert.equal(upNext(skipDirty, items, limits).id, "c");
+  // Wearing A fills the hamper with the chinos B shares
+  const shared = [
+    fit("a", "x", "chinos", { active: true }),
+    fit("b", "z", "chinos"),
+    fit("c", "z", "q"),
+  ];
+  assert.equal(upNext(shared, items, limits).id, "c");
+  // Nothing clean: the outfit after today's
+  const allDirty = [fit("a", "y", "q", { active: true }), fit("b", "y", "q")];
+  assert.equal(upNext(allDirty, items, limits).id, "b");
 });
 
 test("clean outfits leave out any with a piece in the hamper", () => {
