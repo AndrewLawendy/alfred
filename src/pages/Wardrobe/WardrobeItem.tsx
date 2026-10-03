@@ -5,6 +5,8 @@ import Loading from "components/Loading";
 import EmptyState from "components/EmptyState";
 
 import useData from "resources/useData";
+import useLimits from "resources/useLimits";
+import { isInHamper, wearBadge } from "utils/laundry";
 import { openNewItem } from "utils/history";
 import { openItemFromPhoto } from "utils/photoTransition";
 import { Item } from "utils/types";
@@ -26,6 +28,7 @@ const WardrobeItem = ({ type }: Pick<Item, "type">) => {
     "wardrobe-items",
     where("type", "==", type)
   );
+  const limits = useLimits();
 
   if (isItemsLoading || !items) {
     return <Loading message={`Loading your ${plurals[type]}`} />;
@@ -37,6 +40,8 @@ const WardrobeItem = ({ type }: Pick<Item, "type">) => {
         <ItemTile
           key={item.id}
           item={item}
+          badge={wearBadge(item, limits)}
+          isDimmed={isInHamper(item, limits)}
           onClick={(event) =>
             openItemFromPhoto(item.id, event.currentTarget.querySelector("img"))
           }

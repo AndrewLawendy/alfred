@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Box,
   Button,
@@ -12,29 +12,21 @@ import {
   DrawerContent,
   Heading,
   Text,
-  Link,
   Icon,
   Image,
   useDisclosure,
-  Popover,
-  PopoverAnchor,
-  PopoverContent,
-  PopoverArrow,
-  PopoverHeader,
-  PopoverBody,
 } from "@chakra-ui/react";
 import { GiSleevelessJacket } from "react-icons/gi";
-import { HiSwitchVertical } from "react-icons/hi";
-import { MdArrowForward, MdChevronRight } from "react-icons/md";
+import { MdArrowForward, MdCheck, MdChevronRight } from "react-icons/md";
 import { WiThermometer } from "react-icons/wi";
 import { orderBy } from "@firebase/firestore";
-import { Link as WouterLink } from "wouter";
 
 import PageHeader, { Eyebrow } from "components/PageHeader";
 import { useInstallHint } from "components/Install";
 import PickedMark, { pickedRing } from "components/PickedMark";
 import Weather from "components/Weather";
 import EmptyState from "components/EmptyState";
+import HamperSheet from "components/HamperSheet";
 import Loading from "components/Loading";
 import OutfitReference from "components/OutfitReference";
 import Swipeable from "components/Swipeable";
@@ -42,16 +34,31 @@ import Swipeable from "components/Swipeable";
 import useAuth from "hooks/useAuth";
 import useBackToClose from "hooks/useBackToClose";
 import useNotice from "hooks/useNotice";
+import useToday from "hooks/useToday";
+import useLaundryDone from "resources/useLaundryDone";
 
 import useData from "resources/useData";
 import useUpdateDocument from "resources/useUpdateDocument";
 import useUpdateOutfits from "resources/useUpdateOutfits";
 import useWeather from "resources/useWeather";
+import { useLimitsState } from "resources/useLimits";
 
 import { openNewOutfit, openOutfit, replaceSearch } from "utils/history";
 import { jacketState } from "utils/jacket";
 import { openItemFromPhoto } from "utils/photoTransition";
-import { nextOutfit, swapWithNext } from "utils/rotation";
+import {
+  byId,
+  cleanCount,
+  hamperPieces,
+  inHamper,
+  isOnScreen,
+  pick,
+  sinceLabel,
+  undoOf,
+  upNext,
+  washed,
+  wearBadge,
+} from "utils/laundry";
 import { Item, Jacket, Outfit } from "utils/types";
 
 const slots = ["shirt", "belt", "pants", "shoes"] as const;
@@ -98,6 +105,16 @@ const Swatch = ({ item }: { item?: Item }) => (
 // Outfit whose jacket prompt was shown; survives tab switches, resets on reload
 let promptedFor: string | undefined;
 
+// "Not yet" on the laundry banner hides it on this device until tomorrow
+const LAUNDRY_NOT_YET_KEY = "alfred-laundry-not-yet";
+const laundryNotYetOn = () => {
+  try {
+    return localStorage.getItem(LAUNDRY_NOT_YET_KEY);
+  } catch {
+    return null;
+  }
+};
+
 // A near-white card on the stone page
 const card = {
   alignItems: "center",
@@ -116,16 +133,16 @@ const Home = () => {
   const [user] = useAuth();
   useInstallHint();
   const {
-    isOpen: isSingleOutfitOpen,
-    onClose: onSingleOutfitClose,
-    onOpen: onSingleOutfitOpen,
-  } = useDisclosure();
-  const {
     isOpen: isJacketSheetOpen,
     onOpen: onJacketSheetOpen,
     onClose: onJacketSheetClose,
   } = useDisclosure();
   useBackToClose(isJacketSheetOpen, onJacketSheetClose);
+  const {
+    isOpen: isHamperOpen,
+    onOpen: onHamperOpen,
+    onClose: onHamperClose,
+  } = useDisclosure();
   // Focus the title on open, so no focus ring lands on the first jacket
   const sheetTitleRef = useRef<HTMLHeadingElement>(null);
   const { data: weatherData, isLoading: isWeatherLoading } = useWeather();
@@ -140,9 +157,31 @@ const Home = () => {
     const [firstOutfit] = outfits || [];
     return outfits?.find(({ active }) => active) || firstOutfit;
   }, [outfits]);
-  const upNext =
-    outfits && outfits.length > 1 ? nextOutfit(outfits, activeOutfit) : null;
   const [items] = useData<Item>("wardrobe-items");
+  const { limits, isLoading: isLimitsLoading } = useLimitsState();
+  // Counting waits for the wardrobe and the person's own limits
+  const isCountReady = !!items && !isLimitsLoading;
+  const itemsById = useMemo(() => byId(items || []), [items]);
+  const date = useToday();
+  const isPickedToday = activeOutfit?.pickedOn === date;
+  const comingUp =
+    outfits && outfits.length > 1
+      ? upNext(outfits, itemsById, limits)
+      : undefined;
+  const blocked = activeOutfit
+    ? hamperPieces(activeOutfit, itemsById, limits)
+    : [];
+  const hamper = inHamper(items || [], limits);
+  const clean = outfits ? cleanCount(outfits, itemsById, limits) : 0;
+  // The day "Not yet" was tapped: it hides the banner until the date moves on
+  const [laundryNotYetDay, setLaundryNotYetDay] = useState(laundryNotYetOn);
+  const showLaundry =
+    hamper.length > 0 && clean <= 2 && laundryNotYetDay !== date;
+  const pickedLabel = !activeOutfit?.pickedOn
+    ? "Your outfit"
+    : isPickedToday
+      ? `Today · ${sinceLabel(date, date)}`
+      : `Picked ${sinceLabel(activeOutfit.pickedOn, date)}`;
   const jackets = useMemo(
     () =>
       (items || []).filter((item): item is Jacket => item.type === "jacket"),
@@ -177,8 +216,8 @@ const Home = () => {
         ? `Your ${temperatureJackets[0].title} would suit`
         : `${count(temperatureJackets.length)} jackets would suit`;
 
-  // Ask once per outfit when it becomes today's (on opening Home, Next or
-  // Swap); primitive deps so Firestore refreshes don't reopen it
+  // Ask once per outfit when it becomes today's (on opening Home, Next
+  // outfit or Wear today); primitive deps so Firestore refreshes don't reopen it
   useEffect(() => {
     if (needsJacketChoice && activeOutfit.id !== promptedFor) {
       promptedFor = activeOutfit.id;
@@ -189,6 +228,7 @@ const Home = () => {
   // Offline, changes queue and count as done; this is a change the server
   // turned down
   const toast = useNotice();
+  const laundryDone = useLaundryDone();
   const onWriteError = () =>
     toast({
       status: "error",
@@ -201,52 +241,73 @@ const Home = () => {
     onJacketSheetClose();
   };
 
-  const onFetchNextOutfit = () => {
-    // The Next shortcut can open before there's anything to move on to
-    if (!outfits?.length) return;
+  // The latest outfits, for an Undo tapped after the list has changed
+  const latestOutfits = useRef(outfits);
+  useEffect(() => {
+    latestOutfits.current = outfits;
+  });
 
-    if (outfits.length === 1) return onSingleOutfitOpen();
-
-    const next = nextOutfit(outfits, activeOutfit);
-    updateOutfits([
-      { id: next.id, changes: { active: true } },
-      { id: activeOutfit.id, changes: { active: false, jacket: null } },
-    ]).catch(onWriteError);
+  const onNextOutfit = () => {
+    if (!outfits?.length || !items || !isCountReady || isPickedToday) return;
+    const result = pick({ outfits, items: itemsById, limits, date });
+    // The outfit this pick brings on screen (the same one if it's the only one)
+    const broughtUp =
+      result.outfits.find(({ changes }) => changes.active)?.id ??
+      activeOutfit.id;
+    const undo = {
+      outfits: undoOf(outfits, result.outfits),
+      items: undoOf(items, result.items),
+    };
+    const number = outfits.indexOf(activeOutfit) + 1;
+    updateOutfits(result.outfits, undefined, result.items)
+      .then(() =>
+        toast({
+          status: "success",
+          title: `Counted outfit No. ${number}`,
+          action: {
+            label: "Undo",
+            onClick: () => {
+              // After Wear today, undoing would leave two
+              // outfits marked as today's
+              if (!isOnScreen(latestOutfits.current || [], broughtUp)) {
+                toast({
+                  title: "Can't undo now",
+                  description: "Today's outfit has changed since.",
+                });
+                return;
+              }
+              updateOutfits(undo.outfits, undefined, undo.items).catch(
+                onWriteError
+              );
+            },
+          },
+        })
+      )
+      .catch(onWriteError);
   };
 
-  // Wear the next outfit today and push this one to right after it
-  const onSwitchCurrentOutfit = () => {
-    if (!outfits?.length) return;
-
-    if (outfits.length === 1) return onSingleOutfitOpen();
-
-    updateOutfits(
-      swapWithNext(outfits, activeOutfit).map(({ id, changes }) => ({
-        id,
-        changes:
-          id === activeOutfit.id ? { ...changes, jacket: null } : changes,
-      }))
-    ).catch(onWriteError);
-  };
-
-  // The "Next outfit" app shortcut opens /?action=next. Drop the parameter
-  // first, so a reload can't move the rotation on a second time.
-  const isShortcutNext = useRef(
+  // The push button and the Next outfit app shortcut open /?action=next.
+  // Drop the parameter first, so a reload can't count a second time.
+  const isShortcutPick = useRef(
     new URLSearchParams(window.location.search).get("action") === "next"
   );
   useEffect(() => {
-    if (!isShortcutNext.current || !outfits) return;
-    isShortcutNext.current = false;
+    if (!isShortcutPick.current || !outfits || !isCountReady) return;
+    isShortcutPick.current = false;
     replaceSearch("");
-    onFetchNextOutfit();
-  }, [outfits]);
+    onNextOutfit();
+  }, [outfits, isCountReady]);
 
   // Height taken by everything but the photos: date and greeting, weather
-  // card, action bar, plus the jacket card and up-next card when shown
+  // card, outfit label, action bar, plus the laundry, hamper, jacket and
+  // up-next cards when shown
   const fixedHeight =
     FIXED_HEIGHT +
+    24 +
+    (showLaundry ? CARD_HEIGHT : 0) +
+    (blocked.length > 0 ? CARD_HEIGHT : 0) +
     (hasJacketCard ? CARD_HEIGHT : 0) +
-    (upNext ? CARD_HEIGHT : 0);
+    (comingUp ? CARD_HEIGHT : 0);
 
   if (!user) return null;
 
@@ -273,6 +334,90 @@ const Home = () => {
         <Loading message="Laying out today's clothes" columns={2} />
       ) : activeOutfit ? (
         <>
+          {showLaundry && (
+            <Flex
+              sx={{
+                ...card,
+                mb: 2,
+                p: 4,
+                flexDirection: "column",
+                alignItems: "stretch",
+              }}
+            >
+              <Text
+                as="button"
+                onClick={onHamperOpen}
+                sx={{ fontWeight: "semibold", textAlign: "left" }}
+              >
+                {clean === 0
+                  ? "Laundry day — nothing's fully clean"
+                  : `Only ${clean} clean outfit${clean === 1 ? "" : "s"} left. Did you do laundry?`}
+              </Text>
+              <Flex sx={{ mt: 3, gap: 2 }}>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setLaundryNotYetDay(date);
+                    try {
+                      localStorage.setItem(LAUNDRY_NOT_YET_KEY, date);
+                    } catch {
+                      // Shown again after a reload; nothing lost
+                    }
+                  }}
+                  sx={{ flex: 1 }}
+                >
+                  Not yet
+                </Button>
+                <Button
+                  colorScheme="brand"
+                  onClick={() => laundryDone(hamper)}
+                  sx={{ flex: 1 }}
+                >
+                  Yes, reset all
+                </Button>
+              </Flex>
+            </Flex>
+          )}
+
+          {blocked.length > 0 && (
+            <Flex
+              sx={{
+                ...card,
+                mb: 2,
+                p: 4,
+                flexDirection: "column",
+                alignItems: "stretch",
+              }}
+            >
+              <Text
+                as="button"
+                onClick={onHamperOpen}
+                sx={{ textAlign: "left" }}
+              >
+                🧺 {blocked.map(({ title }) => title).join(" and ")}{" "}
+                {blocked.length === 1
+                  ? `is in the hamper since ${sinceLabel("lastWornOn" in blocked[0] ? blocked[0].lastWornOn : undefined, date)}`
+                  : "are in the hamper"}
+                . Clean now?
+              </Text>
+              <Button
+                colorScheme="brand"
+                onClick={() =>
+                  updateOutfits([], undefined, blocked.map(washed)).catch(
+                    onWriteError
+                  )
+                }
+                sx={{ mt: 3 }}
+              >
+                Yes, it&apos;s clean
+              </Button>
+            </Flex>
+          )}
+
+          <Box sx={{ mb: 2 }}>
+            <Eyebrow>{pickedLabel}</Eyebrow>
+          </Box>
+
           <Grid
             templateColumns="repeat(2, 1fr)"
             gap={2}
@@ -293,6 +438,10 @@ const Home = () => {
                 slot={slot}
                 isLabelled
                 onMissing={() => openOutfit(activeOutfit.id)}
+                badge={wearBadge(
+                  itemsById.get(activeOutfit[slot]?.id ?? ""),
+                  limits
+                )}
               />
             ))}
           </Grid>
@@ -370,10 +519,10 @@ const Home = () => {
             </Flex>
           )}
 
-          {upNext && (
+          {comingUp && (
             <Flex
               as="button"
-              onClick={() => openOutfit(upNext.id)}
+              onClick={() => openOutfit(comingUp.id)}
               aria-label="Open the next outfit"
               sx={{
                 ...card,
@@ -395,20 +544,22 @@ const Home = () => {
                     lineHeight: 1.3,
                   }}
                 >
-                  No. {(outfits?.indexOf(upNext) ?? 0) + 1}
+                  No. {(outfits?.indexOf(comingUp) ?? 0) + 1}
                 </Text>
               </Box>
               <Flex sx={{ gap: 1.5 }}>
                 {slots.map((slot) => (
                   <Swatch
                     key={slot}
-                    item={items?.find(({ id }) => id === upNext[slot]?.id)}
+                    item={items?.find(({ id }) => id === comingUp[slot]?.id)}
                   />
                 ))}
               </Flex>
               <Icon as={MdChevronRight} sx={{ w: 5, h: 5, color: "muted" }} />
             </Flex>
           )}
+
+          <HamperSheet isOpen={isHamperOpen} onClose={onHamperClose} />
 
           <Drawer
             isOpen={isJacketSheetOpen}
@@ -528,62 +679,48 @@ const Home = () => {
             </DrawerContent>
           </Drawer>
 
-          <Popover
-            isOpen={isSingleOutfitOpen}
-            onClose={onSingleOutfitClose}
-            placement="top"
+          <Flex
+            sx={{
+              // Sticky rather than fixed: it takes its own space after the
+              // outfit (never covering a photo) and stays above the nav
+              position: "sticky",
+              bottom: "nav",
+              mt: 4,
+            }}
           >
-            <PopoverAnchor>
+            {isPickedToday ? (
+              // Solid like the button: the bar is sticky and sits over the
+              // cards while the page scrolls
               <Flex
                 sx={{
-                  // Sticky rather than fixed: it takes its own space after the
-                  // outfit (never covering a photo) and stays above the nav
-                  position: "sticky",
-                  bottom: "nav",
-                  mt: 4,
+                  flex: 1,
+                  h: 12,
                   justifyContent: "center",
                   alignItems: "center",
-                  gap: 2,
+                  gap: 1.5,
+                  borderRadius: "full",
+                  backgroundColor: "card",
+                  color: "muted",
+                  fontWeight: "semibold",
                 }}
               >
-                <Button
-                  size="lg"
-                  variant="outline"
-                  leftIcon={<Icon as={HiSwitchVertical} />}
-                  onClick={onSwitchCurrentOutfit}
-                  isDisabled={isUpdateOutfitLoading || isUpdateOutfitsLoading}
-                  sx={{ flex: 1, px: 4 }}
-                >
-                  Swap with next
-                </Button>
-
-                <Button
-                  size="lg"
-                  colorScheme="brand"
-                  rightIcon={<Icon as={MdArrowForward} />}
-                  onClick={onFetchNextOutfit}
-                  isLoading={isUpdateOutfitLoading || isUpdateOutfitsLoading}
-                  sx={{ flex: 1, px: 4 }}
-                >
-                  Next outfit
-                </Button>
+                <Icon as={MdCheck} />
+                Today&apos;s outfit
               </Flex>
-            </PopoverAnchor>
-            <PopoverContent sx={{ borderRadius: "card", bg: "card" }}>
-              <PopoverHeader sx={{ fontWeight: "semibold" }}>
-                Just one outfit so far
-              </PopoverHeader>
-              <PopoverBody>
-                Alfred rotates between outfits, so there&apos;s nothing to move
-                on to yet. Add another in{" "}
-                <Link color="accentText" as={WouterLink} to="/outfits">
-                  Outfits
-                </Link>
-                .
-              </PopoverBody>
-              <PopoverArrow sx={{ bg: "card" }} />
-            </PopoverContent>
-          </Popover>
+            ) : (
+              <Button
+                size="lg"
+                colorScheme="brand"
+                rightIcon={<Icon as={MdArrowForward} />}
+                onClick={onNextOutfit}
+                isDisabled={!isCountReady}
+                isLoading={isUpdateOutfitLoading || isUpdateOutfitsLoading}
+                sx={{ flex: 1, px: 4 }}
+              >
+                Next outfit
+              </Button>
+            )}
+          </Flex>
         </>
       ) : (
         <EmptyState

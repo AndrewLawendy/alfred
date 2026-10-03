@@ -1,10 +1,14 @@
 import { useEffect, useMemo } from "react";
 import { useLocation, useRoute } from "wouter";
-import { Box, Button, Flex, Icon, Text } from "@chakra-ui/react";
+import { Box, Button, Flex, Icon, Text, useDisclosure } from "@chakra-ui/react";
 import { MdAdd } from "react-icons/md";
 
-import PageHeader from "components/PageHeader";
+import HamperSheet from "components/HamperSheet";
+import HamperCard from "components/HamperSheet/HamperCard";
+import PageHeader, { COMPACT_BAR_HEIGHT } from "components/PageHeader";
 import useData from "resources/useData";
+import useLimits from "resources/useLimits";
+import { inHamper } from "utils/laundry";
 import { openNewItem } from "utils/history";
 import { Item } from "utils/types";
 
@@ -35,6 +39,13 @@ const Wardrobe = () => {
     navigate(`/${oldLink.type}?${query}`, { replace: true });
   }, [isOldItemLink, oldLink?.type, oldLink?.item]);
   const [allItems] = useData<Item>("wardrobe-items");
+  const limits = useLimits();
+  const hamper = inHamper(allItems || [], limits);
+  const {
+    isOpen: isHamperOpen,
+    onOpen: onHamperOpen,
+    onClose: onHamperClose,
+  } = useDisclosure();
   const counts = useMemo(
     () =>
       (allItems || []).reduce<Record<string, number>>((acc, { type }) => {
@@ -64,13 +75,24 @@ const Wardrobe = () => {
           </Button>
         }
       />
+      {/* A status, not a type: a card above the tabs, only while there's
+          something to wash */}
+      <HamperCard pieces={hamper} onOpen={onHamperOpen} />
       <Flex
         role="tablist"
         sx={{
+          // Sticks under the slim title bar, so the type can change anywhere
+          // in a long list
+          position: "sticky",
+          top: `calc(env(safe-area-inset-top) + ${COMPACT_BAR_HEIGHT})`,
+          zIndex: "docked",
           gap: 2,
           mx: -3,
           px: 3,
-          mb: 5,
+          py: 2,
+          mb: 3,
+          backgroundColor: "pageGlass",
+          backdropFilter: "blur(12px)",
           overflowX: "auto",
           scrollbarWidth: "none",
           "&::-webkit-scrollbar": { display: "none" },
@@ -109,6 +131,7 @@ const Wardrobe = () => {
       </Box>
 
       <AddChooser />
+      <HamperSheet isOpen={isHamperOpen} onClose={onHamperClose} />
     </>
   );
 };

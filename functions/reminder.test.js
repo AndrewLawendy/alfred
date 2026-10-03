@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { isDue, describe } = require("./reminder");
+const { isDue, describe, upNext, cleanCount } = require("./reminder");
 
 const cairo = {
   time: "07:30",
@@ -111,4 +111,101 @@ test("a late-evening time still goes out just after midnight, once", () => {
     isDue({ ...late, lastSentFor: "2026-09-27 23:50" }, afterMidnight),
     false
   );
+});
+
+const wardrobe = {
+  s1: { type: "shirt", wears: 1 },
+  s2: { type: "shirt" },
+  p: { type: "pants", wears: 3 },
+};
+const limits = { shirt: 1, pants: 3 };
+const fit = (id, shirt, pants, extra = {}) => ({
+  id,
+  shirt: { id: shirt },
+  pants: { id: pants },
+  ...extra,
+});
+
+test("up next is the outfit holding its turn, otherwise the one after today's", () => {
+  const clean = {
+    x: { type: "shirt" },
+    y: { type: "shirt" },
+    z: { type: "shirt" },
+  };
+  assert.equal(
+    upNext(
+      [fit("a", "x", "q", { active: true }), fit("b", "y", "q")],
+      clean,
+      limits
+    ).id,
+    "b"
+  );
+  assert.equal(
+    upNext(
+      [
+        fit("a", "x", "q", { heldTurn: true }),
+        fit("b", "y", "q", { active: true }),
+        fit("c", "z", "q"),
+      ],
+      clean,
+      limits
+    ).id,
+    "a"
+  );
+});
+
+test("up next skips outfits with a piece in the hamper, as Pick today's does", () => {
+  const items = {
+    x: { type: "shirt" },
+    y: { type: "shirt", wears: 1 },
+    z: { type: "shirt" },
+    chinos: { type: "pants", wears: 2 },
+  };
+  // B's shirt is in the hamper
+  const skipDirty = [
+    fit("a", "x", "q", { active: true }),
+    fit("b", "y", "q"),
+    fit("c", "z", "q"),
+  ];
+  assert.equal(upNext(skipDirty, items, limits).id, "c");
+  // Wearing A fills the hamper with the chinos B shares
+  const shared = [
+    fit("a", "x", "chinos", { active: true }),
+    fit("b", "z", "chinos"),
+    fit("c", "z", "q"),
+  ];
+  assert.equal(upNext(shared, items, limits).id, "c");
+  // Nothing clean: the outfit after today's
+  const allDirty = [fit("a", "y", "q", { active: true }), fit("b", "y", "q")];
+  assert.equal(upNext(allDirty, items, limits).id, "b");
+});
+
+test("clean outfits leave out any with a piece in the hamper", () => {
+  const outfits = [
+    fit("a", "s1", "q"),
+    fit("b", "s2", "q"),
+    fit("c", "s2", "p"),
+  ];
+  assert.equal(cleanCount(outfits, wardrobe, limits), 1);
+});
+
+test("laundry line only at 2 or fewer clean outfits with something in the hamper", () => {
+  const base = { isNudge: true, pieces: ["Navy shirt"], jackets: [] };
+  assert.match(
+    describe({ ...base, clean: 2, hasHamper: true }).body,
+    /Only 2 clean outfits left — laundry day\?/
+  );
+  assert.match(
+    describe({ ...base, clean: 0, hasHamper: true }).body,
+    /Nothing's fully clean — laundry day\?/
+  );
+  assert.doesNotMatch(
+    describe({ ...base, clean: 2, hasHamper: false }).body,
+    /laundry/
+  );
+  assert.doesNotMatch(
+    describe({ ...base, clean: 3, hasHamper: true }).body,
+    /laundry/
+  );
+  assert.equal(describe(base).title, "Time for the next outfit");
 });

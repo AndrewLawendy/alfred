@@ -24,6 +24,8 @@ type ConfirmProps = {
   cancelText?: string;
   okType?: ThemingProps<"Button">["colorScheme"];
   onCancel?: () => void;
+  // The second button as an answer ("No"), unlike swiping the sheet away
+  onDecline?: () => void;
   onConfirm: () => void;
 };
 
@@ -34,10 +36,12 @@ const Confirm = ({
   cancelText = "Keep it",
   okType = "brand",
   onCancel = () => false,
+  onDecline,
   onConfirm,
 }: ConfirmProps) => {
   const confirmDrawerRef = useRef(null);
   const isConfirmed = useRef(false);
+  const isDeclined = useRef(false);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const cancel = () => {
     onCancel();
@@ -58,6 +62,10 @@ const Confirm = ({
         // an action that navigates (sign out, closing a screen) can't race
         // the sheet's own Back and overshoot the history
         onCloseComplete={() => {
+          if (isDeclined.current) {
+            isDeclined.current = false;
+            onDecline?.();
+          }
           if (!isConfirmed.current) return;
           isConfirmed.current = false;
           onConfirm();
@@ -85,7 +93,10 @@ const Confirm = ({
                 <Button
                   variant="outline"
                   size="lg"
-                  onClick={cancel}
+                  onClick={() => {
+                    isDeclined.current = !!onDecline;
+                    cancel();
+                  }}
                   sx={{ w: "100%" }}
                 >
                   {cancelText}

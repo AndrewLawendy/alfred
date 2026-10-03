@@ -32,3 +32,6 @@ firebase-debug.log
 
 # Firebase emulator logs
 *-debug.log
+
+# Local design specs and plans
+docs/superpowers

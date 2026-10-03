@@ -27,13 +27,16 @@ import PickedMark, { pickedRing } from "components/PickedMark";
 
 import useBackToClose from "hooks/useBackToClose";
 import useNotice from "hooks/useNotice";
+import useToday from "hooks/useToday";
 import useAddDocument from "resources/useAddDocument";
 import useData from "resources/useData";
+import { useLimitsState } from "resources/useLimits";
 import useUpdateDocument from "resources/useUpdateDocument";
 import useUpdateOutfits from "resources/useUpdateOutfits";
 import { db } from "utils/firebase";
 import { openNewItem } from "utils/history";
 import { openItemFromPhoto } from "utils/photoTransition";
+import { activeIndex, byId, sinceLabel, wearToday } from "utils/laundry";
 import { afterDelete, nextOrder } from "utils/rotation";
 import { Item, Outfit } from "utils/types";
 
@@ -320,6 +323,43 @@ const OutfitEditor = ({
     );
   };
 
+  // Counting waits for the person's own limits
+  const { limits, isLoading: isLimitsLoading } = useLimitsState();
+  // Wear today: bring this outfit on screen, counting nothing; today's keeps
+  // its turn
+  // The outfit on Today, and whether it was picked on an earlier day: then
+  // Wear today asks whether it was worn, so that wear isn't lost
+  const onToday = outfits[activeIndex(outfits)];
+  const today = useToday();
+  const isUnpickedToday = !!onToday && onToday.pickedOn !== today;
+
+  // Wear today: bring this outfit on screen. Today's keeps its turn, and is
+  // counted first only if it was worn after all.
+  const onWearToday = (countCurrent: boolean) => {
+    if (!outfit) return;
+    const updates = wearToday({
+      outfits,
+      items: byId(items),
+      limits,
+      date: today,
+      to: outfit.id,
+      countCurrent,
+    });
+    if (!updates.outfits.length) return;
+    closeOutfit();
+    updateOutfits(updates.outfits, undefined, updates.items)
+      .then(() =>
+        toast({ status: "success", title: `Outfit No. ${number} is today's` })
+      )
+      .catch(() =>
+        toast({
+          status: "error",
+          title: "Couldn't change today's outfit",
+          description: "Nothing was changed. Please try again.",
+        })
+      );
+  };
+
   const heading = !outfit
     ? "New outfit"
     : isEditing
@@ -406,6 +446,41 @@ const OutfitEditor = ({
               />
             ))}
           </Grid>
+        )}
+
+        {outfit && outfit.id !== onToday?.id && !isEditing && (
+          <Confirm
+            message={
+              <>
+                <Heading sx={{ fontSize: "2xl" }}>
+                  Did you wear No. {outfits.indexOf(onToday) + 1}?
+                </Heading>
+                <Text sx={{ mt: 2, color: "muted" }}>
+                  {onToday?.pickedOn
+                    ? `You picked it on ${sinceLabel(onToday.pickedOn, today)}. `
+                    : "It's the outfit on Today. "}
+                  If you wore it, Alfred counts it before switching.
+                </Text>
+              </>
+            }
+            okText="Yes, count it"
+            cancelText="No"
+            onConfirm={() => onWearToday(true)}
+            onDecline={() => onWearToday(false)}
+          >
+            {({ onOpen }) => (
+              <Button
+                size="lg"
+                colorScheme="brand"
+                onClick={isUnpickedToday ? onOpen : () => onWearToday(false)}
+                isLoading={isLoading}
+                isDisabled={isLimitsLoading}
+                sx={{ w: "100%", mt: 5 }}
+              >
+                Wear today
+              </Button>
+            )}
+          </Confirm>
         )}
 
         {isEditingExisting && outfit && (

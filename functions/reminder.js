@@ -78,24 +78,105 @@ const weatherLine = ({ weather, jackets, chosen }) => {
   return `${sky} — ${count.toLowerCase()} jackets would suit.`;
 };
 
-// The morning nudge: move on to the next outfit (named piece by piece), plus
-// the weather. With a single outfit there's nothing to move on to.
-const describe = ({ isNudge, pieces, weather, jackets, chosen }) => {
+// ponytail: repeats isInHamper, cleanCount and upNext from
+// src/utils/laundry.ts, as the functions are CommonJS outside the Vite build.
+// Change both together; reminder.test.js pins this copy.
+const isInHamper = (item, limits) => {
+  const limit =
+    item && (item.type === "shirt" || item.type === "pants")
+      ? limits[item.type]
+      : undefined;
+  return limit !== undefined && (item.wears ?? 0) >= limit;
+};
+
+const cleanCount = (outfits, items, limits) =>
+  outfits.filter((outfit) =>
+    ["shirt", "pants"].every(
+      (slot) => !isInHamper(items[outfit[slot]?.id], limits)
+    )
+  ).length;
+
+const isWearable = (outfit, items, limits) =>
+  ["shirt", "pants"].every(
+    (slot) => !isInHamper(items[outfit[slot]?.id], limits)
+  );
+
+// What Next outfit brings up: the outfit holding its turn, otherwise the one
+// after today's, skipping any with a piece in the hamper once today's outfit
+// has counted its wear. With nothing clean, the next one anyway.
+const upNext = (outfits, items, limits) => {
+  const index = Math.max(
+    0,
+    outfits.findIndex(({ active }) => active)
+  );
+  const current = outfits[index];
+  if (outfits.length === 1) return current;
+  const worn = { ...items };
+  ["shirt", "pants"].forEach((slot) => {
+    const id = current[slot]?.id;
+    const limit = id && worn[id] ? limits[worn[id].type] : undefined;
+    if (limit === undefined || !["shirt", "pants"].includes(worn[id].type)) {
+      return;
+    }
+    worn[id] = {
+      ...worn[id],
+      wears: Math.min(limit, (worn[id].wears ?? 0) + 1),
+    };
+  });
+  const holder = outfits.find(({ heldTurn }) => heldTurn);
+  const start =
+    holder && holder !== current ? outfits.indexOf(holder) : index + 1;
+  const at = (i) => outfits[i % outfits.length];
+  for (let step = 0; step < outfits.length; step++) {
+    const outfit = at(start + step);
+    if (outfit !== current && isWearable(outfit, worn, limits)) return outfit;
+  }
+  return at(start) === current ? at(start + 1) : at(start);
+};
+
+const laundryLine = ({ clean, hasHamper }) =>
+  !hasHamper || clean === undefined || clean > 2
+    ? ""
+    : clean === 0
+      ? "Nothing's fully clean — laundry day?"
+      : `Only ${clean} clean outfit${clean === 1 ? "" : "s"} left — laundry day?`;
+
+// The morning nudge: move on to the next outfit (the one up next, named piece by
+// piece), the weather, and a laundry line when clean outfits run low. Once
+// picked, or with a single outfit, it describes the outfit on screen.
+const describe = ({
+  isNudge,
+  pieces,
+  weather,
+  jackets,
+  chosen,
+  clean,
+  hasHamper,
+}) => {
   const outfit = pieces.join(", ");
   const firstLine = !outfit
     ? "Tap to see it."
     : isNudge
-    ? `Up next: ${outfit}.`
-    : `${outfit}.`;
+      ? `Up next: ${outfit}.`
+      : `${outfit}.`;
   return {
     title: isNudge ? "Time for the next outfit" : "Your outfit is laid out",
     body: [
       firstLine,
       weatherLine({ weather, jackets, chosen: isNudge ? undefined : chosen }),
+      laundryLine({ clean, hasHamper }),
     ]
       .filter(Boolean)
       .join("\n"),
   };
 };
 
-module.exports = { localParts, isDue, sentKey, describe };
+module.exports = {
+  localParts,
+  isDue,
+  sentKey,
+  describe,
+  upNext,
+  cleanCount,
+  isInHamper,
+};

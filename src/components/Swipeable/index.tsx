@@ -6,6 +6,9 @@ type SwipeableProps = {
   // "down": bottom sheets, dragged down to dismiss
   direction: "right" | "down";
   onClose: () => void;
+  // Bottom sheets with a scrolling list: drag only from the top strip, so
+  // the list scrolls instead of moving the sheet
+  isHandleOnly?: boolean;
   children: ReactNode;
 };
 
@@ -13,7 +16,12 @@ type SwipeableProps = {
 const DISTANCE = 100;
 const SPEED = 500;
 
-const Swipeable = ({ direction, onClose, children }: SwipeableProps) => {
+const Swipeable = ({
+  direction,
+  onClose,
+  isHandleOnly = false,
+  children,
+}: SwipeableProps) => {
   const controls = useDragControls();
   const isBack = direction === "right";
 
@@ -22,7 +30,7 @@ const Swipeable = ({ direction, onClose, children }: SwipeableProps) => {
       drag={isBack ? "x" : "y"}
       dragControls={controls}
       // Back swipes start only from the edge strip, so scrolling and form input are untouched
-      dragListener={!isBack}
+      dragListener={!isBack && !isHandleOnly}
       dragConstraints={{ top: 0, right: 0, bottom: 0, left: 0 }}
       // Follow the finger in the closing direction only
       dragElastic={isBack ? { left: 0, right: 1 } : { top: 0, bottom: 1 }}
@@ -42,6 +50,8 @@ const Swipeable = ({ direction, onClose, children }: SwipeableProps) => {
           : {
               borderTopLeftRadius: 16,
               borderTopRightRadius: 16,
+              // A tall sheet stops short of the top and scrolls inside
+              maxHeight: "90dvh",
               paddingBottom: "env(safe-area-inset-bottom)",
             }),
       }}
@@ -63,14 +73,25 @@ const Swipeable = ({ direction, onClose, children }: SwipeableProps) => {
       ) : (
         <div
           aria-hidden
+          {...(isHandleOnly && {
+            onPointerDown: (event: React.PointerEvent) => controls.start(event),
+          })}
           style={{
-            width: 36,
-            height: 5,
-            margin: "8px auto 0",
-            borderRadius: 999,
-            background: "var(--chakra-colors-gray-300)",
+            // A full-width strip to grab when only the handle drags
+            padding: isHandleOnly ? "8px 0" : "8px 0 0",
+            touchAction: isHandleOnly ? "none" : undefined,
           }}
-        />
+        >
+          <div
+            style={{
+              width: 36,
+              height: 5,
+              margin: "0 auto",
+              borderRadius: 999,
+              background: "var(--chakra-colors-gray-300)",
+            }}
+          />
+        </div>
       )}
       {children}
     </motion.div>
