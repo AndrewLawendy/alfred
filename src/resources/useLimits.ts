@@ -7,17 +7,20 @@ import { auth, db } from "utils/firebase";
 import { DEFAULT_LIMITS, Limits } from "utils/laundry";
 import settle from "resources/settle";
 
-// Wears before washing, per type; the defaults until the person changes one
-const useLimits = (): Limits => {
+// Wears before washing, per type; the defaults until the person changes one.
+// isLoading until their settings arrive, so nothing counts with the defaults
+export const useLimitsState = (): { limits: Limits; isLoading: boolean } => {
   const [user] = useAuth();
   const ref = useMemo(
     () => (user ? doc(db, "settings", user.uid) : undefined),
     [user?.uid]
   );
-  const [data] = useDocumentData(ref);
+  const [data, isLoading] = useDocumentData(ref);
   const saved = (data as { limits?: Partial<Limits> } | undefined)?.limits;
-  return { ...DEFAULT_LIMITS, ...saved };
+  return { limits: { ...DEFAULT_LIMITS, ...saved }, isLoading };
 };
+
+const useLimits = () => useLimitsState().limits;
 
 export const saveLimits = (limits: Limits) => {
   const uid = auth.currentUser?.uid;

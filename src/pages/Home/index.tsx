@@ -52,7 +52,7 @@ import useData from "resources/useData";
 import useUpdateDocument from "resources/useUpdateDocument";
 import useUpdateOutfits from "resources/useUpdateOutfits";
 import useWeather from "resources/useWeather";
-import useLimits from "resources/useLimits";
+import { useLimitsState } from "resources/useLimits";
 
 import { openNewOutfit, openOutfit, replaceSearch } from "utils/history";
 import { jacketState } from "utils/jacket";
@@ -176,7 +176,9 @@ const Home = () => {
     return outfits?.find(({ active }) => active) || firstOutfit;
   }, [outfits]);
   const [items] = useData<Item>("wardrobe-items");
-  const limits = useLimits();
+  const { limits, isLoading: isLimitsLoading } = useLimitsState();
+  // Counting waits for the wardrobe and the person's own limits
+  const isCountReady = !!items && !isLimitsLoading;
   const itemsById = useMemo(() => byId(items || []), [items]);
   const date = localDate();
   const isPickedToday = activeOutfit?.pickedOn === date;
@@ -260,7 +262,7 @@ const Home = () => {
   });
 
   const onPickToday = () => {
-    if (!outfits?.length || !items || isPickedToday) return;
+    if (!outfits?.length || !items || !isCountReady || isPickedToday) return;
     const result = pick({ outfits, items: itemsById, limits, date });
     const broughtUp = upNext(outfits).id;
     const undo = {
@@ -310,11 +312,11 @@ const Home = () => {
     new URLSearchParams(window.location.search).get("action") === "next"
   );
   useEffect(() => {
-    if (!isShortcutPick.current || !outfits || !items) return;
+    if (!isShortcutPick.current || !outfits || !isCountReady) return;
     isShortcutPick.current = false;
     replaceSearch("");
     onPickToday();
-  }, [outfits, items]);
+  }, [outfits, isCountReady]);
 
   // Height taken by everything but the photos: date and greeting, weather
   // card, outfit label, action bar, plus the laundry, hamper, jacket and
@@ -725,7 +727,9 @@ const Home = () => {
                   leftIcon={<Icon as={MdSkipNext} />}
                   onClick={onNotToday}
                   isDisabled={
-                    !items || isUpdateOutfitLoading || isUpdateOutfitsLoading
+                    !isCountReady ||
+                    isUpdateOutfitLoading ||
+                    isUpdateOutfitsLoading
                   }
                   sx={{ flex: 1, px: 4 }}
                 >
@@ -750,7 +754,7 @@ const Home = () => {
                     colorScheme="brand"
                     rightIcon={<Icon as={MdArrowForward} />}
                     onClick={onPickToday}
-                    isDisabled={!items}
+                    isDisabled={!isCountReady}
                     isLoading={isUpdateOutfitLoading || isUpdateOutfitsLoading}
                     sx={{ flex: 1, px: 4 }}
                   >
