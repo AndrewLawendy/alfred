@@ -5,6 +5,7 @@ import {
   cleanCount,
   hamperPieces,
   inHamper,
+  hamperGroups,
   isInHamper,
   localDate,
   notToday,
@@ -452,4 +453,19 @@ test("Wear today on the outfit that comes up next anyway is a plain Next outfit"
       countCurrent: true,
     })
   ).toEqual(pick({ outfits: queue(), items, limits, date: TUE }));
+});
+
+test("the hamper groups by type, shirts first, oldest first within each", () => {
+  const groups = hamperGroups([
+    item("old pants", "pants", 3, "2026-09-27"),
+    item("old shirt", "shirt", 1, "2026-09-28"),
+    item("new shirt", "shirt", 1, "2026-10-02"),
+  ]);
+  expect(
+    groups.map(({ type, pieces }) => [type, pieces.map(({ id }) => id)])
+  ).toEqual([
+    ["shirt", ["old shirt", "new shirt"]],
+    ["pants", ["old pants"]],
+  ]);
+  expect(hamperGroups([])).toEqual([]);
 });

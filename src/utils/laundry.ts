@@ -99,6 +99,14 @@ export const inHamper = <I extends Counted>(items: I[], limits: Limits) =>
     .filter((item) => isInHamper(item, limits))
     .sort((a, b) => (a.lastWornOn ?? "").localeCompare(b.lastWornOn ?? ""));
 
+// The hamper by type, in outfit order (shirts, then pants), each oldest first;
+// pieces must already be in hamper order (see inHamper)
+export const hamperGroups = <I extends Counted>(pieces: I[]) =>
+  COUNTED.map((type) => ({
+    type,
+    pieces: pieces.filter((piece) => piece.type === type),
+  })).filter(({ pieces }) => pieces.length > 0);
+
 export const washed = (item: Counted): ItemUpdate => ({
   id: item.id,
   changes: { wears: 0 },
