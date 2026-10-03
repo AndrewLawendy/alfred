@@ -6,9 +6,13 @@ import { Item } from "utils/types";
 type ItemTileProps = {
   item: Item;
   onClick: (event: React.MouseEvent<HTMLElement>) => void;
+  // 🧺 or wear pips, top right
+  badge?: string;
+  // In the hamper: dimmed, still in its place
+  isDimmed?: boolean;
 };
 
-const ItemTile = ({ item, onClick }: ItemTileProps) => (
+const ItemTile = ({ item, onClick, badge, isDimmed }: ItemTileProps) => (
   <Box
     as="button"
     onClick={onClick}
@@ -32,8 +36,30 @@ const ItemTile = ({ item, onClick }: ItemTileProps) => (
         src={item.imageUrl}
         alt={item.title}
         data-photo-source={item.id}
-        sx={{ w: "100%", h: "100%", objectFit: "cover" }}
+        sx={{
+          w: "100%",
+          h: "100%",
+          objectFit: "cover",
+          opacity: isDimmed ? 0.45 : 1,
+        }}
       />
+      {badge && (
+        <Text
+          sx={{
+            ...frosted,
+            position: "absolute",
+            top: 2.5,
+            right: 2.5,
+            px: 2.5,
+            py: 0.5,
+            borderRadius: "full",
+            fontSize: "xs",
+            fontWeight: "semibold",
+          }}
+        >
+          {badge}
+        </Text>
+      )}
       {item.type === "jacket" && (
         // The limit that decides when this jacket is suggested
         <Text

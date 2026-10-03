@@ -4,7 +4,7 @@ import { Box, Flex, Heading, Text } from "@chakra-ui/react";
 type PageHeaderProps = {
   title: ReactNode;
   // Small caps line above the title, e.g. the date
-  eyebrow?: string;
+  eyebrow?: ReactNode;
   // A sentence under the title row
   description?: string;
   // A button beside the title, e.g. New

@@ -1,10 +1,13 @@
 import { useEffect, useMemo } from "react";
 import { useLocation, useRoute } from "wouter";
-import { Box, Button, Flex, Icon, Text } from "@chakra-ui/react";
+import { Box, Button, Flex, Icon, Text, useDisclosure } from "@chakra-ui/react";
 import { MdAdd } from "react-icons/md";
 
+import HamperSheet from "components/HamperSheet";
 import PageHeader from "components/PageHeader";
 import useData from "resources/useData";
+import useLimits from "resources/useLimits";
+import { inHamper } from "utils/laundry";
 import { openNewItem } from "utils/history";
 import { Item } from "utils/types";
 
@@ -35,6 +38,13 @@ const Wardrobe = () => {
     navigate(`/${oldLink.type}?${query}`, { replace: true });
   }, [isOldItemLink, oldLink?.type, oldLink?.item]);
   const [allItems] = useData<Item>("wardrobe-items");
+  const limits = useLimits();
+  const hamperCount = inHamper(allItems || [], limits).length;
+  const {
+    isOpen: isHamperOpen,
+    onOpen: onHamperOpen,
+    onClose: onHamperClose,
+  } = useDisclosure();
   const counts = useMemo(
     () =>
       (allItems || []).reduce<Record<string, number>>((acc, { type }) => {
@@ -49,9 +59,27 @@ const Wardrobe = () => {
       <PageHeader
         title="Wardrobe"
         eyebrow={
-          allItems
-            ? `${allItems.length} piece${allItems.length === 1 ? "" : "s"}`
-            : undefined
+          allItems && (
+            <>
+              {`${allItems.length} piece${allItems.length === 1 ? "" : "s"}`}
+              {" · "}
+              {/* A status, not a type: it lives beside the count, not in the
+                  tabs, and leaves the title room on a phone */}
+              <Box
+                as="button"
+                onClick={onHamperOpen}
+                sx={{
+                  font: "inherit",
+                  letterSpacing: "inherit",
+                  textTransform: "inherit",
+                  color: "accentText",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                🧺 {hamperCount ? `${hamperCount} in the hamper` : "Hamper"}
+              </Box>
+            </>
+          )
         }
         action={
           <Button
@@ -109,6 +137,7 @@ const Wardrobe = () => {
       </Box>
 
       <AddChooser />
+      <HamperSheet isOpen={isHamperOpen} onClose={onHamperClose} />
     </>
   );
 };

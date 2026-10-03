@@ -39,6 +39,7 @@ import { useInstallHint } from "components/Install";
 import PickedMark, { pickedRing } from "components/PickedMark";
 import Weather from "components/Weather";
 import EmptyState from "components/EmptyState";
+import HamperSheet from "components/HamperSheet";
 import Loading from "components/Loading";
 import OutfitReference from "components/OutfitReference";
 import Swipeable from "components/Swipeable";
@@ -154,6 +155,11 @@ const Home = () => {
     onClose: onJacketSheetClose,
   } = useDisclosure();
   useBackToClose(isJacketSheetOpen, onJacketSheetClose);
+  const {
+    isOpen: isHamperOpen,
+    onOpen: onHamperOpen,
+    onClose: onHamperClose,
+  } = useDisclosure();
   // Focus the title on open, so no focus ring lands on the first jacket
   const sheetTitleRef = useRef<HTMLHeadingElement>(null);
   const { data: weatherData, isLoading: isWeatherLoading } = useWeather();
@@ -339,7 +345,11 @@ const Home = () => {
                 alignItems: "stretch",
               }}
             >
-              <Text sx={{ fontWeight: "semibold" }}>
+              <Text
+                as="button"
+                onClick={onHamperOpen}
+                sx={{ fontWeight: "semibold", textAlign: "left" }}
+              >
                 {clean === 0
                   ? "Laundry day — nothing's fully clean"
                   : `Only ${clean} clean outfit${clean === 1 ? "" : "s"} left. Did you do laundry?`}
@@ -384,7 +394,11 @@ const Home = () => {
                 alignItems: "stretch",
               }}
             >
-              <Text>
+              <Text
+                as="button"
+                onClick={onHamperOpen}
+                sx={{ textAlign: "left" }}
+              >
                 🧺 {blocked.map(({ title }) => title).join(" and ")}{" "}
                 {blocked.length === 1
                   ? `is in the hamper since ${sinceLabel("lastWornOn" in blocked[0] ? blocked[0].lastWornOn : undefined, date)}`
@@ -549,6 +563,8 @@ const Home = () => {
               <Icon as={MdChevronRight} sx={{ w: 5, h: 5, color: "muted" }} />
             </Flex>
           )}
+
+          <HamperSheet isOpen={isHamperOpen} onClose={onHamperClose} />
 
           <Drawer
             isOpen={isJacketSheetOpen}

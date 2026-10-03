@@ -1,10 +1,30 @@
 import { orderBy } from "firebase/firestore";
-import { Box, Flex, Grid, Heading, Icon, Image, Text } from "@chakra-ui/react";
+import {
+  Box,
+  Button,
+  Flex,
+  Grid,
+  Heading,
+  Icon,
+  Image,
+  Text,
+} from "@chakra-ui/react";
 import { WiThermometer } from "react-icons/wi";
 
 import OutfitReference from "components/OutfitReference";
 import { Eyebrow } from "components/PageHeader";
+import useNotice from "hooks/useNotice";
 import useData from "resources/useData";
+import useLimits from "resources/useLimits";
+import useUpdateOutfits from "resources/useUpdateOutfits";
+import {
+  isInHamper,
+  limitOf,
+  localDate,
+  sinceLabel,
+  toHamper,
+  washed,
+} from "utils/laundry";
 import { openOutfit } from "utils/history";
 import { Item, Outfit } from "utils/types";
 
@@ -21,6 +41,22 @@ const ItemDetails = ({ item }: { item: Item }) => {
   const usedIn = (outfits || [])
     .map((outfit, index) => ({ outfit, number: index + 1 }))
     .filter(({ outfit }) => slots.some((slot) => outfit[slot]?.id === item.id));
+  const limits = useLimits();
+  const [updateOutfits, isSaving] = useUpdateOutfits();
+  const toast = useNotice();
+  const isDirty = isInHamper(item, limits);
+  const limit = limitOf(item, limits);
+  // Washed, or into the hamper by hand (a spill), for counted pieces only
+  const onLaundry = () =>
+    updateOutfits([], undefined, [
+      isDirty ? washed(item) : toHamper(item, limits, localDate()),
+    ]).catch(() =>
+      toast({
+        status: "error",
+        title: "Couldn't update this piece",
+        description: "Nothing was changed. Please try again.",
+      })
+    );
 
   return (
     <>
@@ -50,6 +86,28 @@ const ItemDetails = ({ item }: { item: Item }) => {
           <Text sx={{ mt: 2, fontSize: "md", color: "muted" }}>
             {item.description}
           </Text>
+        )}
+
+        {(item.type === "shirt" || item.type === "pants") && limit && (
+          <Flex
+            sx={{
+              mt: 6,
+              gap: 3,
+              p: 4,
+              alignItems: "center",
+              borderRadius: "card",
+              backgroundColor: "card",
+            }}
+          >
+            <Text sx={{ flex: 1, fontWeight: "semibold" }}>
+              {isDirty
+                ? `In the hamper since ${sinceLabel(item.lastWornOn)}`
+                : `${item.wears ?? 0} of ${limit} wear${limit === 1 ? "" : "s"}`}
+            </Text>
+            <Button variant="outline" onClick={onLaundry} isLoading={isSaving}>
+              {isDirty ? "Washed" : "Put in hamper"}
+            </Button>
+          </Flex>
         )}
 
         {item.type === "jacket" ? (
