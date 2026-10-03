@@ -1,6 +1,7 @@
 rules_version = '2';
 
-// Each person reads and writes only their own outfits, items and reminder.
+// Each person reads and writes only their own outfits, items, reminder and
+// settings.
 // The morning reminder function uses admin access, so these don't apply to it.
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -28,6 +29,11 @@ service cloud.firestore {
 
     // Stored under the owner's id
     match /reminders/{uid} {
+      allow read, write: if isSignedIn() && request.auth.uid == uid;
+    }
+
+    // Laundry limits, stored under the owner's id
+    match /settings/{uid} {
       allow read, write: if isSignedIn() && request.auth.uid == uid;
     }
   }

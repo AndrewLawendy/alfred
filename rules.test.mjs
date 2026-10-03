@@ -44,6 +44,7 @@ beforeEach(async () => {
     await setDoc(doc(db, "wardrobe-items/shirt"), { user: "alice" });
     await setDoc(doc(db, "outfits/monday"), { user: "alice", order: 0 });
     await setDoc(doc(db, "reminders/alice"), { user: "alice" });
+    await setDoc(doc(db, "settings/alice"), { user: "alice" });
     await uploadBytes(
       ref(context.storage(), "shirt.jpg"),
       photo,
@@ -113,6 +114,19 @@ test("a reminder is its owner's alone", async () => {
       { tokens: ["bob-phone"] },
       { merge: true }
     )
+  );
+});
+
+test("laundry limits are their owner's only", async () => {
+  const alice = as("alice").firestore();
+  const bob = as("bob").firestore();
+  await assertSucceeds(getDoc(doc(alice, "settings/alice")));
+  await assertSucceeds(
+    setDoc(doc(alice, "settings/alice"), { limits: { pants: 2 } }, { merge: true })
+  );
+  await assertFails(getDoc(doc(bob, "settings/alice")));
+  await assertFails(
+    setDoc(doc(bob, "settings/alice"), { limits: { pants: 9 } }, { merge: true })
   );
 });
 
