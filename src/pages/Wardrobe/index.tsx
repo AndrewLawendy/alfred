@@ -4,6 +4,7 @@ import { Box, Button, Flex, Icon, Text, useDisclosure } from "@chakra-ui/react";
 import { MdAdd } from "react-icons/md";
 
 import HamperSheet from "components/HamperSheet";
+import HamperCard from "components/HamperSheet/HamperCard";
 import PageHeader, { COMPACT_BAR_HEIGHT } from "components/PageHeader";
 import useData from "resources/useData";
 import useLimits from "resources/useLimits";
@@ -39,7 +40,7 @@ const Wardrobe = () => {
   }, [isOldItemLink, oldLink?.type, oldLink?.item]);
   const [allItems] = useData<Item>("wardrobe-items");
   const limits = useLimits();
-  const hamperCount = inHamper(allItems || [], limits).length;
+  const hamper = inHamper(allItems || [], limits);
   const {
     isOpen: isHamperOpen,
     onOpen: onHamperOpen,
@@ -59,27 +60,9 @@ const Wardrobe = () => {
       <PageHeader
         title="Wardrobe"
         eyebrow={
-          allItems && (
-            <>
-              {`${allItems.length} piece${allItems.length === 1 ? "" : "s"}`}
-              {" · "}
-              {/* A status, not a type: it lives beside the count, not in the
-                  tabs, and leaves the title room on a phone */}
-              <Box
-                as="button"
-                onClick={onHamperOpen}
-                sx={{
-                  font: "inherit",
-                  letterSpacing: "inherit",
-                  textTransform: "inherit",
-                  color: "accentText",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                🧺 {hamperCount ? `${hamperCount} in the hamper` : "Hamper"}
-              </Box>
-            </>
-          )
+          allItems
+            ? `${allItems.length} piece${allItems.length === 1 ? "" : "s"}`
+            : undefined
         }
         action={
           <Button
@@ -92,6 +75,9 @@ const Wardrobe = () => {
           </Button>
         }
       />
+      {/* A status, not a type: a card above the tabs, only while there's
+          something to wash */}
+      <HamperCard pieces={hamper} onOpen={onHamperOpen} />
       <Flex
         role="tablist"
         sx={{
