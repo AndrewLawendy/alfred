@@ -43,6 +43,7 @@ const PageHeader = ({
   action,
   titleSize = "4xl",
 }: PageHeaderProps) => {
+  const headerRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const barRef = useRef<HTMLDivElement>(null);
   const glassRef = useRef<HTMLDivElement>(null);
@@ -77,6 +78,7 @@ const PageHeader = ({
       const from = big.getBoundingClientRect();
       const raw = morphProgress({
         titleTop: from.top,
+        restTop: from.top + window.scrollY,
         barBottom: bar.getBoundingClientRect().bottom,
         distance: from.height || 1,
       });
@@ -124,8 +126,16 @@ const PageHeader = ({
     update();
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll);
+    // The title also moves without a scroll: the eyebrow arrives with the
+    // data, and fonts load after the page opens
+    const resize =
+      typeof ResizeObserver === "undefined"
+        ? undefined
+        : new ResizeObserver(onScroll);
+    if (headerRef.current) resize?.observe(headerRef.current);
     return () => {
       cancelAnimationFrame(frame);
+      resize?.disconnect();
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
       big.style.opacity = "";
@@ -194,7 +204,7 @@ const PageHeader = ({
         )}
       </Flex>
 
-      <Box sx={{ mb: 5 }}>
+      <Box ref={headerRef} sx={{ mb: 5 }}>
         <Flex sx={{ alignItems: "flex-end", gap: 3 }}>
           <Box sx={{ flex: 1, minW: 0 }}>
             {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
