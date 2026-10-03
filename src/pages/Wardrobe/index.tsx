@@ -4,7 +4,7 @@ import { Box, Button, Flex, Icon, Text, useDisclosure } from "@chakra-ui/react";
 import { MdAdd } from "react-icons/md";
 
 import HamperSheet from "components/HamperSheet";
-import PageHeader from "components/PageHeader";
+import PageHeader, { COMPACT_BAR_HEIGHT } from "components/PageHeader";
 import useData from "resources/useData";
 import useLimits from "resources/useLimits";
 import { inHamper } from "utils/laundry";
@@ -95,10 +95,18 @@ const Wardrobe = () => {
       <Flex
         role="tablist"
         sx={{
+          // Sticks under the slim title bar, so the type can change anywhere
+          // in a long list
+          position: "sticky",
+          top: `calc(env(safe-area-inset-top) + ${COMPACT_BAR_HEIGHT})`,
+          zIndex: "docked",
           gap: 2,
           mx: -3,
           px: 3,
-          mb: 5,
+          py: 2,
+          mb: 3,
+          backgroundColor: "pageGlass",
+          backdropFilter: "blur(12px)",
           overflowX: "auto",
           scrollbarWidth: "none",
           "&::-webkit-scrollbar": { display: "none" },
