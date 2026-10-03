@@ -33,3 +33,21 @@ test("the slim title bar shows once the big title has scrolled into it", () => {
   expect(compactBar().textContent).toContain("Wardrobe");
   expect(compactBar().textContent).toContain("Add shirt");
 });
+
+test("the main button moves into the bar with the title, rather than appearing twice", () => {
+  titleAt(120);
+  const { unmount } = render(
+    <PageHeader title="Wardrobe" action={<button>Add shirt</button>} />
+  );
+  expect(screen.getByTestId("compact-action").style.visibility).toBe("hidden");
+  expect(screen.getByTestId("page-action").style.opacity).toBe("");
+  unmount();
+
+  titleAt(32); // halfway into the bar
+  render(<PageHeader title="Wardrobe" action={<button>Add shirt</button>} />);
+  expect(screen.getByTestId("compact-action").style.visibility).toBe("visible");
+  expect(screen.getByTestId("compact-action").style.transform).toMatch(
+    /translate/
+  );
+  expect(screen.getByTestId("page-action").style.opacity).toBe("0");
+});

@@ -47,6 +47,8 @@ const PageHeader = ({
   const barRef = useRef<HTMLDivElement>(null);
   const glassRef = useRef<HTMLDivElement>(null);
   const flyerRef = useRef<HTMLParagraphElement>(null);
+  const barActionRef = useRef<HTMLDivElement>(null);
+  const pageActionRef = useRef<HTMLDivElement>(null);
   const [isCompact, setCompact] = useState(false);
 
   useEffect(() => {
@@ -59,8 +61,15 @@ const PageHeader = ({
       "(prefers-reduced-motion: reduce)"
     ).matches;
 
+    const barAction = barActionRef.current;
+    const pageAction = pageActionRef.current;
     // Moving with the finger, the swap must be instant; a fade only without it
     flyer.style.transition = isReduced ? "opacity 0.15s" : "none";
+    if (barAction) {
+      barAction.style.transition = isReduced
+        ? "opacity 0.15s, visibility 0.15s"
+        : "none";
+    }
 
     let frame = 0;
     const update = () => {
@@ -89,6 +98,23 @@ const PageHeader = ({
       glass.style.opacity = String(
         isReduced ? progress : Math.max(0, progress * 2 - 1)
       );
+      // The main button travels up with the title, from its place beside it
+      if (barAction && pageAction) {
+        barAction.style.transform = "none";
+        const spot = barAction.getBoundingClientRect();
+        const start = pageAction.getBoundingClientRect();
+        barAction.style.transform = isMoving
+          ? flyerTransform(progress, {
+              dx: start.left - spot.left,
+              dy: start.top - spot.top,
+              scale: 1,
+            })
+          : "none";
+        barAction.style.opacity = progress > 0 ? "1" : "0";
+        // Hidden also takes the button out of the tab order
+        barAction.style.visibility = progress > 0 ? "visible" : "hidden";
+        pageAction.style.opacity = isMoving ? "0" : "";
+      }
       setCompact(progress >= 1);
     };
     const onScroll = () => {
@@ -103,6 +129,7 @@ const PageHeader = ({
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
       big.style.opacity = "";
+      if (pageAction) pageAction.style.opacity = "";
     };
   }, []);
 
@@ -156,16 +183,15 @@ const PageHeader = ({
         >
           {title}
         </Text>
-        <Box
-          sx={{
-            opacity: isCompact ? 1 : 0,
-            // Hidden also takes the button out of the tab order
-            visibility: isCompact ? "visible" : "hidden",
-            transition: "opacity 0.2s 0.05s, visibility 0.2s 0.05s",
-          }}
-        >
-          {action}
-        </Box>
+        {action && (
+          <Box
+            ref={barActionRef}
+            data-testid="compact-action"
+            sx={{ flexShrink: 0, opacity: 0, visibility: "hidden" }}
+          >
+            {action}
+          </Box>
+        )}
       </Flex>
 
       <Box sx={{ mb: 5 }}>
@@ -185,7 +211,15 @@ const PageHeader = ({
               {title}
             </Heading>
           </Box>
-          {action}
+          {action && (
+            <Box
+              ref={pageActionRef}
+              data-testid="page-action"
+              sx={{ flexShrink: 0 }}
+            >
+              {action}
+            </Box>
+          )}
         </Flex>
         {description && (
           <Text sx={{ mt: 3, color: "muted" }}>{description}</Text>
