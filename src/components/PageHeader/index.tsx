@@ -1,6 +1,8 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
 import { Box, Flex, Heading, Text } from "@chakra-ui/react";
 
+import { flyerTransform, morphProgress } from "./morph";
+
 type PageHeaderProps = {
   title: ReactNode;
   // Small caps line above the title, e.g. the date
@@ -29,13 +31,11 @@ export const Eyebrow = ({ children }: { children: ReactNode }) => (
 
 // The slim bar that takes over once the big title has scrolled away
 export const COMPACT_BAR_HEIGHT = "3.25rem";
-// The header's bottom margin (mb: 5), so the bar is in before anything that
-// sticks under it (the Wardrobe tabs) reaches it
-const HEADER_GAP = 20;
 
-// Each page opens with its own large serif title rather than an app bar. Once
-// that scrolls away, a slim glass bar keeps the page name and its main button
-// at the top, like the bottom nav.
+// Each page opens with its own large serif title rather than an app bar. As
+// it scrolls away it shrinks into a slim glass bar, following the finger, and
+// the bar keeps the page name and its main button at the top. With reduced
+// motion the bar simply fades in.
 const PageHeader = ({
   title,
   eyebrow,
@@ -43,20 +43,67 @@ const PageHeader = ({
   action,
   titleSize = "4xl",
 }: PageHeaderProps) => {
-  const headerRef = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
   const barRef = useRef<HTMLDivElement>(null);
+  const glassRef = useRef<HTMLDivElement>(null);
+  const flyerRef = useRef<HTMLParagraphElement>(null);
   const [isCompact, setCompact] = useState(false);
 
   useEffect(() => {
-    if (!headerRef.current || !barRef.current) return;
-    // The bar sits under the status bar, so measure where it ends
-    const barBottom = barRef.current.getBoundingClientRect().bottom;
-    const observer = new IntersectionObserver(
-      ([entry]) => setCompact(!entry.isIntersecting),
-      { rootMargin: `-${Math.round(barBottom + HEADER_GAP)}px 0px 0px 0px` }
-    );
-    observer.observe(headerRef.current);
-    return () => observer.disconnect();
+    const big = titleRef.current;
+    const bar = barRef.current;
+    const glass = glassRef.current;
+    const flyer = flyerRef.current;
+    if (!big || !bar || !glass || !flyer) return;
+    const isReduced = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+
+    // Moving with the finger, the swap must be instant; a fade only without it
+    flyer.style.transition = isReduced ? "opacity 0.15s" : "none";
+
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const from = big.getBoundingClientRect();
+      const raw = morphProgress({
+        titleTop: from.top,
+        barBottom: bar.getBoundingClientRect().bottom,
+        distance: from.height || 1,
+      });
+      const progress = isReduced ? Math.floor(raw) : raw;
+      // The small title's own place, measured without the morph applied
+      flyer.style.transform = "none";
+      const home = flyer.getBoundingClientRect();
+      const isMoving = progress > 0 && !isReduced;
+      flyer.style.transform = isMoving
+        ? flyerTransform(progress, {
+            dx: from.left - home.left,
+            dy: from.top - home.top,
+            scale: from.height / (home.height || 1),
+          })
+        : "none";
+      flyer.style.opacity = progress > 0 ? "1" : "0";
+      // The small title stands in for the big one while it moves
+      big.style.opacity = isMoving ? "0" : "";
+      glass.style.opacity = String(
+        isReduced ? progress : Math.max(0, progress * 2 - 1)
+      );
+      setCompact(progress >= 1);
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      big.style.opacity = "";
+    };
   }, []);
 
   return (
@@ -75,30 +122,58 @@ const PageHeader = ({
           px: 3,
           gap: 3,
           alignItems: "center",
-          backgroundColor: "pageGlass",
-          backdropFilter: "blur(12px)",
-          borderBottom: "1px solid",
-          borderColor: "line",
-          opacity: isCompact ? 1 : 0,
-          // Hidden also takes its button out of the tab order
-          visibility: isCompact ? "visible" : "hidden",
-          transition: "opacity 0.15s, visibility 0.15s",
+          // Clicks pass through to the page until the bar has formed
+          pointerEvents: isCompact ? "auto" : "none",
         }}
       >
+        <Box
+          ref={glassRef}
+          sx={{
+            position: "absolute",
+            inset: 0,
+            zIndex: -1,
+            opacity: 0,
+            backgroundColor: "pageGlass",
+            backdropFilter: "blur(12px)",
+            borderBottom: "1px solid",
+            borderColor: "line",
+            transition: "opacity 0.15s",
+          }}
+        />
         <Text
+          ref={flyerRef}
           noOfLines={1}
-          sx={{ flex: 1, fontFamily: "heading", fontSize: "xl" }}
+          sx={{
+            flex: 1,
+            fontFamily: "heading",
+            fontSize: "xl",
+            // As the big title's, so its scale matches the font sizes
+            lineHeight: 1.15,
+            transformOrigin: "left top",
+            opacity: 0,
+            willChange: "transform",
+          }}
         >
           {title}
         </Text>
-        {action}
+        <Box
+          sx={{
+            opacity: isCompact ? 1 : 0,
+            // Hidden also takes the button out of the tab order
+            visibility: isCompact ? "visible" : "hidden",
+            transition: "opacity 0.2s 0.05s, visibility 0.2s 0.05s",
+          }}
+        >
+          {action}
+        </Box>
       </Flex>
 
-      <Box ref={headerRef} sx={{ mb: 5 }}>
+      <Box sx={{ mb: 5 }}>
         <Flex sx={{ alignItems: "flex-end", gap: 3 }}>
           <Box sx={{ flex: 1, minW: 0 }}>
             {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
             <Heading
+              ref={titleRef}
               as="h1"
               noOfLines={1}
               sx={{
