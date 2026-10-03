@@ -17,6 +17,7 @@ import Logo from "assets/alfred-mark.svg";
 import Logout from "./Logout";
 import Appearance from "./Appearance";
 import MorningReminder from "./MorningReminder";
+import Laundry from "./Laundry";
 
 const Account = () => {
   const [user] = useAuth();
@@ -57,6 +58,7 @@ const Account = () => {
       </Flex>
 
       <Appearance />
+      <Laundry />
       <MorningReminder />
       <InstallCard />
 
