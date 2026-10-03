@@ -248,7 +248,10 @@ const Home = () => {
   const onNextOutfit = () => {
     if (!outfits?.length || !items || !isCountReady || isPickedToday) return;
     const result = pick({ outfits, items: itemsById, limits, date });
-    const broughtUp = upNext(outfits, itemsById, limits).id;
+    // The outfit this pick brings on screen (the same one if it's the only one)
+    const broughtUp =
+      result.outfits.find(({ changes }) => changes.active)?.id ??
+      activeOutfit.id;
     const undo = {
       outfits: undoOf(outfits, result.outfits),
       items: undoOf(items, result.items),

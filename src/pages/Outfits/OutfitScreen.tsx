@@ -27,21 +27,16 @@ import PickedMark, { pickedRing } from "components/PickedMark";
 
 import useBackToClose from "hooks/useBackToClose";
 import useNotice from "hooks/useNotice";
+import useToday from "hooks/useToday";
 import useAddDocument from "resources/useAddDocument";
 import useData from "resources/useData";
-import useLimits from "resources/useLimits";
+import { useLimitsState } from "resources/useLimits";
 import useUpdateDocument from "resources/useUpdateDocument";
 import useUpdateOutfits from "resources/useUpdateOutfits";
 import { db } from "utils/firebase";
 import { openNewItem } from "utils/history";
 import { openItemFromPhoto } from "utils/photoTransition";
-import {
-  activeIndex,
-  byId,
-  localDate,
-  sinceLabel,
-  wearToday,
-} from "utils/laundry";
+import { activeIndex, byId, sinceLabel, wearToday } from "utils/laundry";
 import { afterDelete, nextOrder } from "utils/rotation";
 import { Item, Outfit } from "utils/types";
 
@@ -328,13 +323,14 @@ const OutfitEditor = ({
     );
   };
 
-  const limits = useLimits();
+  // Counting waits for the person's own limits
+  const { limits, isLoading: isLimitsLoading } = useLimitsState();
   // Wear today: bring this outfit on screen, counting nothing; today's keeps
   // its turn
   // The outfit on Today, and whether it was picked on an earlier day: then
   // Wear today asks whether it was worn, so that wear isn't lost
   const onToday = outfits[activeIndex(outfits)];
-  const today = localDate();
+  const today = useToday();
   const isUnpickedToday = !!onToday && onToday.pickedOn !== today;
 
   // Wear today: bring this outfit on screen. Today's keeps its turn, and is
@@ -478,6 +474,7 @@ const OutfitEditor = ({
                 colorScheme="brand"
                 onClick={isUnpickedToday ? onOpen : () => onWearToday(false)}
                 isLoading={isLoading}
+                isDisabled={isLimitsLoading}
                 sx={{ w: "100%", mt: 5 }}
               >
                 Wear today
