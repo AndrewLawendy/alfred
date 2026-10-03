@@ -22,7 +22,9 @@ export const useLimitsState = (): { limits: Limits; isLoading: boolean } => {
 
 const useLimits = () => useLimitsState().limits;
 
-export const saveLimits = (limits: Limits) => {
+// Writes only the types given: the merge keeps the others as saved, even if
+// the screen still shows the defaults
+export const saveLimits = (limits: Partial<Limits>) => {
   const uid = auth.currentUser?.uid;
   if (!uid) return Promise.resolve();
   const write = setDoc(
