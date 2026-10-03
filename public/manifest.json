@@ -38,8 +38,8 @@
   "background_color": "#EEEDE9",
   "shortcuts": [
     {
-      "name": "Next outfit",
-      "short_name": "Next",
+      "name": "Pick today's",
+      "short_name": "Pick",
       "url": "/?action=next",
       "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
     },

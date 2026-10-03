@@ -5,7 +5,15 @@ const { initializeApp } = require("firebase-admin/app");
 const { getFirestore, FieldValue } = require("firebase-admin/firestore");
 const { getMessaging } = require("firebase-admin/messaging");
 
-const { isDue, describe, sentKey } = require("./reminder");
+const {
+  isDue,
+  describe,
+  sentKey,
+  localParts,
+  upNext,
+  cleanCount,
+  isInHamper,
+} = require("./reminder");
 
 initializeApp();
 const db = getFirestore();
@@ -31,28 +39,34 @@ const isGone = (error) =>
   ].includes(error?.code);
 
 // Title and body for this person's reminder right now, or null without outfits
-const compose = async (uid, reminder) => {
-  const [outfitsSnapshot, itemsSnapshot] = await Promise.all([
+const compose = async (uid, reminder, now) => {
+  const [outfitsSnapshot, itemsSnapshot, settingsSnapshot] = await Promise.all([
     db.collection("outfits").where("user", "==", uid).get(),
     db.collection("wardrobe-items").where("user", "==", uid).get(),
+    db.collection("settings").doc(uid).get(),
   ]);
   const outfits = outfitsSnapshot.docs
     .map((doc) => doc.data())
     .sort((a, b) => a.order - b.order);
   if (outfits.length === 0) return null;
 
-  const index = Math.max(
-    0,
-    outfits.findIndex(({ active }) => active)
+  const limits = { shirt: 1, pants: 3, ...settingsSnapshot.data()?.limits };
+  const items = Object.fromEntries(
+    itemsSnapshot.docs.map((doc) => [doc.id, doc.data()])
   );
-  // Nudge towards the next outfit, unless there's only one
-  const isNudge = outfits.length > 1;
-  const outfit = outfits[isNudge ? (index + 1) % outfits.length : index];
-  const titles = Object.fromEntries(
-    itemsSnapshot.docs.map((doc) => [doc.id, doc.data().title])
-  );
+  const current =
+    outfits[
+      Math.max(
+        0,
+        outfits.findIndex(({ active }) => active)
+      )
+    ];
+  const today = localParts(now, reminder.timeZone || "UTC").date;
+  // Nudge towards picking today's, unless it's picked or there's only one
+  const isNudge = outfits.length > 1 && current.pickedOn !== today;
+  const outfit = isNudge ? upNext(outfits) : current;
   const pieces = ["shirt", "belt", "pants", "shoes"]
-    .map((slot) => titles[outfit[slot]?.id])
+    .map((slot) => items[outfit[slot]?.id]?.title)
     .filter(Boolean);
   const jackets = itemsSnapshot.docs
     .map((doc) => ({ ...doc.data(), id: doc.id }))
@@ -60,7 +74,7 @@ const compose = async (uid, reminder) => {
   // The outfit keeps a copy of its jacket: use the jacket as it is now, and
   // treat a deleted one as not decided yet
   const chosen = outfit.jacket
-    ? jackets.find(({ id }) => id === outfit.jacket.id) ?? null
+    ? (jackets.find(({ id }) => id === outfit.jacket.id) ?? null)
     : outfit.jacket;
   const weather = await getWeather(reminder.coords || CAIRO).catch((error) => {
     logger.warn("No weather for the reminder", { uid, error: error.message });
@@ -68,8 +82,16 @@ const compose = async (uid, reminder) => {
   });
 
   return {
-    ...describe({ isNudge, pieces, weather, jackets, chosen }),
-    // "Wear it" moves the rotation on, like the Next outfit shortcut
+    ...describe({
+      isNudge,
+      pieces,
+      weather,
+      jackets,
+      chosen,
+      clean: cleanCount(outfits, items, limits),
+      hasHamper: Object.values(items).some((item) => isInHamper(item, limits)),
+    }),
+    // "Pick today's" counts the outfit on screen and moves on, like the shortcut
     ...(isNudge && { action: "/?action=next" }),
   };
 };
@@ -95,7 +117,7 @@ const send = async (reference, reminder, { title, body, action }) => {
 };
 
 const remind = async (reference, reminder, now) => {
-  const message = await compose(reference.id, reminder);
+  const message = await compose(reference.id, reminder, now);
   if (!message) return;
   await send(reference, reminder, message);
   await reference.update({
@@ -147,7 +169,7 @@ exports.sendTestReminder = onCall(async (request) => {
       "Switch the reminder on on this device first."
     );
   }
-  const message = (await compose(uid, reminder)) || {
+  const message = (await compose(uid, reminder, new Date())) || {
     title: "Alfred",
     body: "Your reminders work. Add an outfit to see it here each morning.",
   };

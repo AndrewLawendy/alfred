@@ -78,24 +78,79 @@ const weatherLine = ({ weather, jackets, chosen }) => {
   return `${sky} — ${count.toLowerCase()} jackets would suit.`;
 };
 
-// The morning nudge: move on to the next outfit (named piece by piece), plus
-// the weather. With a single outfit there's nothing to move on to.
-const describe = ({ isNudge, pieces, weather, jackets, chosen }) => {
+// ponytail: repeats isInHamper, cleanCount and upNext from
+// src/utils/laundry.ts, as the functions are CommonJS outside the Vite build.
+// Change both together; reminder.test.js pins this copy.
+const isInHamper = (item, limits) => {
+  const limit =
+    item && (item.type === "shirt" || item.type === "pants")
+      ? limits[item.type]
+      : undefined;
+  return limit !== undefined && (item.wears ?? 0) >= limit;
+};
+
+const cleanCount = (outfits, items, limits) =>
+  outfits.filter((outfit) =>
+    ["shirt", "pants"].every(
+      (slot) => !isInHamper(items[outfit[slot]?.id], limits)
+    )
+  ).length;
+
+// What Pick today's brings up: the outfit holding its turn, or the next one
+const upNext = (outfits) => {
+  const index = Math.max(
+    0,
+    outfits.findIndex(({ active }) => active)
+  );
+  const holder = outfits.find(({ heldTurn }) => heldTurn);
+  return holder && holder !== outfits[index]
+    ? holder
+    : outfits[(index + 1) % outfits.length];
+};
+
+const laundryLine = ({ clean, hasHamper }) =>
+  !hasHamper || clean === undefined || clean > 2
+    ? ""
+    : clean === 0
+      ? "Nothing's fully clean — laundry day?"
+      : `Only ${clean} clean outfit${clean === 1 ? "" : "s"} left — laundry day?`;
+
+// The morning nudge: pick today's outfit (the one up next, named piece by
+// piece), the weather, and a laundry line when clean outfits run low. Once
+// picked, or with a single outfit, it describes the outfit on screen.
+const describe = ({
+  isNudge,
+  pieces,
+  weather,
+  jackets,
+  chosen,
+  clean,
+  hasHamper,
+}) => {
   const outfit = pieces.join(", ");
   const firstLine = !outfit
     ? "Tap to see it."
     : isNudge
-    ? `Up next: ${outfit}.`
-    : `${outfit}.`;
+      ? `Up next: ${outfit}.`
+      : `${outfit}.`;
   return {
-    title: isNudge ? "Time for the next outfit" : "Your outfit is laid out",
+    title: isNudge ? "Time to pick today's outfit" : "Your outfit is laid out",
     body: [
       firstLine,
       weatherLine({ weather, jackets, chosen: isNudge ? undefined : chosen }),
+      laundryLine({ clean, hasHamper }),
     ]
       .filter(Boolean)
       .join("\n"),
   };
 };
 
-module.exports = { localParts, isDue, sentKey, describe };
+module.exports = {
+  localParts,
+  isDue,
+  sentKey,
+  describe,
+  upNext,
+  cleanCount,
+  isInHamper,
+};

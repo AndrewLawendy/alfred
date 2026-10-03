@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { isDue, describe } = require("./reminder");
+const { isDue, describe, upNext, cleanCount } = require("./reminder");
 
 const cairo = {
   time: "07:30",
@@ -55,7 +55,7 @@ test("nudges to the next outfit, naming its pieces and the weather", () => {
   assert.deepEqual(
     describe({ isNudge: true, pieces, weather, jackets: [coat, blazer] }),
     {
-      title: "Time for the next outfit",
+      title: "Time to pick today's outfit",
       body:
         "Up next: White oxford, Brown leather, Charcoal wool, Brown oxfords.\n" +
         "9° and light rain — two jackets would suit.",
@@ -111,4 +111,62 @@ test("a late-evening time still goes out just after midnight, once", () => {
     isDue({ ...late, lastSentFor: "2026-09-27 23:50" }, afterMidnight),
     false
   );
+});
+
+const wardrobe = {
+  s1: { type: "shirt", wears: 1 },
+  s2: { type: "shirt" },
+  p: { type: "pants", wears: 3 },
+};
+const limits = { shirt: 1, pants: 3 };
+const fit = (id, shirt, pants, extra = {}) => ({
+  id,
+  shirt: { id: shirt },
+  pants: { id: pants },
+  ...extra,
+});
+
+test("up next is the outfit holding its turn, otherwise the one after today's", () => {
+  assert.equal(
+    upNext([fit("a", "s2", "q", { active: true }), fit("b", "s2", "q")]).id,
+    "b"
+  );
+  assert.equal(
+    upNext([
+      fit("a", "s2", "q", { heldTurn: true }),
+      fit("b", "s2", "q", { active: true }),
+      fit("c", "s2", "q"),
+    ]).id,
+    "a"
+  );
+});
+
+test("clean outfits leave out any with a piece in the hamper", () => {
+  const outfits = [
+    fit("a", "s1", "q"),
+    fit("b", "s2", "q"),
+    fit("c", "s2", "p"),
+  ];
+  assert.equal(cleanCount(outfits, wardrobe, limits), 1);
+});
+
+test("laundry line only at 2 or fewer clean outfits with something in the hamper", () => {
+  const base = { isNudge: true, pieces: ["Navy shirt"], jackets: [] };
+  assert.match(
+    describe({ ...base, clean: 2, hasHamper: true }).body,
+    /Only 2 clean outfits left — laundry day\?/
+  );
+  assert.match(
+    describe({ ...base, clean: 0, hasHamper: true }).body,
+    /Nothing's fully clean — laundry day\?/
+  );
+  assert.doesNotMatch(
+    describe({ ...base, clean: 2, hasHamper: false }).body,
+    /laundry/
+  );
+  assert.doesNotMatch(
+    describe({ ...base, clean: 3, hasHamper: true }).body,
+    /laundry/
+  );
+  assert.equal(describe(base).title, "Time to pick today's outfit");
 });
