@@ -8,6 +8,7 @@ import {
   isInHamper,
   localDate,
   notToday,
+  isOnScreen,
   pick,
   sinceLabel,
   undoOf,
@@ -351,4 +352,15 @@ test("piece marks: hamper, pips for multi-wear types, nothing for one-wear", () 
   expect(wearBadge(item("s", "shirt", 0), DEFAULT_LIMITS)).toBeUndefined();
   expect(wearBadge(item("b", "belt", 5), DEFAULT_LIMITS)).toBeUndefined();
   expect(wearBadge(undefined, DEFAULT_LIMITS)).toBeUndefined();
+});
+
+test("undo is only safe while the outfit a pick brought up is still on screen", () => {
+  const items = wardrobe();
+  let outfits = apply(
+    queue(),
+    pick({ outfits: queue(), items, limits, date: TUE }).outfits
+  );
+  expect(isOnScreen(outfits, "b")).toBe(true);
+  outfits = apply(outfits, notToday({ outfits, items, limits, date: TUE })!);
+  expect(isOnScreen(outfits, "b")).toBe(false);
 });

@@ -62,6 +62,7 @@ import {
   cleanCount,
   hamperPieces,
   inHamper,
+  isOnScreen,
   localDate,
   notToday,
   pick,
@@ -252,9 +253,16 @@ const Home = () => {
     onJacketSheetClose();
   };
 
+  // The latest outfits, for an Undo tapped after the list has changed
+  const latestOutfits = useRef(outfits);
+  useEffect(() => {
+    latestOutfits.current = outfits;
+  });
+
   const onPickToday = () => {
     if (!outfits?.length || !items || isPickedToday) return;
     const result = pick({ outfits, items: itemsById, limits, date });
+    const broughtUp = upNext(outfits).id;
     const undo = {
       outfits: undoOf(outfits, result.outfits),
       items: undoOf(items, result.items),
@@ -268,6 +276,15 @@ const Home = () => {
           action: {
             label: "Undo",
             onClick: () => {
+              // After Not today or Wear today, undoing would leave two
+              // outfits marked as today's
+              if (!isOnScreen(latestOutfits.current || [], broughtUp)) {
+                toast({
+                  title: "Can't undo now",
+                  description: "Today's outfit has changed since.",
+                });
+                return;
+              }
               updateOutfits(undo.outfits, undefined, undo.items).catch(
                 onWriteError
               );

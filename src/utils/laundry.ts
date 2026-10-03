@@ -264,3 +264,8 @@ export const wearBadge = (piece: Counted | undefined, limits: Limits) => {
     ? "●".repeat(wearsOf(piece)) + "○".repeat(limit - wearsOf(piece))
     : undefined;
 };
+
+// Whether `id` is still the outfit on screen: an Undo built at pick time is
+// only safe until the rotation moves again
+export const isOnScreen = (outfits: Queued[], id: string) =>
+  outfits[activeIndex(outfits)]?.id === id;
