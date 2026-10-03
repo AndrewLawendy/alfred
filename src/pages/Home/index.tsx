@@ -47,6 +47,7 @@ import Swipeable from "components/Swipeable";
 import useAuth from "hooks/useAuth";
 import useBackToClose from "hooks/useBackToClose";
 import useNotice from "hooks/useNotice";
+import useToday from "hooks/useToday";
 
 import useData from "resources/useData";
 import useUpdateDocument from "resources/useUpdateDocument";
@@ -63,7 +64,6 @@ import {
   hamperPieces,
   inHamper,
   isOnScreen,
-  localDate,
   notToday,
   pick,
   sinceLabel,
@@ -180,7 +180,7 @@ const Home = () => {
   // Counting waits for the wardrobe and the person's own limits
   const isCountReady = !!items && !isLimitsLoading;
   const itemsById = useMemo(() => byId(items || []), [items]);
-  const date = localDate();
+  const date = useToday();
   const isPickedToday = activeOutfit?.pickedOn === date;
   const comingUp = outfits && outfits.length > 1 ? upNext(outfits) : undefined;
   const blocked = activeOutfit
@@ -188,10 +188,10 @@ const Home = () => {
     : [];
   const hamper = inHamper(items || [], limits);
   const clean = outfits ? cleanCount(outfits, itemsById, limits) : 0;
-  const [isLaundryNotYet, setLaundryNotYet] = useState(
-    () => laundryNotYetOn() === date
-  );
-  const showLaundry = hamper.length > 0 && clean <= 2 && !isLaundryNotYet;
+  // The day "Not yet" was tapped: it hides the banner until the date moves on
+  const [laundryNotYetDay, setLaundryNotYetDay] = useState(laundryNotYetOn);
+  const showLaundry =
+    hamper.length > 0 && clean <= 2 && laundryNotYetDay !== date;
   const pickedLabel = !activeOutfit?.pickedOn
     ? "Your outfit"
     : isPickedToday
@@ -377,7 +377,7 @@ const Home = () => {
                 <Button
                   variant="outline"
                   onClick={() => {
-                    setLaundryNotYet(true);
+                    setLaundryNotYetDay(date);
                     try {
                       localStorage.setItem(LAUNDRY_NOT_YET_KEY, date);
                     } catch {
