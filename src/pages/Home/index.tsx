@@ -736,13 +736,19 @@ const Home = () => {
                   Not today
                 </Button>
                 {isPickedToday ? (
+                  // Solid like the buttons: the bar is sticky and sits over
+                  // the cards while the page scrolls
                   <Flex
                     sx={{
                       flex: 1,
+                      h: 12,
                       justifyContent: "center",
                       alignItems: "center",
                       gap: 1.5,
+                      borderRadius: "full",
+                      backgroundColor: "card",
                       color: "muted",
+                      fontWeight: "semibold",
                     }}
                   >
                     <Icon as={MdCheck} />
