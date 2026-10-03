@@ -29,9 +29,11 @@ export type ItemUpdate = {
   changes: { wears?: number | null; lastWornOn?: string | null };
 };
 
-// Local "YYYY-MM-DD"; en-CA formats dates that way
+// Local "YYYY-MM-DD", built from its parts rather than a locale's format,
+// which can change between browser versions
+const pad = (n: number) => String(n).padStart(2, "0");
 export const localDate = (date = new Date()) =>
-  date.toLocaleDateString("en-CA");
+  `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 
 export const limitOf = (item: Counted, limits: Limits) =>
   item.type === "shirt" || item.type === "pants"

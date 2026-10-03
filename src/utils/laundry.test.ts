@@ -49,6 +49,15 @@ test("local dates are YYYY-MM-DD", () => {
   expect(localDate(new Date(2026, 9, 3, 23, 59))).toBe("2026-10-03");
 });
 
+test("local dates don't depend on the browser's locale formats", () => {
+  const spy = vi
+    .spyOn(Date.prototype, "toLocaleDateString")
+    .mockReturnValue("10/3/2026");
+  expect(localDate(new Date(2026, 9, 3))).toBe("2026-10-03");
+  expect(localDate(new Date(2026, 0, 5))).toBe("2026-01-05");
+  spy.mockRestore();
+});
+
 test("an item is in the hamper once its wears reach its type's limit", () => {
   expect(isInHamper(item("s", "shirt", 1), limits)).toBe(true);
   expect(isInHamper(item("s", "shirt", 0), limits)).toBe(false);
