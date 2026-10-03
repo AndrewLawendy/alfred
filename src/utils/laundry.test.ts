@@ -8,6 +8,7 @@ import {
   isInHamper,
   localDate,
   notToday,
+  wearToday,
   isOnScreen,
   pick,
   sinceLabel,
@@ -363,4 +364,57 @@ test("undo is only safe while the outfit a pick brought up is still on screen", 
   expect(isOnScreen(outfits, "b")).toBe(true);
   outfits = apply(outfits, notToday({ outfits, items, limits, date: TUE })!);
   expect(isOnScreen(outfits, "b")).toBe(false);
+});
+
+test("Wear today without counting is just a jump to the chosen outfit", () => {
+  const items = wardrobe();
+  expect(
+    wearToday({
+      outfits: queue(),
+      items,
+      limits,
+      date: TUE,
+      to: "d",
+      countCurrent: false,
+    })
+  ).toEqual({
+    outfits: notToday({ outfits: queue(), items, limits, date: TUE, to: "d" }),
+    items: [],
+  });
+});
+
+test("Wear today after wearing the outfit on screen counts it first, then jumps", () => {
+  const items = wardrobe();
+  const result = wearToday({
+    outfits: queue(),
+    items,
+    limits,
+    date: TUE,
+    to: "d",
+    countCurrent: true,
+  });
+  expect(result.items).toEqual([
+    { id: "sa", changes: { wears: 1, lastWornOn: MON } },
+    { id: "p", changes: { wears: 1, lastWornOn: MON } },
+  ]);
+  let outfits = apply(queue(), result.outfits);
+  expect(onScreen(outfits)).toBe("d");
+  // B came up after A and holds its turn: it's next after D
+  outfits = apply(outfits, pick({ outfits, items, limits, date: WED }).outfits);
+  expect(outfits.map(({ id }) => id)).toEqual(["a", "d", "b", "c"]);
+  expect(onScreen(outfits)).toBe("b");
+});
+
+test("Wear today on the outfit that comes up next anyway is a plain pick", () => {
+  const items = wardrobe();
+  expect(
+    wearToday({
+      outfits: queue(),
+      items,
+      limits,
+      date: TUE,
+      to: "b",
+      countCurrent: true,
+    })
+  ).toEqual(pick({ outfits: queue(), items, limits, date: TUE }));
 });

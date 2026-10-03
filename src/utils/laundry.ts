@@ -269,3 +269,42 @@ export const wearBadge = (piece: Counted | undefined, limits: Limits) => {
 // only safe until the rotation moves again
 export const isOnScreen = (outfits: Queued[], id: string) =>
   outfits[activeIndex(outfits)]?.id === id;
+
+// Wear today, from an outfit's screen: bring `to` up, counting nothing. When
+// the outfit on screen was worn after all (the person says so), it's counted
+// first, exactly as Pick today's then Wear today would.
+export const wearToday = <O extends Queued>({
+  outfits,
+  items,
+  limits,
+  date,
+  to,
+  countCurrent,
+}: Move<O> & { to: string; countCurrent: boolean }): {
+  outfits: OutfitUpdate[];
+  items: ItemUpdate[];
+} => {
+  if (!countCurrent) {
+    return {
+      outfits: notToday({ outfits, items, limits, date, to }) ?? [],
+      items: [],
+    };
+  }
+  const picked = pick({ outfits, items, limits, date });
+  const afterPick = outfits
+    .map((outfit) => ({
+      ...outfit,
+      ...picked.outfits.find(({ id }) => id === outfit.id)?.changes,
+    }))
+    .sort((a, b) => a.order - b.order);
+  const jump = notToday({ outfits: afterPick, items, limits, date, to }) ?? [];
+  // One write: the jump's changes win where both touch an outfit
+  const merged = [...picked.outfits];
+  jump.forEach(({ id, changes }) => {
+    const index = merged.findIndex((update) => update.id === id);
+    if (index === -1) merged.push({ id, changes });
+    else
+      merged[index] = { id, changes: { ...merged[index].changes, ...changes } };
+  });
+  return { outfits: merged, items: picked.items };
+};
