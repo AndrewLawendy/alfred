@@ -253,3 +253,14 @@ export const sinceLabel = (date?: string | null, today = localDate()) => {
     days < 7 ? { weekday: "short" } : { day: "numeric", month: "short" }
   );
 };
+
+// The corner mark for a piece: 🧺 in the hamper, pips (●●○) when it takes
+// more than one wear, nothing otherwise
+export const wearBadge = (piece: Counted | undefined, limits: Limits) => {
+  if (!piece) return undefined;
+  if (isInHamper(piece, limits)) return "🧺";
+  const limit = limitOf(piece, limits);
+  return limit && limit > 1
+    ? "●".repeat(wearsOf(piece)) + "○".repeat(limit - wearsOf(piece))
+    : undefined;
+};

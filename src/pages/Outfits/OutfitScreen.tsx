@@ -29,11 +29,13 @@ import useBackToClose from "hooks/useBackToClose";
 import useNotice from "hooks/useNotice";
 import useAddDocument from "resources/useAddDocument";
 import useData from "resources/useData";
+import useLimits from "resources/useLimits";
 import useUpdateDocument from "resources/useUpdateDocument";
 import useUpdateOutfits from "resources/useUpdateOutfits";
 import { db } from "utils/firebase";
 import { openNewItem } from "utils/history";
 import { openItemFromPhoto } from "utils/photoTransition";
+import { byId, localDate, notToday } from "utils/laundry";
 import { afterDelete, nextOrder } from "utils/rotation";
 import { Item, Outfit } from "utils/types";
 
@@ -320,6 +322,33 @@ const OutfitEditor = ({
     );
   };
 
+  const limits = useLimits();
+  // Wear today: bring this outfit on screen, counting nothing; today's keeps
+  // its turn
+  const onWearToday = () => {
+    if (!outfit) return;
+    const updates = notToday({
+      outfits,
+      items: byId(items),
+      limits,
+      date: localDate(),
+      to: outfit.id,
+    });
+    if (!updates) return;
+    closeOutfit();
+    updateOutfits(updates)
+      .then(() =>
+        toast({ status: "success", title: `Outfit No. ${number} is today's` })
+      )
+      .catch(() =>
+        toast({
+          status: "error",
+          title: "Couldn't change today's outfit",
+          description: "Nothing was changed. Please try again.",
+        })
+      );
+  };
+
   const heading = !outfit
     ? "New outfit"
     : isEditing
@@ -406,6 +435,18 @@ const OutfitEditor = ({
               />
             ))}
           </Grid>
+        )}
+
+        {outfit && !outfit.active && !isEditing && (
+          <Button
+            size="lg"
+            colorScheme="brand"
+            onClick={onWearToday}
+            isLoading={isLoading}
+            sx={{ w: "100%", mt: 5 }}
+          >
+            Wear today
+          </Button>
         )}
 
         {isEditingExisting && outfit && (

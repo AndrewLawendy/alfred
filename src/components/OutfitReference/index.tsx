@@ -1,3 +1,4 @@
+import { ReactNode } from "react";
 import { Flex, Icon, Text } from "@chakra-ui/react";
 import { GiBelt, GiRunningShoe, GiShirt, GiTrousers } from "react-icons/gi";
 import OutfitItem from "components/OutfitItem";
@@ -23,6 +24,7 @@ type OutfitReferenceProps = {
   isLabelled?: boolean;
   // Where a missing piece leads, to pick another (the outfit)
   onMissing?: () => void;
+  badge?: ReactNode;
 };
 
 // A piece whose item was deleted: a gap that says what to pick
@@ -71,6 +73,7 @@ const OutfitReference = ({
   radius = "card",
   isLabelled,
   onMissing,
+  badge,
 }: OutfitReferenceProps) => {
   const [item, isItemLoading] = useDocumentData(reference);
   if (!isItemLoading && !item) {
@@ -96,6 +99,7 @@ const OutfitReference = ({
       isLoaded={!isItemLoading}
       aspectRatio={aspectRatio}
       radius={radius}
+      badge={badge}
     />
   );
 };

@@ -1,3 +1,4 @@
+import { ReactNode } from "react";
 import { Box, Image, Text, Skeleton, SkeletonProps } from "@chakra-ui/react";
 
 import { openItemFromPhoto } from "utils/photoTransition";
@@ -14,6 +15,8 @@ interface OutfitItemProps extends SkeletonProps, Pick<Item, "type"> {
   // Crop the photo to this ratio instead of the default 162px height
   aspectRatio?: number;
   radius?: string;
+  // A small mark in the corner, e.g. 🧺 for a piece in the hamper
+  badge?: ReactNode;
 }
 
 const OutfitItem = ({
@@ -25,6 +28,7 @@ const OutfitItem = ({
   type,
   aspectRatio,
   radius = "card",
+  badge,
   ...props
 }: OutfitItemProps) => {
   const photo = (
@@ -50,6 +54,23 @@ const OutfitItem = ({
               { height: "var(--outfit-photo-height, 162px)" }),
         }}
       />
+      {badge && (
+        <Text
+          sx={{
+            ...frosted,
+            position: "absolute",
+            top: 2,
+            left: 2,
+            px: 2.5,
+            py: 0.5,
+            borderRadius: "full",
+            fontSize: "xs",
+            fontWeight: "semibold",
+          }}
+        >
+          {badge}
+        </Text>
+      )}
       {isLabelled && title && (
         <Text
           noOfLines={1}

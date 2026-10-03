@@ -14,6 +14,7 @@ import {
   upNext,
   toHamper,
   washed,
+  wearBadge,
   wearableFrom,
 } from "utils/laundry";
 import type { Queued } from "utils/laundry";
@@ -342,4 +343,12 @@ test("since labels use the weekday this week, the date before that", () => {
   expect(sinceLabel("2026-09-28", "2026-10-03")).toBe("Mon");
   expect(sinceLabel("2026-09-20", "2026-10-03")).toBe("20 Sept");
   expect(sinceLabel(undefined, "2026-10-03")).toBe("");
+});
+
+test("piece marks: hamper, pips for multi-wear types, nothing for one-wear", () => {
+  expect(wearBadge(item("s", "shirt", 1), DEFAULT_LIMITS)).toBe("🧺");
+  expect(wearBadge(item("p", "pants", 1), DEFAULT_LIMITS)).toBe("●○○");
+  expect(wearBadge(item("s", "shirt", 0), DEFAULT_LIMITS)).toBeUndefined();
+  expect(wearBadge(item("b", "belt", 5), DEFAULT_LIMITS)).toBeUndefined();
+  expect(wearBadge(undefined, DEFAULT_LIMITS)).toBeUndefined();
 });
