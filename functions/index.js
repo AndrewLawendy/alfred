@@ -91,7 +91,7 @@ const compose = async (uid, reminder, now) => {
       clean: cleanCount(outfits, items, limits),
       hasHamper: Object.values(items).some((item) => isInHamper(item, limits)),
     }),
-    // "Pick today's" counts the outfit on screen and moves on, like the shortcut
+    // "Next outfit" counts the outfit on screen and moves on, like the shortcut
     ...(isNudge && { action: "/?action=next" }),
   };
 };

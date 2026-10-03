@@ -172,7 +172,7 @@ const MorningReminder = () => {
             </Heading>
           </FormLabel>
           <Text sx={{ mt: 1, color: "muted" }}>
-            A nudge to pick today&apos;s outfit, with the weather.
+            A nudge to move on to the next outfit, with the weather.
           </Text>
           {support !== "unsupported" && support !== "denied" && (
             // What's set, at a glance (the saved schedule, not a draft)

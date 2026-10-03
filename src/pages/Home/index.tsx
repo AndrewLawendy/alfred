@@ -12,27 +12,14 @@ import {
   DrawerContent,
   Heading,
   Text,
-  Link,
   Icon,
   Image,
   useDisclosure,
-  Popover,
-  PopoverAnchor,
-  PopoverContent,
-  PopoverArrow,
-  PopoverHeader,
-  PopoverBody,
 } from "@chakra-ui/react";
 import { GiSleevelessJacket } from "react-icons/gi";
-import {
-  MdArrowForward,
-  MdCheck,
-  MdChevronRight,
-  MdSkipNext,
-} from "react-icons/md";
+import { MdArrowForward, MdCheck, MdChevronRight } from "react-icons/md";
 import { WiThermometer } from "react-icons/wi";
 import { orderBy } from "@firebase/firestore";
-import { Link as WouterLink } from "wouter";
 
 import PageHeader, { Eyebrow } from "components/PageHeader";
 import { useInstallHint } from "components/Install";
@@ -64,7 +51,6 @@ import {
   hamperPieces,
   inHamper,
   isOnScreen,
-  notToday,
   pick,
   sinceLabel,
   undoOf,
@@ -145,11 +131,6 @@ const CARD_HEIGHT = 72;
 const Home = () => {
   const [user] = useAuth();
   useInstallHint();
-  const {
-    isOpen: isSingleOutfitOpen,
-    onClose: onSingleOutfitClose,
-    onOpen: onSingleOutfitOpen,
-  } = useDisclosure();
   const {
     isOpen: isJacketSheetOpen,
     onOpen: onJacketSheetOpen,
@@ -234,8 +215,8 @@ const Home = () => {
         ? `Your ${temperatureJackets[0].title} would suit`
         : `${count(temperatureJackets.length)} jackets would suit`;
 
-  // Ask once per outfit when it becomes today's (on opening Home, Pick
-  // today's or Not today); primitive deps so Firestore refreshes don't reopen it
+  // Ask once per outfit when it becomes today's (on opening Home, Next
+  // outfit or Wear today); primitive deps so Firestore refreshes don't reopen it
   useEffect(() => {
     if (needsJacketChoice && activeOutfit.id !== promptedFor) {
       promptedFor = activeOutfit.id;
@@ -264,7 +245,7 @@ const Home = () => {
     latestOutfits.current = outfits;
   });
 
-  const onPickToday = () => {
+  const onNextOutfit = () => {
     if (!outfits?.length || !items || !isCountReady || isPickedToday) return;
     const result = pick({ outfits, items: itemsById, limits, date });
     const broughtUp = upNext(outfits, itemsById, limits).id;
@@ -281,7 +262,7 @@ const Home = () => {
           action: {
             label: "Undo",
             onClick: () => {
-              // After Not today or Wear today, undoing would leave two
+              // After Wear today, undoing would leave two
               // outfits marked as today's
               if (!isOnScreen(latestOutfits.current || [], broughtUp)) {
                 toast({
@@ -300,16 +281,7 @@ const Home = () => {
       .catch(onWriteError);
   };
 
-  // Not today counts nothing; today's outfit keeps its turn
-  const onNotToday = () => {
-    if (!outfits?.length) return;
-    if (outfits.length === 1) return onSingleOutfitOpen();
-    const updates = notToday({ outfits, items: itemsById, limits, date });
-    if (!updates) return toast({ title: "Nothing else is clean" });
-    updateOutfits(updates).catch(onWriteError);
-  };
-
-  // The push button and the Pick today's app shortcut open /?action=next.
+  // The push button and the Next outfit app shortcut open /?action=next.
   // Drop the parameter first, so a reload can't count a second time.
   const isShortcutPick = useRef(
     new URLSearchParams(window.location.search).get("action") === "next"
@@ -318,7 +290,7 @@ const Home = () => {
     if (!isShortcutPick.current || !outfits || !isCountReady) return;
     isShortcutPick.current = false;
     replaceSearch("");
-    onPickToday();
+    onNextOutfit();
   }, [outfits, isCountReady]);
 
   // Height taken by everything but the photos: date and greeting, weather
@@ -706,87 +678,48 @@ const Home = () => {
             </DrawerContent>
           </Drawer>
 
-          <Popover
-            isOpen={isSingleOutfitOpen}
-            onClose={onSingleOutfitClose}
-            placement="top"
+          <Flex
+            sx={{
+              // Sticky rather than fixed: it takes its own space after the
+              // outfit (never covering a photo) and stays above the nav
+              position: "sticky",
+              bottom: "nav",
+              mt: 4,
+            }}
           >
-            <PopoverAnchor>
+            {isPickedToday ? (
+              // Solid like the button: the bar is sticky and sits over the
+              // cards while the page scrolls
               <Flex
                 sx={{
-                  // Sticky rather than fixed: it takes its own space after the
-                  // outfit (never covering a photo) and stays above the nav
-                  position: "sticky",
-                  bottom: "nav",
-                  mt: 4,
+                  flex: 1,
+                  h: 12,
                   justifyContent: "center",
                   alignItems: "center",
-                  gap: 2,
+                  gap: 1.5,
+                  borderRadius: "full",
+                  backgroundColor: "card",
+                  color: "muted",
+                  fontWeight: "semibold",
                 }}
               >
-                <Button
-                  size="lg"
-                  variant="outline"
-                  leftIcon={<Icon as={MdSkipNext} />}
-                  onClick={onNotToday}
-                  isDisabled={
-                    !isCountReady ||
-                    isUpdateOutfitLoading ||
-                    isUpdateOutfitsLoading
-                  }
-                  sx={{ flex: 1, px: 4 }}
-                >
-                  Not today
-                </Button>
-                {isPickedToday ? (
-                  // Solid like the buttons: the bar is sticky and sits over
-                  // the cards while the page scrolls
-                  <Flex
-                    sx={{
-                      flex: 1,
-                      h: 12,
-                      justifyContent: "center",
-                      alignItems: "center",
-                      gap: 1.5,
-                      borderRadius: "full",
-                      backgroundColor: "card",
-                      color: "muted",
-                      fontWeight: "semibold",
-                    }}
-                  >
-                    <Icon as={MdCheck} />
-                    Today&apos;s outfit
-                  </Flex>
-                ) : (
-                  <Button
-                    size="lg"
-                    colorScheme="brand"
-                    rightIcon={<Icon as={MdArrowForward} />}
-                    onClick={onPickToday}
-                    isDisabled={!isCountReady}
-                    isLoading={isUpdateOutfitLoading || isUpdateOutfitsLoading}
-                    sx={{ flex: 1, px: 4 }}
-                  >
-                    Pick today&apos;s
-                  </Button>
-                )}
+                <Icon as={MdCheck} />
+                Today&apos;s outfit
               </Flex>
-            </PopoverAnchor>
-            <PopoverContent sx={{ borderRadius: "card", bg: "card" }}>
-              <PopoverHeader sx={{ fontWeight: "semibold" }}>
-                Just one outfit so far
-              </PopoverHeader>
-              <PopoverBody>
-                Alfred rotates between outfits, so there&apos;s nothing to move
-                on to yet. Add another in{" "}
-                <Link color="accentText" as={WouterLink} to="/outfits">
-                  Outfits
-                </Link>
-                .
-              </PopoverBody>
-              <PopoverArrow sx={{ bg: "card" }} />
-            </PopoverContent>
-          </Popover>
+            ) : (
+              <Button
+                size="lg"
+                colorScheme="brand"
+                rightIcon={<Icon as={MdArrowForward} />}
+                onClick={onNextOutfit}
+                isDisabled={!isCountReady}
+                isLoading={isUpdateOutfitLoading || isUpdateOutfitsLoading}
+                sx={{ flex: 1, px: 4 }}
+              >
+                Next outfit
+              </Button>
+            )}
+          </Flex>
         </>
       ) : (
         <EmptyState

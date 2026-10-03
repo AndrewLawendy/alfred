@@ -130,7 +130,7 @@ self.addEventListener("push", (event) => {
       data: { url: data.url || "/", action: data.action },
       // Android shows the button; iOS just opens the app on tap
       ...(data.action && {
-        actions: [{ action: "wear", title: "Pick today's" }],
+        actions: [{ action: "wear", title: "Next outfit" }],
       }),
     } as NotificationOptions)
   );
@@ -139,7 +139,7 @@ self.addEventListener("push", (event) => {
 // Tapping it opens Today, reusing an open Alfred window when there is one
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  // "Pick today's" counts the outfit on screen and moves on; tapping the
+  // "Next outfit" counts the outfit on screen and moves on; tapping the
   // notification just opens Today
   const { url: openUrl = "/", action } = (event.notification.data ?? {}) as {
     url?: string;

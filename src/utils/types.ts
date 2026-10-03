@@ -62,7 +62,7 @@ export interface Outfit extends Common {
   jacket?: Jacket | null | false;
   order: number;
   active: boolean;
-  // Local "YYYY-MM-DD" it came on screen (Pick today's, Not today, Wear today)
+  // Local "YYYY-MM-DD" it came on screen (Next outfit, Wear today)
   pickedOn?: string | null;
   // First outfit skipped since the last pick: it keeps its turn
   heldTurn?: boolean | null;

@@ -160,7 +160,7 @@ const apply = (outfits: Queued[], updates: { id: string; changes: object }[]) =>
 const onScreen = (outfits: Queued[]) =>
   outfits.find(({ active }) => active)?.id;
 
-test("Pick today's counts the outfit on screen and brings up the next", () => {
+test("Next outfit counts the outfit on screen and brings up the next", () => {
   const result = pick({
     outfits: queue(),
     items: wardrobe({ p: 1 }),
@@ -258,7 +258,7 @@ test("Wear today jumps to a chosen outfit, and everything it jumped keeps its tu
   ).toBeUndefined();
 });
 
-test("Pick today's skips an outfit with a piece in the hamper, which keeps its turn", () => {
+test("Next outfit skips an outfit with a piece in the hamper, which keeps its turn", () => {
   const dirty = wardrobe({ sb: 1 });
   let outfits = apply(
     queue(),
@@ -440,7 +440,7 @@ test("Wear today after wearing the outfit on screen counts it first, then jumps"
   expect(onScreen(outfits)).toBe("b");
 });
 
-test("Wear today on the outfit that comes up next anyway is a plain pick", () => {
+test("Wear today on the outfit that comes up next anyway is a plain Next outfit", () => {
   const items = wardrobe();
   expect(
     wearToday({

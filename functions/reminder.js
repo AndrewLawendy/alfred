@@ -101,7 +101,7 @@ const isWearable = (outfit, items, limits) =>
     (slot) => !isInHamper(items[outfit[slot]?.id], limits)
   );
 
-// What Pick today's brings up: the outfit holding its turn, otherwise the one
+// What Next outfit brings up: the outfit holding its turn, otherwise the one
 // after today's, skipping any with a piece in the hamper once today's outfit
 // has counted its wear. With nothing clean, the next one anyway.
 const upNext = (outfits, items, limits) => {
@@ -141,7 +141,7 @@ const laundryLine = ({ clean, hasHamper }) =>
       ? "Nothing's fully clean — laundry day?"
       : `Only ${clean} clean outfit${clean === 1 ? "" : "s"} left — laundry day?`;
 
-// The morning nudge: pick today's outfit (the one up next, named piece by
+// The morning nudge: move on to the next outfit (the one up next, named piece by
 // piece), the weather, and a laundry line when clean outfits run low. Once
 // picked, or with a single outfit, it describes the outfit on screen.
 const describe = ({
@@ -160,7 +160,7 @@ const describe = ({
       ? `Up next: ${outfit}.`
       : `${outfit}.`;
   return {
-    title: isNudge ? "Time to pick today's outfit" : "Your outfit is laid out",
+    title: isNudge ? "Time for the next outfit" : "Your outfit is laid out",
     body: [
       firstLine,
       weatherLine({ weather, jackets, chosen: isNudge ? undefined : chosen }),

@@ -151,7 +151,7 @@ const comingUp = <O extends Queued>(
   return { next: at(start) === current ? at(start + 1) : at(start) };
 };
 
-// Pick today's: count the outfit on screen as worn and bring up the next one.
+// Next outfit: count the outfit on screen as worn and bring up the next one.
 // One picked after browsing takes the slot of the outfit holding its turn, so
 // everything it jumped keeps its turn. Positions are renumbered 0..n-1, as
 // stored orders can have gaps or duplicates.
@@ -218,7 +218,7 @@ export const pick = <O extends Queued>({
   return { outfits: outfitUpdates, items: itemUpdates };
 };
 
-// The outfit Pick today's would bring up now (for the Up next card)
+// The outfit Next outfit would bring up now (for the Up next card)
 export const upNext = <O extends Queued>(
   outfits: O[],
   items: Map<string, Counted>,
@@ -231,8 +231,8 @@ export const upNext = <O extends Queued>(
   );
 };
 
-// Not today: bring up the next wearable outfit, counting nothing; Wear today
-// (`to`) brings up a chosen one, in the hamper or not. The first outfit
+// Move today's outfit aside, counting nothing: to the next wearable outfit,
+// or (`to`, Wear today) to a chosen one, in the hamper or not. The first outfit
 // skipped since the last pick holds its turn; coming back round to it lets go.
 // Undefined when there's nowhere to go.
 export const notToday = <O extends Queued>({
@@ -314,7 +314,7 @@ export const isOnScreen = (outfits: Queued[], id: string) =>
 
 // Wear today, from an outfit's screen: bring `to` up, counting nothing. When
 // the outfit on screen was worn after all (the person says so), it's counted
-// first, exactly as Pick today's then Wear today would.
+// first, exactly as Next outfit then Wear today would.
 export const wearToday = <O extends Queued>({
   outfits,
   items,

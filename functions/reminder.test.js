@@ -55,7 +55,7 @@ test("nudges to the next outfit, naming its pieces and the weather", () => {
   assert.deepEqual(
     describe({ isNudge: true, pieces, weather, jackets: [coat, blazer] }),
     {
-      title: "Time to pick today's outfit",
+      title: "Time for the next outfit",
       body:
         "Up next: White oxford, Brown leather, Charcoal wool, Brown oxfords.\n" +
         "9° and light rain — two jackets would suit.",
@@ -207,5 +207,5 @@ test("laundry line only at 2 or fewer clean outfits with something in the hamper
     describe({ ...base, clean: 3, hasHamper: true }).body,
     /laundry/
   );
-  assert.equal(describe(base).title, "Time to pick today's outfit");
+  assert.equal(describe(base).title, "Time for the next outfit");
 });
