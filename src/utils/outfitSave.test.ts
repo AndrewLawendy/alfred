@@ -1,4 +1,4 @@
-import { deleteOutfit, saveOutfit } from "utils/outfitSave";
+import { deleteOutfit, saveOutfit, watchPhoto } from "utils/outfitSave";
 
 const file = new File(["x"], "look.jpg");
 
@@ -83,4 +83,11 @@ test("deleting removes the outfit first; a stuck photo doesn't block it", async 
     }
   );
   expect(calls).toEqual(["outfit", "photo"]);
+});
+
+test("a photo that can't be read is dropped at once, with word why", async () => {
+  const onUnreadable = vi.fn();
+  const photo = watchPhoto(Promise.reject(new Error("HEIC")), onUnreadable);
+  await expect(photo).rejects.toThrow("HEIC");
+  expect(onUnreadable).toHaveBeenCalled();
 });

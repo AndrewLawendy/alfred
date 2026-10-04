@@ -38,7 +38,7 @@ import useUploadImage from "resources/useUploadImage";
 import { db } from "utils/firebase";
 import geFileURL from "utils/geFileURL";
 import resizeImage from "utils/resizeImage";
-import { deleteOutfit, saveOutfit } from "utils/outfitSave";
+import { deleteOutfit, saveOutfit, watchPhoto } from "utils/outfitSave";
 import { activeIndex, byId, sinceLabel, wearToday } from "utils/laundry";
 import { afterDelete, nextOrder } from "utils/rotation";
 import {
@@ -143,7 +143,17 @@ const OutfitEditor = ({
   );
   const boardPhoto = preview ?? (isPhotoRemoved ? undefined : outfit?.photoUrl);
   const onPhotoPick = (file: File) => {
-    setPhoto(resizeImage(file));
+    setPhoto(
+      watchPhoto(resizeImage(file), () => {
+        setPhoto(undefined);
+        setPreview(undefined);
+        toast({
+          status: "error",
+          title: "Couldn't read this photo",
+          description: "Try another one, or take a new photo.",
+        });
+      })
+    );
     setPreview(URL.createObjectURL(file));
     setIsPhotoRemoved(false);
   };

@@ -23,6 +23,10 @@ export const Eyebrow = ({ children }: { children: ReactNode }) => (
       letterSpacing: "0.12em",
       textTransform: "uppercase",
       color: "muted",
+      // One line: a long outfit name ends in an ellipsis, not a second row
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
     }}
   >
     {children}

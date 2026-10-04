@@ -44,3 +44,13 @@ export const deleteOutfit = async (
     await io.deletePhoto(outfit.photoUrl).catch(() => undefined);
   }
 };
+
+// A picked photo, still resizing: if the browser can't read it (HEIC
+// outside Safari), say so at once instead of failing every Save later
+export const watchPhoto = (
+  resized: Promise<File>,
+  onUnreadable: () => void
+) => {
+  resized.catch(onUnreadable);
+  return resized;
+};
