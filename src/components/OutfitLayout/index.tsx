@@ -1,10 +1,17 @@
 import { ReactNode } from "react";
-import { Box, Flex } from "@chakra-ui/react";
+import { Box, Flex, Icon, IconButton, Text } from "@chakra-ui/react";
+import { MdAdd, MdClose } from "react-icons/md";
 
 import OutfitItem from "components/OutfitItem";
 import { MissingPiece } from "components/OutfitReference";
-import { layoutOf } from "utils/wardrobe";
-import { Item } from "utils/types";
+import { pickedRing } from "components/PickedMark";
+import { frosted } from "utils/theme";
+import { categoryOf, CATEGORIES, rank } from "utils/wardrobe";
+import { Category, Item } from "utils/types";
+
+// An empty place on the editor's board: a required one (a top and bottom,
+// or a dress) is full size, an optional one is a faint rail tile
+export type Slot = { category: Category; isRequired: boolean };
 
 type OutfitLayoutProps = {
   pieces: Item[];
@@ -12,13 +19,30 @@ type OutfitLayoutProps = {
   missing?: number;
   onMissing?: () => void;
   badge?: (item: Item) => ReactNode;
+  // Editing: empty places, taking a piece out, and choosing a category
+  slots?: Slot[];
+  onSlot?: (category: Category) => void;
+  onRemove?: (item: Item) => void;
+  onPiece?: (item: Item) => void;
+  // The category a pick will land in, outlined
+  highlight?: Category;
 };
 
 const GAP = 8;
 const RAIL = 110;
 const HEIGHT = "var(--outfit-height, 440px)";
+const CORE: Category[] = ["top", "dress", "bottom"];
 
-type Cell = { item?: Item; weight: number };
+type Cell = { item?: Item; slot?: Slot; weight: number };
+
+const categoryOfCell = ({ item, slot }: Cell) =>
+  item ? categoryOf(item.type) : slot?.category;
+
+const addLabel = (category: Category) => {
+  const label = CATEGORIES.find(({ key }) => key === category)?.label ?? "";
+  if (category === "shoes") return "Add shoes";
+  return `Add ${category === "accessory" ? "an" : "a"} ${label.toLowerCase()}`;
+};
 
 // Each cell's share of a column's height, after the gaps between them
 const heightOf = (cells: Cell[], cell: Cell) => {
@@ -34,52 +58,127 @@ const OutfitLayout = ({
   missing = 0,
   onMissing,
   badge,
+  slots = [],
+  onSlot,
+  onRemove,
+  onPiece,
+  highlight,
 }: OutfitLayoutProps) => {
-  const { main, side, small } = layoutOf(pieces);
-  const toCell = (item: Item): Cell => ({
-    item,
-    weight: item.type === "layer" ? 2 : 1,
-  });
+  const cells: Cell[] = [
+    ...pieces.map((item) => ({ item })),
+    ...slots.map((slot) => ({ slot })),
+  ]
+    .map((cell) => ({
+      ...cell,
+      weight: categoryOfCell(cell as Cell) === "layer" ? 2 : 1,
+    }))
+    // Stable: within a category, the order the person picked
+    .sort(
+      (a, b) => rank(categoryOfCell(a) ?? "") - rank(categoryOfCell(b) ?? "")
+    );
+  const isCore = (cell: Cell) => CORE.includes(categoryOfCell(cell)!);
   const rail = [
-    ...[...side, ...small].map(toCell),
+    ...cells.filter((cell) => !isCore(cell)),
     ...Array.from({ length: missing }, () => ({ weight: 1 })),
   ];
   // An outfit of only shoes and accessories fills the column instead
-  const column = main.length ? main.map(toCell) : rail.splice(0);
+  const core = cells.filter(isCore);
+  const column = core.length ? core : rail.splice(0);
   // A top and bottom alone stand side by side: stacked full width, both
   // photos would crop to wide bands
   const isRow = rail.length === 0 && column.length === 2;
 
   const renderCell = (cells: Cell[], isRail: boolean) =>
-    cells.map((cell, index) => (
-      <Box
-        key={cell.item?.id ?? `missing-${index}`}
-        style={
-          {
-            "--outfit-photo-height": isRow ? HEIGHT : heightOf(cells, cell),
-          } as React.CSSProperties
-        }
-        sx={{ flex: 1, minW: 0 }}
-      >
-        {cell.item ? (
-          <OutfitItem
-            id={cell.item.id}
-            type={cell.item.type}
-            title={cell.item.title}
-            imageUrl={cell.item.imageUrl}
-            badge={badge?.(cell.item)}
-            // Names don't fit the rail, except the layer's taller photo
-            isLabelled={!isRail || cell.item.type === "layer"}
-            radius={isRail ? "thumb" : "card"}
-          />
-        ) : (
-          <MissingPiece
-            radius={isRail ? "thumb" : "card"}
-            onMissing={onMissing}
-          />
-        )}
-      </Box>
-    ));
+    cells.map((cell, index) => {
+      const radius = isRail ? "thumb" : "card";
+      const { item, slot } = cell;
+      return (
+        <Box
+          key={item?.id ?? slot?.category ?? `missing-${index}`}
+          style={
+            {
+              "--outfit-photo-height": isRow ? HEIGHT : heightOf(cells, cell),
+            } as React.CSSProperties
+          }
+          sx={{
+            position: "relative",
+            flex: 1,
+            minW: 0,
+            borderRadius: radius,
+            ...(highlight &&
+              categoryOfCell(cell) === highlight &&
+              !slot &&
+              pickedRing),
+          }}
+        >
+          {item && (
+            <OutfitItem
+              id={item.id}
+              type={item.type}
+              title={item.title}
+              imageUrl={item.imageUrl}
+              badge={badge?.(item)}
+              // Names don't fit the rail, except the layer's taller photo
+              isLabelled={!isRail || item.type === "layer"}
+              radius={radius}
+              {...(onPiece && {
+                onClick: () => onPiece(item),
+                role: "button",
+                "aria-label": item.title,
+              })}
+            />
+          )}
+          {item && onRemove && (
+            <IconButton
+              aria-label={`Remove ${item.title}`}
+              icon={<Icon as={MdClose} />}
+              size="xs"
+              onClick={() => onRemove(item)}
+              sx={{
+                ...frosted,
+                position: "absolute",
+                top: 2,
+                right: 2,
+                borderRadius: "full",
+              }}
+            />
+          )}
+          {slot && (
+            <Flex
+              as="button"
+              onClick={() => onSlot?.(slot.category)}
+              aria-label={addLabel(slot.category)}
+              sx={{
+                w: "100%",
+                height: "var(--outfit-photo-height)",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 1,
+                borderRadius: radius,
+                border: slot.isRequired ? "2px dashed" : "1.5px dashed",
+                borderColor: slot.isRequired ? "accentText" : "line",
+                color: slot.isRequired ? "accentText" : "muted",
+                fontSize: "sm",
+                ...(highlight === slot.category && {
+                  backgroundColor: "card",
+                }),
+              }}
+            >
+              <Icon as={MdAdd} sx={{ w: 5, h: 5 }} />
+              <Text aria-hidden>
+                {slot.isRequired
+                  ? addLabel(slot.category)
+                  : CATEGORIES.find(({ key }) => key === slot.category)?.label}
+              </Text>
+            </Flex>
+          )}
+          {!item && !slot && (
+            <MissingPiece radius={radius} onMissing={onMissing} />
+          )}
+        </Box>
+      );
+    });
 
   return (
     <Flex sx={{ gap: `${GAP}px` }}>

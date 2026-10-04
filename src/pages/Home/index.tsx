@@ -716,14 +716,14 @@ const Home = () => {
             ? {
                 title: "Your wardrobe is in. Now, a first outfit.",
                 description:
-                  "Pick one shirt, one belt, one pair of pants and one pair of shoes. Alfred will add it to the rotation.",
+                  "Pick 2 to 6 pieces from your wardrobe. Alfred will add it to the rotation.",
                 actionLabel: "Create an outfit",
                 onAction: openNewOutfit,
               }
             : {
                 title: "Shall we begin with your wardrobe?",
                 description:
-                  "Photograph a few shirts, belts, pants and shoes. Once they're in, Alfred will lay out something to wear each morning.",
+                  "Photograph a few pieces you wear. Once they're in, Alfred will lay out something to wear each morning.",
                 actionLabel: "Open wardrobe",
                 to: "/wardrobe",
               })}

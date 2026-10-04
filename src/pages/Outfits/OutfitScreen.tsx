@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, RefObject } from "react";
-import { doc } from "firebase/firestore";
+import { useState, RefObject } from "react";
+import { deleteField, doc } from "firebase/firestore";
 import {
   Box,
   Button,
@@ -7,11 +7,9 @@ import {
   Heading,
   Icon,
   IconButton,
-  Image,
   Text,
 } from "@chakra-ui/react";
-import { MdAdd, MdArrowBack } from "react-icons/md";
-import { GiShirt, GiBelt, GiTrousers, GiRunningShoe } from "react-icons/gi";
+import { MdArrowBack } from "react-icons/md";
 
 import Confirm from "components/Confirm";
 import Loading from "components/Loading";
@@ -21,8 +19,7 @@ import {
   ScreenHeader,
   useScreen,
 } from "components/Screen";
-import PickedMark, { pickedRing } from "components/PickedMark";
-import OutfitLayout from "components/OutfitLayout";
+import OutfitLayout, { Slot } from "components/OutfitLayout";
 
 import useBackToClose from "hooks/useBackToClose";
 import useNotice from "hooks/useNotice";
@@ -34,147 +31,37 @@ import { useLimitsState } from "resources/useLimits";
 import useUpdateDocument from "resources/useUpdateDocument";
 import useUpdateOutfits from "resources/useUpdateOutfits";
 import { db } from "utils/firebase";
-import { openNewItem } from "utils/history";
 import { activeIndex, byId, sinceLabel, wearToday } from "utils/laundry";
 import { afterDelete, nextOrder } from "utils/rotation";
-import { pieceIdsOf } from "utils/wardrobe";
-import { Item, Outfit } from "utils/types";
+import {
+  categoryOf,
+  CATEGORIES,
+  gapsFor,
+  isOutfitValid,
+  MAX_PIECES,
+  pieceIdsOf,
+  togglePick,
+} from "utils/wardrobe";
+import { Category, Item, Outfit } from "utils/types";
+import Picker from "./Picker";
 
-const slots = [
-  { key: "top", label: "Top", icon: GiShirt },
-  { key: "accessory", label: "Accessory", icon: GiBelt },
-  { key: "bottom", label: "Bottom", icon: GiTrousers },
-  { key: "shoes", label: "Shoes", icon: GiRunningShoe },
-] as const;
-
-type SlotKey = (typeof slots)[number]["key"];
-type Picks = Partial<Record<SlotKey, string>>;
-
-// ponytail: interim four-slot editor on the pieces model, replaced in Task 8
-const picksOf = (items: Item[], outfit?: Outfit): Picks =>
-  Object.fromEntries(
-    (outfit?.pieces ?? []).map(({ id }) => [
-      items.find((item) => item.id === id)?.type ?? "",
-      id,
-    ])
-  );
-
-const tileWidth = "8rem";
-
-// Every item of one category in a row you swipe through; tap one to pick it
-const Carousel = ({
-  slot,
-  items,
-  selectedId,
-  onPick,
-}: {
-  slot: (typeof slots)[number];
-  items: Item[];
-  selectedId?: string;
-  onPick: (id: string) => void;
-}) => {
-  const choices = items.filter(({ type }) => type === slot.key);
-  const rowRef = useRef<HTMLDivElement>(null);
-
-  // Start with the current pick in view
-  useEffect(() => {
-    // Scroll only the row: scrollIntoView would also scroll the screen
-    const row = rowRef.current;
-    const tile = row?.querySelector<HTMLElement>("[aria-pressed=true]");
-    // Only when it's out of view, lining it up with the row's left padding
-    if (row && tile && tile.offsetLeft + tile.offsetWidth > row.clientWidth) {
-      row.scrollLeft = tile.offsetLeft - 16;
-    }
-  }, []);
-
-  return (
-    <Box as="section" aria-label={slot.label} sx={{ mb: 6 }}>
-      <Heading as="h3" sx={{ fontSize: "xl", px: 4, mb: 2 }}>
-        {slot.label}
-      </Heading>
-      <Flex
-        ref={rowRef}
-        sx={{
-          // The offsetParent for centring the current pick
-          position: "relative",
-          gap: 3,
-          px: 4,
-          // Room for the chosen tile's ring, which the scroll area would clip
-          py: 1,
-          overflowX: "auto",
-          scrollSnapType: "x mandatory",
-          scrollPaddingInline: 4,
-          scrollbarWidth: "none",
-          "::-webkit-scrollbar": { display: "none" },
-        }}
-      >
-        {choices.map((item) => {
-          const isSelected = item.id === selectedId;
-          return (
-            <Box
-              key={item.id}
-              as="button"
-              onClick={() => onPick(item.id)}
-              aria-pressed={isSelected}
-              sx={{
-                flexShrink: 0,
-                w: tileWidth,
-                textAlign: "left",
-                scrollSnapAlign: "start",
-                transition: "transform 0.1s",
-                _active: { transform: "scale(0.97)" },
-              }}
-            >
-              <Box
-                sx={{
-                  position: "relative",
-                  aspectRatio: "4 / 5",
-                  borderRadius: "card",
-                  overflow: "hidden",
-                  backgroundColor: "surface",
-                  // Chakra turns outline "none" into a 2px transparent one,
-                  // so only add it when selected
-                  ...(isSelected && pickedRing),
-                }}
-              >
-                <Image
-                  src={item.imageUrl}
-                  alt=""
-                  sx={{ w: "100%", h: "100%", objectFit: "cover" }}
-                />
-                {isSelected && <PickedMark />}
-              </Box>
-              <Text noOfLines={1} sx={{ pt: 2, fontWeight: "medium" }}>
-                {item.title}
-              </Text>
-            </Box>
-          );
-        })}
-        <Flex
-          as="button"
-          onClick={() => openNewItem(slot.key)}
-          sx={{
-            flexShrink: 0,
-            w: tileWidth,
-            aspectRatio: "4 / 5",
-            scrollSnapAlign: "start",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 1,
-            border: "1.5px dashed",
-            borderColor: "line",
-            borderRadius: "card",
-            color: "muted",
-            fontSize: "sm",
-          }}
-        >
-          <Icon as={MdAdd} sx={{ w: 7, h: 7 }} />
-          Add {slot.label.toLowerCase()}
-        </Flex>
-      </Flex>
-    </Box>
-  );
+// The board's empty places: the required top and bottom (unless there's a
+// dress), then a faint place for each optional category still open
+const slotsFor = (types: string[]): Slot[] => {
+  const categories = types.map(categoryOf);
+  const required = gapsFor(types).map((category) => ({
+    category,
+    isRequired: true,
+  }));
+  if (types.length >= MAX_PIECES) return required;
+  const optional = (["layer", "shoes", "accessory"] as const)
+    .filter(
+      (category) =>
+        CATEGORIES.find(({ key }) => key === category)?.multi ||
+        !categories.includes(category)
+    )
+    .map((category) => ({ category, isRequired: false }));
+  return [...required, ...optional];
 };
 
 type EditorProps = {
@@ -194,7 +81,6 @@ const OutfitEditor = ({
 }: EditorProps) => {
   const [mode, setMode] = useState<"view" | "edit">(outfit ? "view" : "edit");
   const { close: closeOutfit } = useScreen();
-  const [picks, setPicks] = useState<Picks>(() => picksOf(items, outfit));
   const [addOutfit, isAdding] = useAddDocument<Outfit>("outfits");
   const [updateOutfit, isUpdating] = useUpdateDocument<Outfit>("outfits");
   const [updateOutfits, isDeleting] = useUpdateOutfits();
@@ -204,26 +90,51 @@ const OutfitEditor = ({
   const isEditing = mode === "edit";
   const isEditingExisting = isEditing && outfit !== undefined;
   const itemById = (id?: string) => items.find((item) => item.id === id);
-  const missing = slots.filter(({ key }) => !itemById(picks[key]));
+  const typeOf = (id: string) => itemById(id)?.type;
   const savedIds = outfit ? pieceIdsOf(outfit) : [];
   const savedPieces = savedIds.flatMap((id) => itemById(id) ?? []);
+  // Deleted pieces drop out when editing; their gap is filled from the board
+  const savedPicks = savedPieces.map(({ id }) => id);
+  const [picks, setPicks] = useState(savedPicks);
+  const pickedItems = picks.flatMap((id) => itemById(id) ?? []);
+  const pickedTypes = pickedItems.map(({ type }) => type);
+  // The picker opens on the first thing missing
+  const [tab, setTab] = useState<Category>(
+    () => gapsFor(pickedTypes)[0] ?? "top"
+  );
+  const isValid = isOutfitValid(picks.length);
+  const isMulti = (category: Category) =>
+    CATEGORIES.find(({ key }) => key === category)?.multi;
+
+  const onPick = (id: string) => {
+    const next = togglePick(picks, id, typeOf);
+    setPicks(next);
+    // A single pick done, move on to what's still missing
+    const gap = gapsFor(next.flatMap((pick) => typeOf(pick) ?? []))[0];
+    if (gap && !isMulti(tab) && next.length > picks.length) setTab(gap);
+  };
 
   // Editing is its own step: Back returns to the outfit and drops changes
   useBackToClose(isEditingExisting, () => {
-    setPicks(picksOf(items, outfit));
+    setPicks(savedPicks);
     setMode("view");
   });
 
   const onSave = async () => {
     const references = {
-      pieces: slots.map(({ key }) =>
-        doc(db, "wardrobe-items", picks[key] as string)
-      ),
+      pieces: picks.map((id) => doc(db, "wardrobe-items", id)),
     };
 
     try {
       if (outfit) {
-        await updateOutfit(outfit.id, references);
+        await updateOutfit(outfit.id, {
+          ...references,
+          // The old four-slot fields go once it's saved as pieces
+          shirt: deleteField(),
+          belt: deleteField(),
+          pants: deleteField(),
+          shoes: deleteField(),
+        } as unknown as Partial<Outfit>);
         setMode("view");
       } else {
         await addOutfit({
@@ -326,20 +237,23 @@ const OutfitEditor = ({
         >
           {heading}
         </Text>
-        {!isEditing && (
+        {isEditing ? (
+          <Button
+            onClick={onSave}
+            isLoading={isLoading}
+            isDisabled={!isValid}
+            colorScheme="brand"
+          >
+            {outfit ? "Save" : "Add"}
+          </Button>
+        ) : (
           <Button onClick={() => setMode("edit")} variant="outline">
             Edit
           </Button>
         )}
       </ScreenHeader>
 
-      <ScreenBody sx={{ pt: 2, pb: 5, ...(isEditing && { px: 0 }) }}>
-        {isEditing && (
-          <Text sx={{ px: 4, mb: 5, color: "muted" }}>
-            Choose one of each. Jackets are picked on the day, based on the
-            weather.
-          </Text>
-        )}
+      <ScreenBody sx={{ pt: 2, pb: 5 }}>
         {!isEditing && outfit?.active && (
           <Text
             sx={{
@@ -359,15 +273,27 @@ const OutfitEditor = ({
           </Text>
         )}
         {isEditing ? (
-          slots.map((slot) => (
-            <Carousel
-              key={slot.key}
-              slot={slot}
-              items={items}
-              selectedId={picks[slot.key]}
-              onPick={(id) => setPicks({ ...picks, [slot.key]: id })}
+          <Box
+            // The board shares the screen with the picker below
+            style={{ "--outfit-height": "300px" } as React.CSSProperties}
+          >
+            <OutfitLayout
+              pieces={pickedItems}
+              slots={slotsFor(pickedTypes)}
+              onSlot={setTab}
+              onRemove={(item) =>
+                setPicks(picks.filter((id) => id !== item.id))
+              }
+              onPiece={(item) => setTab(categoryOf(item.type))}
+              highlight={isMulti(tab) ? undefined : tab}
             />
-          ))
+            {!isValid && (
+              <Text sx={{ mt: 3, fontSize: "sm", color: "muted" }}>
+                Pick 2 to 6 pieces — a top and bottom, or a dress, plus anything
+                else.
+              </Text>
+            )}
+          </Box>
         ) : (
           <OutfitLayout
             pieces={savedPieces}
@@ -450,30 +376,26 @@ const OutfitEditor = ({
       </ScreenBody>
 
       {isEditing && (
+        // The wardrobe to pick from, a sheet under the board; its grid
+        // scrolls on its own so the board stays in view
         <ScreenFooter
           sx={{
-            borderTop: "1px solid",
-            borderColor: "line",
-            pb: "calc(var(--chakra-space-4) + env(safe-area-inset-bottom))",
             flexDirection: "column",
+            px: 0,
+            pt: 2,
+            borderRadius: "24px 24px 0 0",
+            backgroundColor: "card",
           }}
         >
-          {missing.length > 0 && (
-            <Text sx={{ mb: 3, fontSize: "sm", color: "muted" }}>
-              Still missing:{" "}
-              {missing.map(({ label }) => label.toLowerCase()).join(", ")}
-            </Text>
-          )}
-          <Button
-            onClick={onSave}
-            isLoading={isLoading}
-            isDisabled={missing.length > 0}
-            colorScheme="brand"
-            size="lg"
-            sx={{ w: "100%", borderRadius: "full" }}
-          >
-            {outfit ? "Save changes" : "Add to rotation"}
-          </Button>
+          <Box sx={{ maxH: "44dvh", overflowY: "auto" }}>
+            <Picker
+              items={items}
+              picks={picks}
+              active={tab}
+              onTab={setTab}
+              onPick={onPick}
+            />
+          </Box>
         </ScreenFooter>
       )}
     </>

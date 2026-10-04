@@ -71,3 +71,29 @@ test("a deleted piece leaves a gap that leads to picking another", () => {
   screen.getByRole("button", { name: "Pick a piece" }).click();
   expect(onMissing).toHaveBeenCalled();
 });
+
+test("while editing, required gaps sit in the column and optional slots in the rail", () => {
+  const onSlot = vi.fn();
+  render(
+    <OutfitLayout
+      pieces={[piece("Oxford", "top")]}
+      slots={[
+        { category: "bottom", isRequired: true },
+        { category: "shoes", isRequired: false },
+      ]}
+      onSlot={onSlot}
+    />
+  );
+  expect(titlesIn("Main pieces")).toEqual(["Oxford", "Add a bottom"]);
+  expect(titlesIn("Side pieces")).toEqual(["Add shoes"]);
+  screen.getByRole("button", { name: "Add shoes" }).click();
+  expect(onSlot).toHaveBeenCalledWith("shoes");
+});
+
+test("while editing, × takes a piece out", () => {
+  const onRemove = vi.fn();
+  const oxford = piece("Oxford", "top");
+  render(<OutfitLayout pieces={[oxford]} onRemove={onRemove} />);
+  screen.getByRole("button", { name: "Remove Oxford" }).click();
+  expect(onRemove).toHaveBeenCalledWith(oxford);
+});

@@ -125,7 +125,7 @@ export const pieceIdsOf = (outfit: MaybeOld): string[] =>
 export const normalizeOutfit = <T extends MaybeOld>(outfit: T) =>
   ({ ...outfit, pieces: refsOf(outfit) }) as T & { pieces: Ref[] };
 
-const rank = (type: string) =>
+export const rank = (type: string) =>
   CATEGORIES.findIndex(({ key }) => key === categoryOf(type));
 
 // How an outfit is shown: what you wear on the body large, layers beside,
@@ -149,3 +149,29 @@ export const layoutOf = <I extends { id: string; type: string }>(
 // Phase 2 adds "or a photo"
 export const isOutfitValid = (pieceCount: number) =>
   pieceCount >= MIN_PIECES && pieceCount <= MAX_PIECES;
+
+// Picking a piece for an outfit: accessories add up; in any other category
+// it replaces that category's pick. Tapping a pick again takes it out. A
+// piece that would make more than MAX_PIECES is refused (same array back).
+export const togglePick = (
+  picks: string[],
+  id: string,
+  typeOf: (id: string) => string | undefined
+): string[] => {
+  if (picks.includes(id)) return picks.filter((pick) => pick !== id);
+  const category = categoryOf(typeOf(id) ?? "");
+  const isMulti = CATEGORIES.find(({ key }) => key === category)?.multi;
+  const kept = isMulti
+    ? picks
+    : picks.filter((pick) => categoryOf(typeOf(pick) ?? "") !== category);
+  return kept.length >= MAX_PIECES ? picks : [...kept, id];
+};
+
+// What an outfit still needs: a top and a bottom, unless it has a dress
+export const gapsFor = (types: string[]): Category[] => {
+  const categories = types.map(categoryOf);
+  if (categories.includes("dress")) return [];
+  return (["top", "bottom"] as const).filter(
+    (category) => !categories.includes(category)
+  );
+};

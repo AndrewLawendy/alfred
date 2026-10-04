@@ -81,14 +81,14 @@ const Outfits = () => {
         items && items.length === 0 ? (
           <EmptyState
             title="Your wardrobe comes first"
-            description="Outfits are made from your own clothes. Add a shirt, belt, pants and shoes to your wardrobe, then come back here."
+            description="Outfits are made from your own clothes. Add a few pieces to your wardrobe, then come back here."
             actionLabel="Go to Wardrobe"
             to="/wardrobe"
           />
         ) : (
           <EmptyState
             title="No outfits yet"
-            description="Put together a shirt, belt, pants and shoes. Each outfit you make joins the rotation."
+            description="Pick 2 to 6 pieces. Each outfit you make joins the rotation."
             actionLabel="Create an outfit"
             onAction={openNewOutfit}
           />
