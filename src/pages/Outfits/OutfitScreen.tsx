@@ -55,6 +55,7 @@ import {
 import { Item, Outfit } from "utils/types";
 import Picker, { PickerTab } from "./Picker";
 import PhotoMenu, { AddPhoto } from "./PhotoMenu";
+import PickerSheet from "./PickerSheet";
 
 // Still read by screen readers, but not seen (the name field shows instead)
 const srOnly = {
@@ -613,14 +614,14 @@ const OutfitEditor = ({
           sx={{
             flexDirection: "column",
             px: 0,
-            pt: 2,
+            pt: 1,
             borderRadius: "24px 24px 0 0",
             backgroundColor: "card",
           }}
         >
-          {/* One fixed height whatever the tab, so the sheet never jumps;
-              what doesn't fit scrolls inside it */}
-          <Flex sx={{ h: "44dvh", flexDirection: "column" }}>
+          {/* A steady height whatever the tab (taller from its handle), so it
+              never jumps; what doesn't fit scrolls inside it */}
+          <PickerSheet>
             {/* The rule, right above where you pick */}
             {(!isValid || (boardPhoto && !picks.length)) && (
               <Text sx={{ px: 4, pb: 2, fontSize: "sm", color: "muted" }}>
@@ -643,7 +644,7 @@ const OutfitEditor = ({
                 }}
               />
             </Box>
-          </Flex>
+          </PickerSheet>
         </ScreenFooter>
       )}
     </>
