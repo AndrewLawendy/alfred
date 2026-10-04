@@ -28,6 +28,7 @@ import EmptyState from "components/EmptyState";
 import HamperSheet from "components/HamperSheet";
 import Loading from "components/Loading";
 import OutfitLayout from "components/OutfitLayout";
+import OutfitCover from "components/OutfitCover";
 import Swipeable from "components/Swipeable";
 
 import useAuth from "hooks/useAuth";
@@ -59,7 +60,7 @@ import {
   washed,
   wearBadge,
 } from "utils/laundry";
-import { pieceIdsOf } from "utils/wardrobe";
+import { outfitTitle, pieceIdsOf } from "utils/wardrobe";
 import { Item, Jacket, Outfit } from "utils/types";
 
 const numbers = ["No", "One", "Two", "Three", "Four", "Five", "Six"];
@@ -414,7 +415,10 @@ const Home = () => {
           )}
 
           <Box sx={{ mb: 2 }}>
-            <Eyebrow>{pickedLabel}</Eyebrow>
+            <Eyebrow>
+              {pickedLabel}
+              {activeOutfit.name && ` · ${activeOutfit.name}`}
+            </Eyebrow>
           </Box>
 
           <Box
@@ -432,6 +436,11 @@ const Home = () => {
               missing={pieceIdsOf(activeOutfit).length - activePieces.length}
               onMissing={() => openOutfit(activeOutfit.id)}
               badge={(item) => wearBadge(item, limits)}
+              photoUrl={activeOutfit.photoUrl}
+              title={outfitTitle(
+                activeOutfit,
+                (outfits?.indexOf(activeOutfit) ?? 0) + 1
+              )}
             />
           </Box>
 
@@ -524,21 +533,25 @@ const Home = () => {
                 _active: { transform: "scale(0.98)" },
               }}
             >
-              <Box sx={{ flex: 1 }}>
+              <Box sx={{ flex: 1, minW: 0 }}>
                 <Eyebrow>Up next</Eyebrow>
                 <Text
+                  noOfLines={1}
                   sx={{
                     fontFamily: "heading",
                     fontSize: "lg",
                     lineHeight: 1.3,
                   }}
                 >
-                  No. {(outfits?.indexOf(comingUp) ?? 0) + 1}
+                  {outfitTitle(comingUp, (outfits?.indexOf(comingUp) ?? 0) + 1)}
                 </Text>
               </Box>
-              <Flex sx={{ gap: 1.5 }}>
+              <Flex sx={{ gap: 1.5, flexShrink: 0 }}>
+                {comingUp.photoUrl && (
+                  <OutfitCover photoUrl={comingUp.photoUrl} size={10} />
+                )}
                 {pieceIdsOf(comingUp)
-                  .slice(0, 4)
+                  .slice(0, comingUp.photoUrl ? 3 : 4)
                   .map((id) => (
                     <Swatch key={id} item={itemsById.get(id)} />
                   ))}

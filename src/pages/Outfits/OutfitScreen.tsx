@@ -39,6 +39,7 @@ import {
   gapsFor,
   isOutfitValid,
   MAX_PIECES,
+  outfitTitle,
   pieceIdsOf,
   togglePick,
 } from "utils/wardrobe";
@@ -209,7 +210,7 @@ const OutfitEditor = ({
     ? "New outfit"
     : isEditing
       ? `Edit No. ${number}`
-      : `Outfit No. ${number}`;
+      : outfit.name || `Outfit No. ${number}`;
 
   return (
     <>
@@ -295,11 +296,24 @@ const OutfitEditor = ({
             )}
           </Box>
         ) : (
-          <OutfitLayout
-            pieces={savedPieces}
-            missing={savedIds.length - savedPieces.length}
-            onMissing={() => setMode("edit")}
-          />
+          <>
+            <OutfitLayout
+              pieces={savedPieces}
+              missing={savedIds.length - savedPieces.length}
+              onMissing={() => setMode("edit")}
+              photoUrl={outfit?.photoUrl}
+              title={outfit ? outfitTitle(outfit, number) : undefined}
+            />
+            {outfit?.photoUrl && !savedIds.length && (
+              <Button
+                variant="link"
+                onClick={() => setMode("edit")}
+                sx={{ mt: 3, color: "accentText", whiteSpace: "normal" }}
+              >
+                Track laundry for this outfit? Add its pieces.
+              </Button>
+            )}
+          </>
         )}
 
         {outfit && outfit.id !== onToday?.id && !isEditing && (

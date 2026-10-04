@@ -4,6 +4,7 @@ import { MdAdd, MdClose } from "react-icons/md";
 
 import OutfitItem from "components/OutfitItem";
 import { MissingPiece } from "components/OutfitReference";
+import PhotoLayout from "./PhotoLayout";
 import { pickedRing } from "components/PickedMark";
 import { frosted } from "utils/theme";
 import { categoryOf, CATEGORIES, gapsFor, rank } from "utils/wardrobe";
@@ -26,6 +27,10 @@ type OutfitLayoutProps = {
   onPiece?: (item: Item) => void;
   // The category a pick will land in, outlined
   highlight?: Category;
+  // The outfit's own photo: then the photo leads and the pieces wrap it
+  photoUrl?: string;
+  // What the outfit is called, the photo's accessible name
+  title?: string;
 };
 
 const GAP = 8;
@@ -64,7 +69,19 @@ const OutfitLayout = ({
   onRemove,
   onPiece,
   highlight,
+  photoUrl,
+  title,
 }: OutfitLayoutProps) => {
+  if (photoUrl) {
+    return (
+      <PhotoLayout
+        photoUrl={photoUrl}
+        title={title}
+        pieces={pieces}
+        badge={badge}
+      />
+    );
+  }
   // A top with no bottom (or the reverse) and a deleted piece: that piece
   // was the bottom. Otherwise a deleted piece can't be told.
   const needed = gapsFor(pieces.map(({ type }) => type));

@@ -19,6 +19,7 @@ import { MdAdd, MdDragIndicator } from "react-icons/md";
 import { openNewOutfit, openOutfit } from "utils/history";
 
 import OutfitReference from "components/OutfitReference";
+import OutfitCover from "components/OutfitCover";
 import Loading from "components/Loading";
 import PageHeader from "components/PageHeader";
 import EmptyState from "components/EmptyState";
@@ -171,21 +172,47 @@ const Outfits = () => {
                             </Text>
                           )}
                         </Box>
-                        <Grid
-                          templateColumns="repeat(4, 1fr)"
-                          gap={1.5}
-                          sx={{ flex: 1, minW: 0 }}
-                          pointerEvents="none"
-                        >
-                          {outfit.pieces.slice(0, 4).map((reference) => (
-                            <OutfitReference
-                              key={reference.id}
-                              reference={reference}
-                              aspectRatio={1}
-                              radius="thumb"
-                            />
-                          ))}
-                        </Grid>
+                        <Box sx={{ flex: 1, minW: 0 }} pointerEvents="none">
+                          {outfit.name && (
+                            <Text
+                              noOfLines={1}
+                              sx={{
+                                mb: 1.5,
+                                fontFamily: "heading",
+                                fontSize: "lg",
+                              }}
+                            >
+                              {outfit.name}
+                            </Text>
+                          )}
+                          {/* The photo leads the row, as a ringed swatch;
+                              then pieces, four swatches in all */}
+                          <Grid templateColumns="repeat(4, 1fr)" gap={1.5}>
+                            {outfit.photoUrl && (
+                              <OutfitCover
+                                photoUrl={outfit.photoUrl}
+                                size="100%"
+                              />
+                            )}
+                            {outfit.pieces
+                              .slice(0, outfit.photoUrl ? 3 : 4)
+                              .map((reference) => (
+                                <OutfitReference
+                                  key={reference.id}
+                                  reference={reference}
+                                  aspectRatio={1}
+                                  radius="thumb"
+                                />
+                              ))}
+                          </Grid>
+                          {outfit.photoUrl && !outfit.pieces.length && (
+                            <Text
+                              sx={{ mt: 1.5, fontSize: "sm", color: "muted" }}
+                            >
+                              Photo only
+                            </Text>
+                          )}
+                        </Box>
                       </Flex>
                     )}
                   </Draggable>

@@ -120,3 +120,49 @@ test("a deleted piece that can't be told stays a plain rail gap", () => {
   );
   expect(titlesIn("Side pieces")).toEqual(["Pick a piece"]);
 });
+
+const six = [
+  piece("Blouse", "top"),
+  piece("Trousers", "bottom"),
+  piece("Blazer", "layer"),
+  piece("Loafers", "shoes"),
+  piece("Hijab", "accessory"),
+  piece("Watch", "accessory"),
+];
+
+test("a photo-only outfit is one photo, no piece groups", () => {
+  render(<OutfitLayout pieces={[]} photoUrl="https://p" title="No. 8" />);
+  expect(screen.getByRole("img", { name: "No. 8" })).toHaveAttribute(
+    "src",
+    "https://p"
+  );
+  expect(screen.queryByRole("group")).toBeNull();
+});
+
+test("with a photo, pieces wrap it: beside, then under", () => {
+  const { unmount } = render(
+    <OutfitLayout pieces={six} photoUrl="https://p" title="Weekend errands" />
+  );
+  expect(titlesIn("Pieces")).toEqual(["Blouse", "Trousers", "Blazer"]);
+  expect(titlesIn("More pieces")).toEqual(["Loafers", "Hijab", "Watch"]);
+  unmount();
+  render(
+    <OutfitLayout pieces={six.slice(0, 3)} photoUrl="https://p" title="No. 2" />
+  );
+  expect(titlesIn("Pieces")).toEqual(["Blouse", "Trousers"]);
+  expect(titlesIn("More pieces")).toEqual(["Blazer"]);
+});
+
+test("one or two pieces stay beside the photo", () => {
+  render(
+    <OutfitLayout pieces={six.slice(0, 2)} photoUrl="https://p" title="No. 2" />
+  );
+  expect(titlesIn("Pieces")).toEqual(["Blouse", "Trousers"]);
+  expect(screen.queryByRole("group", { name: "More pieces" })).toBeNull();
+});
+
+test("without a photo the layout is unchanged", () => {
+  render(<OutfitLayout pieces={six.slice(0, 2)} title="No. 2" />);
+  expect(screen.queryByRole("img", { name: "No. 2" })).toBeNull();
+  expect(titlesIn("Main pieces")).toEqual(["Blouse", "Trousers"]);
+});
