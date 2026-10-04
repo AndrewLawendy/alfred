@@ -113,11 +113,15 @@ type MaybeOld = {
 };
 
 // The outfit's piece references: its pieces, or the old slots in shirt,
-// pants, belt, shoes order. Missing references are dropped.
-const refsOf = (outfit: MaybeOld) =>
-  (
-    outfit.pieces ?? [outfit.shirt, outfit.pants, outfit.belt, outfit.shoes]
-  ).filter((piece): piece is Ref => !!piece);
+// pants, belt, shoes order. This app never writes slots, so any slot means
+// an old app edited it last, and the slots win over stale pieces. Missing
+// references are dropped.
+const refsOf = (outfit: MaybeOld) => {
+  const slots = [outfit.shirt, outfit.pants, outfit.belt, outfit.shoes];
+  return (slots.some(Boolean) ? slots : (outfit.pieces ?? [])).filter(
+    (piece): piece is Ref => !!piece
+  );
+};
 
 export const pieceIdsOf = (outfit: MaybeOld): string[] =>
   refsOf(outfit).map(({ id }) => id);

@@ -53,3 +53,18 @@ test("settings rename shirt and pants limits", () => {
     null
   );
 });
+
+test("an outfit an old app edited after it got pieces is migrated again", () => {
+  const result = migrateOutfit({
+    pieces: { arrayValue: { values: [ref("stale")] } },
+    shirt: ref("s"),
+    pants: ref("p"),
+  });
+  assert.deepEqual(
+    result.set.pieces.arrayValue.values.map((v) =>
+      v.referenceValue.split("/").pop()
+    ),
+    ["s", "p"]
+  );
+  assert.deepEqual(result.remove, ["shirt", "pants"]);
+});

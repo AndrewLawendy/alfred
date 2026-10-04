@@ -54,11 +54,6 @@ test("an old outfit's slots become pieces: shirt, pants, belt, shoes", () => {
   ]);
 });
 
-test("a new outfit keeps its pieces and ignores leftover old fields", () => {
-  const mixed = { id: "o", pieces: [ref("d"), ref("f")], shirt: ref("s") };
-  expect(pieceIdsOf(mixed)).toEqual(["d", "f"]);
-});
-
 test("missing slots are dropped", () => {
   expect(pieceIdsOf({ shirt: ref("s"), pants: undefined })).toEqual(["s"]);
 });
@@ -68,4 +63,14 @@ test("an outfit has 2 to 6 pieces", () => {
   expect(isOutfitValid(2)).toBe(true);
   expect(isOutfitValid(6)).toBe(true);
   expect(isOutfitValid(7)).toBe(false);
+});
+
+test("old slots written after pieces win: the last edit came from an old app", () => {
+  expect(
+    pieceIdsOf({
+      pieces: [{ id: "stale-top" }, { id: "jeans" }],
+      shirt: { id: "new-top" },
+      pants: { id: "jeans" },
+    })
+  ).toEqual(["new-top", "jeans"]);
 });

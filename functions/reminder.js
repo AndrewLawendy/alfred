@@ -101,11 +101,14 @@ const DEFAULT_LIMITS = {
   accessory: 0,
 };
 
-// An outfit's pieces, whether saved as pieces or in the old four slots
-const pieceIdsOf = (outfit) =>
-  (outfit.pieces || [outfit.shirt, outfit.pants, outfit.belt, outfit.shoes])
+// An outfit's pieces, whether saved as pieces or in the old four slots. The
+// new app never writes slots, so any slot means an old app edited it last.
+const pieceIdsOf = (outfit) => {
+  const slots = [outfit.shirt, outfit.pants, outfit.belt, outfit.shoes];
+  return (slots.some(Boolean) ? slots : outfit.pieces || [])
     .filter(Boolean)
     .map(({ id }) => id);
+};
 
 // A piece's own limit, else its category's; outerwear is never counted
 const limitOf = (item, limits) => {

@@ -22,8 +22,9 @@ export const migrateItem = (fields) => {
   return { set: { type: { stringValue: category } }, remove: [] };
 };
 
+// Slots alongside pieces mean an old app edited the outfit after it got
+// pieces: the slots are the latest, so they're migrated again
 export const migrateOutfit = (fields) => {
-  if (fields.pieces) return null;
   const present = SLOTS.filter((slot) => fields[slot]?.referenceValue);
   if (!present.length) return null;
   return {

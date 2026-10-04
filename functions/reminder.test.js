@@ -245,3 +245,9 @@ test("up next reads new pieces and old slots alike", () => {
   ];
   assert.equal(upNext(outfits, items, limits).id, "z");
 });
+
+test("old slots written after pieces win in the push too", () => {
+  const items = { a: { type: "top" }, n: { type: "top", wears: 1 } };
+  const outfit = { pieces: [{ id: "a" }], shirt: { id: "n" } };
+  assert.equal(cleanCount([outfit], items, { top: 1 }), 0);
+});
