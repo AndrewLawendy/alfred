@@ -13,6 +13,8 @@ type PhotoLayoutProps = {
   badge?: (item: Item) => ReactNode;
   // The brass ring and camera mark on the photo (the outfit screen)
   isMarked?: boolean;
+  // Tapping the photo, as tapping a piece opens it
+  onPhoto?: () => void;
 };
 
 const GAP = 8;
@@ -31,6 +33,7 @@ const PhotoLayout = ({
   pieces,
   badge,
   isMarked,
+  onPhoto,
 }: PhotoLayoutProps) => {
   const { main, side, small } = layoutOf(pieces);
   const sorted = [...main, ...side, ...small];
@@ -78,10 +81,17 @@ const PhotoLayout = ({
         }}
       >
         <Box
+          {...(onPhoto && {
+            as: "button",
+            onClick: onPhoto,
+            "aria-label": title,
+          })}
           sx={{
             position: "relative",
             flexShrink: 0,
             borderRadius: "card",
+            transition: "transform 0.1s",
+            _active: { transform: "scale(0.98)" },
             // Marked as the look itself, as its swatch is in the list
             ...(isMarked && {
               boxShadow:

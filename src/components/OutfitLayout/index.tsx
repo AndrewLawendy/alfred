@@ -33,6 +33,8 @@ type OutfitLayoutProps = {
   title?: string;
   // Ring and mark the photo as the look (the outfit screen)
   isPhotoMarked?: boolean;
+  // Tapping the outfit photo
+  onPhoto?: () => void;
 };
 
 const GAP = 8;
@@ -74,6 +76,7 @@ const OutfitLayout = ({
   photoUrl,
   title,
   isPhotoMarked,
+  onPhoto,
 }: OutfitLayoutProps) => {
   if (photoUrl) {
     return (
@@ -83,6 +86,7 @@ const OutfitLayout = ({
         pieces={pieces}
         badge={badge}
         isMarked={isPhotoMarked}
+        onPhoto={onPhoto}
       />
     );
   }

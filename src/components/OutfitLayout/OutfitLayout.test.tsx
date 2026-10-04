@@ -166,3 +166,17 @@ test("without a photo the layout is unchanged", () => {
   expect(screen.queryByRole("img", { name: "No. 2" })).toBeNull();
   expect(titlesIn("Main pieces")).toEqual(["Blouse", "Trousers"]);
 });
+
+test("the outfit photo can be tapped, like its pieces", () => {
+  const onPhoto = vi.fn();
+  render(
+    <OutfitLayout
+      pieces={[]}
+      photoUrl="https://p"
+      title="Office Monday"
+      onPhoto={onPhoto}
+    />
+  );
+  screen.getByRole("button", { name: "Office Monday" }).click();
+  expect(onPhoto).toHaveBeenCalled();
+});

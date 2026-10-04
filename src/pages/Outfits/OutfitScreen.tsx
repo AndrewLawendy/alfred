@@ -20,6 +20,7 @@ import {
   useScreen,
 } from "components/Screen";
 import OutfitLayout, { Slot } from "components/OutfitLayout";
+import PhotoViewer from "components/PhotoViewer";
 
 import useBackToClose from "hooks/useBackToClose";
 import useNotice from "hooks/useNotice";
@@ -81,6 +82,8 @@ const OutfitEditor = ({
   headingRef,
 }: EditorProps) => {
   const [mode, setMode] = useState<"view" | "edit">(outfit ? "view" : "edit");
+  // The outfit photo, open full screen
+  const [isPhotoOpen, setIsPhotoOpen] = useState(false);
   const { close: closeOutfit } = useScreen();
   const [addOutfit, isAdding] = useAddDocument<Outfit>("outfits");
   const [updateOutfit, isUpdating] = useUpdateDocument<Outfit>("outfits");
@@ -304,7 +307,16 @@ const OutfitEditor = ({
               photoUrl={outfit?.photoUrl}
               title={outfit ? outfitTitle(outfit, number) : undefined}
               isPhotoMarked
+              onPhoto={() => setIsPhotoOpen(true)}
             />
+            {outfit?.photoUrl && (
+              <PhotoViewer
+                photoUrl={outfit.photoUrl}
+                title={outfitTitle(outfit, number)}
+                isOpen={isPhotoOpen}
+                onClose={() => setIsPhotoOpen(false)}
+              />
+            )}
             {outfit?.photoUrl && !savedIds.length && (
               <Button
                 variant="link"

@@ -437,6 +437,7 @@ const Home = () => {
               onMissing={() => openOutfit(activeOutfit.id)}
               badge={(item) => wearBadge(item, limits)}
               photoUrl={activeOutfit.photoUrl}
+              onPhoto={() => openOutfit(activeOutfit.id)}
               title={outfitTitle(
                 activeOutfit,
                 (outfits?.indexOf(activeOutfit) ?? 0) + 1
