@@ -3,20 +3,25 @@ import { MdAdd, MdRemove } from "react-icons/md";
 
 import useNotice from "hooks/useNotice";
 import { saveLimits, useLimitsState } from "resources/useLimits";
-import { Limits } from "utils/laundry";
+import { CATEGORIES } from "utils/wardrobe";
+import { Category } from "utils/types";
 
-const types: { type: keyof Limits; label: string }[] = [
-  { type: "shirt", label: "Shirts" },
-  { type: "pants", label: "Pants" },
-];
+// Outerwear is the daily weather pick, never counted
+const types = CATEGORIES.filter(({ inOutfit }) => inOutfit);
 
-// How many wears each type takes before it goes in the hamper
+// 0 is "Not counted", the lowest step
+const MAX = 10;
+const describe = (limit: number) =>
+  limit === 0 ? "Not counted" : `${limit} wear${limit === 1 ? "" : "s"}`;
+
+// How many wears each category takes before it goes in the hamper
 const Laundry = () => {
   const { limits, isLoading } = useLimitsState();
   const toast = useNotice();
-  const change = (type: keyof Limits, by: number) => {
+  const limitOf = (type: Category) => limits[type] ?? 0;
+  const change = (type: Category, by: number) => {
     saveLimits({
-      [type]: Math.min(10, Math.max(1, limits[type] + by)),
+      [type]: Math.min(MAX, Math.max(0, limitOf(type) + by)),
     }).catch(() =>
       toast({
         status: "error",
@@ -32,28 +37,28 @@ const Laundry = () => {
         Laundry
       </Heading>
       <Text sx={{ mt: 1, color: "muted" }}>
-        Wears before a piece goes in the hamper. Belts, shoes and jackets
-        aren&apos;t counted.
+        Wears before a piece goes in the hamper. A piece can set its own in its
+        details.
       </Text>
-      {types.map(({ type, label }) => (
-        <Flex key={type} sx={{ mt: 4, alignItems: "center", gap: 3 }}>
-          <Text sx={{ flex: 1, fontWeight: "semibold" }}>{label}</Text>
+      {types.map(({ key, plural }) => (
+        <Flex key={key} sx={{ mt: 4, alignItems: "center", gap: 3 }}>
+          <Text sx={{ flex: 1, fontWeight: "semibold" }}>{plural}</Text>
           <IconButton
-            aria-label={`Fewer wears for ${label.toLowerCase()}`}
+            aria-label={`Fewer wears for ${plural.toLowerCase()}`}
             icon={<MdRemove />}
             variant="outline"
-            isDisabled={isLoading || limits[type] <= 1}
-            onClick={() => change(type, -1)}
+            isDisabled={isLoading || limitOf(key) <= 0}
+            onClick={() => change(key, -1)}
           />
-          <Text aria-live="polite" sx={{ w: 20, textAlign: "center" }}>
-            {limits[type]} wear{limits[type] === 1 ? "" : "s"}
+          <Text aria-live="polite" sx={{ w: 24, textAlign: "center" }}>
+            {describe(limitOf(key))}
           </Text>
           <IconButton
-            aria-label={`More wears for ${label.toLowerCase()}`}
+            aria-label={`More wears for ${plural.toLowerCase()}`}
             icon={<MdAdd />}
             variant="outline"
-            isDisabled={isLoading || limits[type] >= 10}
-            onClick={() => change(type, 1)}
+            isDisabled={isLoading || limitOf(key) >= MAX}
+            onClick={() => change(key, 1)}
           />
         </Flex>
       ))}

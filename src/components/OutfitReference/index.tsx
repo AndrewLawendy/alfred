@@ -1,24 +1,16 @@
 import { ReactNode } from "react";
 import { Flex, Icon, Text } from "@chakra-ui/react";
-import { GiBelt, GiRunningShoe, GiShirt, GiTrousers } from "react-icons/gi";
 import OutfitItem from "components/OutfitItem";
 import { useDocumentData } from "react-firebase-hooks/firestore";
 import { DocumentReference, DocumentData } from "firebase/firestore";
 
-import { Item } from "utils/types";
-
-type Slot = "shirt" | "belt" | "pants" | "shoes";
-
-const slotIcons = {
-  shirt: GiShirt,
-  belt: GiBelt,
-  pants: GiTrousers,
-  shoes: GiRunningShoe,
-};
+import { categoryIcons } from "utils/categoryIcons";
+import { Category, Item } from "utils/types";
 
 type OutfitReferenceProps = {
   reference: DocumentReference<DocumentData>;
-  slot: Slot;
+  // For a deleted piece's gap; unknown once the item is gone
+  category?: Category;
   aspectRatio?: number;
   radius?: string;
   isLabelled?: boolean;
@@ -29,7 +21,7 @@ type OutfitReferenceProps = {
 
 // A piece whose item was deleted: a gap that says what to pick
 const MissingPiece = ({
-  slot,
+  category = "top",
   aspectRatio,
   radius,
   isLabelled,
@@ -53,22 +45,16 @@ const MissingPiece = ({
     }}
   >
     <Icon
-      as={slotIcons[slot]}
+      as={categoryIcons[category]}
       sx={{ w: isLabelled ? 8 : 5, h: isLabelled ? 8 : 5 }}
     />
-    {isLabelled && (
-      <Text sx={{ fontSize: "sm" }}>
-        {slot === "pants" || slot === "shoes"
-          ? `Pick ${slot}`
-          : `Pick a ${slot}`}
-      </Text>
-    )}
+    {isLabelled && <Text sx={{ fontSize: "sm" }}>Pick a piece</Text>}
   </Flex>
 );
 
 const OutfitReference = ({
   reference,
-  slot,
+  category,
   aspectRatio,
   radius = "card",
   isLabelled,
@@ -79,7 +65,7 @@ const OutfitReference = ({
   if (!isItemLoading && !item) {
     return (
       <MissingPiece
-        slot={slot}
+        category={category}
         aspectRatio={aspectRatio}
         radius={radius}
         isLabelled={isLabelled}

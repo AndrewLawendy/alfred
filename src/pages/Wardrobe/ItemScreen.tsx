@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef, RefObject } from "react";
-import { doc, orderBy } from "firebase/firestore";
+import { doc } from "firebase/firestore";
 import { useDocumentData } from "react-firebase-hooks/firestore";
 import {
   Button,
@@ -31,13 +31,14 @@ import useUploadImage from "resources/useUploadImage";
 import useDeleteImage from "resources/useDeleteImage";
 import useUpdateDocument from "resources/useUpdateDocument";
 import useDeleteDocument from "resources/useDeleteDocument";
-import useData from "resources/useData";
+import useOutfits from "resources/useOutfits";
 import { db } from "utils/firebase";
 import { useSearchParam } from "utils/history";
 import { clearSharedPhoto, readSharedPhoto } from "utils/sharedPhoto";
 import geFileURL from "utils/geFileURL";
 import resizeImage from "utils/resizeImage";
-import { Item, Outfit } from "utils/types";
+import { pieceIdsOf } from "utils/wardrobe";
+import { Item } from "utils/types";
 
 import ItemDetails from "./ItemDetails";
 import JacketsForm from "./JacketsForm";
@@ -55,11 +56,13 @@ export interface ChildrenProps extends FromReturn<ItemForm> {
 }
 
 const examples: Record<Item["type"], string> = {
-  shirt: "e.g. White oxford",
-  belt: "e.g. Brown leather",
-  pants: "e.g. Navy chinos",
+  top: "e.g. White oxford",
+  dress: "e.g. Navy wrap dress",
+  bottom: "e.g. Grey chinos",
+  layer: "e.g. Camel blazer",
   shoes: "e.g. Tan loafers",
-  jacket: "e.g. Grey wool overcoat",
+  accessory: "e.g. Silk scarf",
+  outerwear: "e.g. Grey wool overcoat",
 };
 
 const formFor = (
@@ -78,10 +81,10 @@ const formFor = (
     isRequired: true,
     requiredMessage: "Add a photo",
   },
-  ...(type === "jacket" && {
+  ...(type === "outerwear" && {
     maxTemperature: {
       initialValue:
-        item?.type === "jacket" ? String(item.maxTemperature ?? "") : "",
+        item?.type === "outerwear" ? String(item.maxTemperature ?? "") : "",
       isRequired: true,
       requiredMessage: "Set the temperature to suggest it at",
     },
@@ -110,14 +113,10 @@ const ItemEditor = ({ type, item, headingRef, sharedPhoto }: EditorProps) => {
     useUploadImage();
   const [deleteItemImage, isDeleteItemImageLoading] = useDeleteImage();
   // The outfits this piece is in, by their number, to warn before a delete
-  const [outfits] = useData<Outfit>("outfits", orderBy("order"));
+  const [outfits] = useOutfits();
   const usedIn = (outfits || [])
     .map((outfit, index) => ({ outfit, number: index + 1 }))
-    .filter(({ outfit }) =>
-      (["shirt", "belt", "pants", "shoes"] as const).some(
-        (slot) => item && outfit[slot]?.id === item.id
-      )
-    )
+    .filter(({ outfit }) => !!item && pieceIdsOf(outfit).includes(item.id))
     .map(({ number }) => `No. ${number}`);
   const isTodaysJacket = (outfits || []).some(
     ({ jacket }) => item && jacket && jacket.id === item.id
@@ -214,7 +213,7 @@ const ItemEditor = ({ type, item, headingRef, sharedPhoto }: EditorProps) => {
 
     // The form works in text; a jacket's temperature is stored as a number
     const fields =
-      type === "jacket"
+      type === "outerwear"
         ? { ...values, maxTemperature: Number(values.maxTemperature) }
         : values;
 
@@ -358,7 +357,7 @@ const ItemEditor = ({ type, item, headingRef, sharedPhoto }: EditorProps) => {
                 placeholder="e.g. Slim fit, goes with anything"
               />
 
-              {type === "jacket" && <JacketsForm mode={mode} {...form} />}
+              {type === "outerwear" && <JacketsForm mode={mode} {...form} />}
 
               {item && (
                 // Kept away from Save and Edit so it's never one stray tap away

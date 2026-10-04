@@ -1,25 +1,39 @@
 import type { OutfitUpdate } from "resources/useUpdateOutfits";
-import { Item, Outfit } from "utils/types";
+import { CATEGORIES, categoryOf, pieceIdsOf } from "utils/wardrobe";
+import { Category, Outfit } from "utils/types";
 
-// Laundry rules: how many wears each type takes before washing, what's in the
-// hamper, and which outfits can be worn. Pure, so Home, the Hamper and tests
-// share them. functions/reminder.js repeats isInHamper, cleanCount and upNext.
+// Laundry rules: how many wears each category (or piece) takes before
+// washing, what's in the hamper, and which outfits can be worn. Pure, so
+// Home, the Hamper and tests share them. functions/reminder.js repeats
+// limitOf, isInHamper, cleanCount and upNext.
 
-export type Limits = { shirt: number; pants: number };
-export const DEFAULT_LIMITS: Limits = { shirt: 1, pants: 3 };
-// The counted outfit slots, which are also the counted item types
-export const COUNTED = ["shirt", "pants"] as const;
+// Wears before washing per category; 0 means not counted
+export type Limits = Partial<Record<Category, number>>;
+export const DEFAULT_LIMITS: Limits = Object.fromEntries(
+  CATEGORIES.filter(({ inOutfit }) => inOutfit).map(({ key, defaultLimit }) => [
+    key,
+    defaultLimit,
+  ])
+);
 
 export type Counted = {
   id: string;
-  type: Item["type"];
+  // A category, or an old type read through categoryOf
+  type: string;
   wears?: number | null;
   lastWornOn?: string | null;
+  // Overrides the category's limit; 0 means not counted
+  wearLimit?: number | null;
 };
+type Ref = { id: string };
 export type Queued = Pick<Outfit, "id" | "order"> & {
   active?: boolean;
-  shirt?: { id: string };
-  pants?: { id: string };
+  pieces?: Ref[];
+  // Old outfits, read through pieceIdsOf
+  shirt?: Ref;
+  pants?: Ref;
+  belt?: Ref;
+  shoes?: Ref;
   jacket?: unknown;
   pickedOn?: string | null;
   heldTurn?: boolean | null;
@@ -35,10 +49,14 @@ const pad = (n: number) => String(n).padStart(2, "0");
 export const localDate = (date = new Date()) =>
   `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 
-export const limitOf = (item: Counted, limits: Limits) =>
-  item.type === "shirt" || item.type === "pants"
-    ? limits[item.type]
-    : undefined;
+// The piece's own limit, else its category's; 0 or none means not counted,
+// and outerwear never is
+export const limitOf = (item: Counted, limits: Limits) => {
+  const category = categoryOf(item.type);
+  if (category === "outerwear") return undefined;
+  const limit = item.wearLimit ?? limits[category] ?? DEFAULT_LIMITS[category];
+  return limit ? limit : undefined;
+};
 
 const wearsOf = (item: Counted) => item.wears ?? 0;
 
@@ -56,9 +74,9 @@ export const hamperPieces = <I extends Counted>(
   items: Map<string, I>,
   limits: Limits
 ) =>
-  COUNTED.map((slot) => items.get(outfit[slot]?.id ?? "")).filter(
-    (piece): piece is I => !!piece && isInHamper(piece, limits)
-  );
+  pieceIdsOf(outfit)
+    .map((id) => items.get(id))
+    .filter((piece): piece is I => !!piece && isInHamper(piece, limits));
 
 export const isWearable = (
   outfit: Queued,
@@ -102,9 +120,9 @@ export const inHamper = <I extends Counted>(items: I[], limits: Limits) =>
 // The hamper by type, in outfit order (shirts, then pants), each oldest first;
 // pieces must already be in hamper order (see inHamper)
 export const hamperGroups = <I extends Counted>(pieces: I[]) =>
-  COUNTED.map((type) => ({
-    type,
-    pieces: pieces.filter((piece) => piece.type === type),
+  CATEGORIES.map(({ key }) => ({
+    type: key,
+    pieces: pieces.filter((piece) => categoryOf(piece.type) === key),
   })).filter(({ pieces }) => pieces.length > 0);
 
 export const washed = (item: Counted): ItemUpdate => ({
@@ -182,8 +200,10 @@ export const pick = <O extends Queued>({
 
   // Dated to the day it came on screen, however long it stayed there
   const wornOn = current.pickedOn ?? date;
-  const itemUpdates = COUNTED.flatMap((slot): ItemUpdate[] => {
-    const piece = items.get(current[slot]?.id ?? "");
+  // Each piece once, even if it's listed twice
+  const ids = [...new Set(pieceIdsOf(current))];
+  const itemUpdates = ids.flatMap((id): ItemUpdate[] => {
+    const piece = items.get(id);
     const limit = piece && limitOf(piece, limits);
     if (!piece || limit === undefined) return [];
     return [

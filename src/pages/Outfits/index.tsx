@@ -1,4 +1,3 @@
-import { orderBy } from "@firebase/firestore";
 import {
   Box,
   Grid,
@@ -18,28 +17,23 @@ import {
 import { MdAdd, MdDragIndicator } from "react-icons/md";
 
 import { openNewOutfit, openOutfit } from "utils/history";
-import { Item, Outfit } from "utils/types";
 
 import OutfitReference from "components/OutfitReference";
 import Loading from "components/Loading";
 import PageHeader from "components/PageHeader";
 import EmptyState from "components/EmptyState";
 
-import useData from "resources/useData";
+import useOutfits from "resources/useOutfits";
+import useWardrobe from "resources/useWardrobe";
 import useNotice from "hooks/useNotice";
 import useUpdateOutfits from "resources/useUpdateOutfits";
 
-const fields = ["shirt", "belt", "pants", "shoes"] as const;
-
 const Outfits = () => {
-  const [outfits, isOutfitsLoading] = useData<Outfit>(
-    "outfits",
-    orderBy("order")
-  );
+  const [outfits, isOutfitsLoading] = useOutfits();
   const [updateOutfits] = useUpdateOutfits();
   const toast = useNotice();
   // With no clothes yet, the wardrobe comes before any outfit
-  const [items] = useData<Item>("wardrobe-items");
+  const [items] = useWardrobe();
 
   const onDragEnd = (result: DropResult) => {
     const { destination, source } = result;
@@ -183,11 +177,10 @@ const Outfits = () => {
                           sx={{ flex: 1, minW: 0 }}
                           pointerEvents="none"
                         >
-                          {fields.map((field) => (
+                          {outfit.pieces.slice(0, 4).map((reference) => (
                             <OutfitReference
-                              key={field}
-                              reference={outfit[field]}
-                              slot={field}
+                              key={reference.id}
+                              reference={reference}
                               aspectRatio={1}
                               radius="thumb"
                             />

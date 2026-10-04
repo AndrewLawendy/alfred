@@ -24,23 +24,30 @@ import type { Queued } from "utils/laundry";
 
 const item = (
   id: string,
-  type: "shirt" | "pants" | "belt" | "shoes" | "jacket",
+  type:
+    "top" | "bottom" | "dress" | "layer" | "shoes" | "accessory" | "outerwear",
   wears?: number,
-  lastWornOn?: string
-) => ({ id, type, wears, lastWornOn });
+  lastWornOn?: string,
+  wearLimit?: number
+) => ({
+  id,
+  type,
+  wears,
+  lastWornOn,
+  ...(wearLimit !== undefined && { wearLimit }),
+});
 
 const outfit = (
   id: string,
   order: number,
-  shirt: string,
-  pants: string,
+  top: string,
+  bottom: string,
   extra: Partial<Queued> = {}
 ): Queued => ({
   id,
   order,
   active: false,
-  shirt: { id: shirt },
-  pants: { id: pants },
+  pieces: [{ id: top }, { id: bottom }],
   ...extra,
 });
 
@@ -60,28 +67,28 @@ test("local dates don't depend on the browser's locale formats", () => {
 });
 
 test("an item is in the hamper once its wears reach its type's limit", () => {
-  expect(isInHamper(item("s", "shirt", 1), limits)).toBe(true);
-  expect(isInHamper(item("s", "shirt", 0), limits)).toBe(false);
-  expect(isInHamper(item("s", "shirt"), limits)).toBe(false);
-  expect(isInHamper(item("p", "pants", 2), limits)).toBe(false);
-  expect(isInHamper(item("p", "pants", 3), limits)).toBe(true);
+  expect(isInHamper(item("s", "top", 1), limits)).toBe(true);
+  expect(isInHamper(item("s", "top", 0), limits)).toBe(false);
+  expect(isInHamper(item("s", "top"), limits)).toBe(false);
+  expect(isInHamper(item("p", "bottom", 2), limits)).toBe(false);
+  expect(isInHamper(item("p", "bottom", 3), limits)).toBe(true);
 });
 
 test("belts, shoes and jackets never go in the hamper", () => {
-  expect(isInHamper(item("b", "belt", 99), limits)).toBe(false);
-  expect(isInHamper(item("j", "jacket", 99), limits)).toBe(false);
+  expect(isInHamper(item("b", "accessory", 99), limits)).toBe(false);
+  expect(isInHamper(item("j", "outerwear", 99), limits)).toBe(false);
 });
 
 test("lowering a limit puts items in the hamper immediately, raising takes them out", () => {
-  const chinos = item("p", "pants", 2);
-  expect(isInHamper(chinos, { ...limits, pants: 2 })).toBe(true);
-  expect(isInHamper(item("p", "pants", 3), { ...limits, pants: 4 })).toBe(
+  const chinos = item("p", "bottom", 2);
+  expect(isInHamper(chinos, { ...limits, bottom: 2 })).toBe(true);
+  expect(isInHamper(item("p", "bottom", 3), { ...limits, bottom: 4 })).toBe(
     false
   );
 });
 
 test("hamper pieces skip slots whose item is missing", () => {
-  const items = byId([item("s1", "shirt", 1)]);
+  const items = byId([item("s1", "top", 1)]);
   expect(hamperPieces(outfit("a", 0, "s1", "gone"), items, limits)).toEqual([
     items.get("s1"),
   ]);
@@ -92,9 +99,9 @@ test("hamper pieces skip slots whose item is missing", () => {
 
 test("wearable outfits are found from a position, going round once", () => {
   const items = byId([
-    item("s1", "shirt", 1),
-    item("s2", "shirt"),
-    item("p", "pants"),
+    item("s1", "top", 1),
+    item("s2", "top"),
+    item("p", "bottom"),
   ]);
   const outfits = [
     outfit("a", 0, "s1", "p"),
@@ -107,7 +114,7 @@ test("wearable outfits are found from a position, going round once", () => {
 });
 
 test("no wearable outfit gives undefined; the outfit on screen is the active one", () => {
-  const items = byId([item("s1", "shirt", 1), item("p", "pants", 3)]);
+  const items = byId([item("s1", "top", 1), item("p", "bottom", 3)]);
   const outfits = [
     outfit("a", 0, "s1", "p"),
     outfit("b", 1, "s1", "p2", { active: true }),
@@ -119,13 +126,13 @@ test("no wearable outfit gives undefined; the outfit on screen is the active one
 
 test("the hamper lists items oldest first; washing and hamper set wears", () => {
   const items = [
-    item("new", "shirt", 1, "2026-10-02"),
-    item("old", "pants", 3, "2026-09-28"),
-    item("clean", "shirt", 0),
+    item("new", "top", 1, "2026-10-02"),
+    item("old", "bottom", 3, "2026-09-28"),
+    item("clean", "top", 0),
   ];
   expect(inHamper(items, limits).map(({ id }) => id)).toEqual(["old", "new"]);
   expect(washed(items[0])).toEqual({ id: "new", changes: { wears: 0 } });
-  expect(toHamper(item("p", "pants", 1), limits, "2026-10-03")).toEqual({
+  expect(toHamper(item("p", "bottom", 1), limits, "2026-10-03")).toEqual({
     id: "p",
     changes: { wears: 3, lastWornOn: "2026-10-03" },
   });
@@ -150,8 +157,8 @@ const queue = (extra: Record<string, Partial<Queued>> = {}) =>
 const wardrobe = (wears: Record<string, number> = {}) =>
   byId(
     ["sa", "sb", "sc", "sd"]
-      .map((id) => item(id, "shirt", wears[id]))
-      .concat(item("p", "pants", wears.p))
+      .map((id) => item(id, "top", wears[id]))
+      .concat(item("p", "bottom", wears.p))
   );
 // Firestore after the writes, in rotation order
 const apply = (outfits: Queued[], updates: { id: string; changes: object }[]) =>
@@ -279,11 +286,11 @@ test("Next outfit skips an outfit with a piece in the hamper, which keeps its tu
 test("the wear just counted can rule out the next outfit", () => {
   // A and B share the chinos, at 2 of 3: wearing A puts them in the hamper
   const items = byId([
-    item("sa", "shirt"),
-    item("sb", "shirt"),
-    item("sc", "shirt"),
-    item("chinos", "pants", 2),
-    item("jeans", "pants"),
+    item("sa", "top"),
+    item("sb", "top"),
+    item("sc", "top"),
+    item("chinos", "bottom", 2),
+    item("jeans", "bottom"),
   ]);
   const outfits = [
     outfit("a", 0, "sa", "chinos", { active: true, pickedOn: MON }),
@@ -384,10 +391,10 @@ test("since labels use the weekday this week, the date before that", () => {
 });
 
 test("piece marks: hamper, pips for multi-wear types, nothing for one-wear", () => {
-  expect(wearBadge(item("s", "shirt", 1), DEFAULT_LIMITS)).toBe("🧺");
-  expect(wearBadge(item("p", "pants", 1), DEFAULT_LIMITS)).toBe("●○○");
-  expect(wearBadge(item("s", "shirt", 0), DEFAULT_LIMITS)).toBeUndefined();
-  expect(wearBadge(item("b", "belt", 5), DEFAULT_LIMITS)).toBeUndefined();
+  expect(wearBadge(item("s", "top", 1), DEFAULT_LIMITS)).toBe("🧺");
+  expect(wearBadge(item("p", "bottom", 1), DEFAULT_LIMITS)).toBe("●○○");
+  expect(wearBadge(item("s", "top", 0), DEFAULT_LIMITS)).toBeUndefined();
+  expect(wearBadge(item("b", "accessory", 5), DEFAULT_LIMITS)).toBeUndefined();
   expect(wearBadge(undefined, DEFAULT_LIMITS)).toBeUndefined();
 });
 
@@ -457,15 +464,15 @@ test("Wear today on the outfit that comes up next anyway is a plain Next outfit"
 
 test("the hamper groups by type, shirts first, oldest first within each", () => {
   const groups = hamperGroups([
-    item("old pants", "pants", 3, "2026-09-27"),
-    item("old shirt", "shirt", 1, "2026-09-28"),
-    item("new shirt", "shirt", 1, "2026-10-02"),
+    item("old pants", "bottom", 3, "2026-09-27"),
+    item("old shirt", "top", 1, "2026-09-28"),
+    item("new shirt", "top", 1, "2026-10-02"),
   ]);
   expect(
     groups.map(({ type, pieces }) => [type, pieces.map(({ id }) => id)])
   ).toEqual([
-    ["shirt", ["old shirt", "new shirt"]],
-    ["pants", ["old pants"]],
+    ["top", ["old shirt", "new shirt"]],
+    ["bottom", ["old pants"]],
   ]);
   expect(hamperGroups([])).toEqual([]);
 });

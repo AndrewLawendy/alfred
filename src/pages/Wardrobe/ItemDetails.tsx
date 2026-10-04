@@ -1,4 +1,3 @@
-import { orderBy } from "firebase/firestore";
 import {
   Box,
   Button,
@@ -14,7 +13,7 @@ import { WiThermometer } from "react-icons/wi";
 import OutfitReference from "components/OutfitReference";
 import { Eyebrow } from "components/PageHeader";
 import useNotice from "hooks/useNotice";
-import useData from "resources/useData";
+import useOutfits from "resources/useOutfits";
 import useLimits from "resources/useLimits";
 import useUpdateOutfits from "resources/useUpdateOutfits";
 import {
@@ -26,9 +25,8 @@ import {
   washed,
 } from "utils/laundry";
 import { openOutfit } from "utils/history";
-import { Item, Outfit } from "utils/types";
-
-const slots = ["shirt", "belt", "pants", "shoes"] as const;
+import { pieceIdsOf } from "utils/wardrobe";
+import { Item } from "utils/types";
 
 const SectionLabel = ({ children }: { children: string }) => (
   <Box sx={{ mt: 8, mb: 3 }}>
@@ -37,10 +35,10 @@ const SectionLabel = ({ children }: { children: string }) => (
 );
 
 const ItemDetails = ({ item }: { item: Item }) => {
-  const [outfits] = useData<Outfit>("outfits", orderBy("order"));
+  const [outfits] = useOutfits();
   const usedIn = (outfits || [])
     .map((outfit, index) => ({ outfit, number: index + 1 }))
-    .filter(({ outfit }) => slots.some((slot) => outfit[slot]?.id === item.id));
+    .filter(({ outfit }) => pieceIdsOf(outfit).includes(item.id));
   const limits = useLimits();
   const [updateOutfits, isSaving] = useUpdateOutfits();
   const toast = useNotice();
@@ -88,7 +86,7 @@ const ItemDetails = ({ item }: { item: Item }) => {
           </Text>
         )}
 
-        {(item.type === "shirt" || item.type === "pants") && limit && (
+        {limit && (
           <Flex
             sx={{
               mt: 6,
@@ -110,7 +108,7 @@ const ItemDetails = ({ item }: { item: Item }) => {
           </Flex>
         )}
 
-        {item.type === "jacket" ? (
+        {item.type === "outerwear" ? (
           <>
             <Flex
               sx={{
@@ -176,11 +174,10 @@ const ItemDetails = ({ item }: { item: Item }) => {
                   gap={1.5}
                   sx={{ flex: 1, pointerEvents: "none" }}
                 >
-                  {slots.map((slot) => (
+                  {outfit.pieces.slice(0, 4).map((reference) => (
                     <OutfitReference
-                      key={slot}
-                      reference={outfit[slot]}
-                      slot={slot}
+                      key={reference.id}
+                      reference={reference}
                       aspectRatio={1}
                       radius="thumb"
                     />

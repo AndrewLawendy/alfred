@@ -19,7 +19,6 @@ import {
 import { GiSleevelessJacket } from "react-icons/gi";
 import { MdArrowForward, MdCheck, MdChevronRight } from "react-icons/md";
 import { WiThermometer } from "react-icons/wi";
-import { orderBy } from "@firebase/firestore";
 
 import PageHeader, { Eyebrow } from "components/PageHeader";
 import { useInstallHint } from "components/Install";
@@ -37,7 +36,8 @@ import useNotice from "hooks/useNotice";
 import useToday from "hooks/useToday";
 import useLaundryDone from "resources/useLaundryDone";
 
-import useData from "resources/useData";
+import useOutfits from "resources/useOutfits";
+import useWardrobe from "resources/useWardrobe";
 import useUpdateDocument from "resources/useUpdateDocument";
 import useUpdateOutfits from "resources/useUpdateOutfits";
 import useWeather from "resources/useWeather";
@@ -59,9 +59,8 @@ import {
   washed,
   wearBadge,
 } from "utils/laundry";
+import { pieceIdsOf } from "utils/wardrobe";
 import { Item, Jacket, Outfit } from "utils/types";
-
-const slots = ["shirt", "belt", "pants", "shoes"] as const;
 
 const numbers = ["No", "One", "Two", "Three", "Four", "Five", "Six"];
 const count = (n: number) => numbers[n] || String(n);
@@ -146,10 +145,7 @@ const Home = () => {
   // Focus the title on open, so no focus ring lands on the first jacket
   const sheetTitleRef = useRef<HTMLHeadingElement>(null);
   const { data: weatherData, isLoading: isWeatherLoading } = useWeather();
-  const [outfits, isOutfitsLoading] = useData<Outfit>(
-    "outfits",
-    orderBy("order")
-  );
+  const [outfits, isOutfitsLoading] = useOutfits();
   const [updateOutfit, isUpdateOutfitLoading] =
     useUpdateDocument<Outfit>("outfits");
   const [updateOutfits, isUpdateOutfitsLoading] = useUpdateOutfits();
@@ -157,7 +153,7 @@ const Home = () => {
     const [firstOutfit] = outfits || [];
     return outfits?.find(({ active }) => active) || firstOutfit;
   }, [outfits]);
-  const [items] = useData<Item>("wardrobe-items");
+  const [items] = useWardrobe();
   const { limits, isLoading: isLimitsLoading } = useLimitsState();
   // Counting waits for the wardrobe and the person's own limits
   const isCountReady = !!items && !isLimitsLoading;
@@ -184,7 +180,7 @@ const Home = () => {
       : `Picked ${sinceLabel(activeOutfit.pickedOn, date)}`;
   const jackets = useMemo(
     () =>
-      (items || []).filter((item): item is Jacket => item.type === "jacket"),
+      (items || []).filter((item): item is Jacket => item.type === "outerwear"),
     [items]
   );
   // The outfit keeps a copy of today's jacket: show the jacket as it is now
@@ -431,17 +427,13 @@ const Home = () => {
               } as React.CSSProperties
             }
           >
-            {slots.map((slot) => (
+            {activeOutfit.pieces.map((reference) => (
               <OutfitReference
-                key={slot}
-                reference={activeOutfit[slot]}
-                slot={slot}
+                key={reference.id}
+                reference={reference}
                 isLabelled
                 onMissing={() => openOutfit(activeOutfit.id)}
-                badge={wearBadge(
-                  itemsById.get(activeOutfit[slot]?.id ?? ""),
-                  limits
-                )}
+                badge={wearBadge(itemsById.get(reference.id), limits)}
               />
             ))}
           </Grid>
@@ -548,12 +540,11 @@ const Home = () => {
                 </Text>
               </Box>
               <Flex sx={{ gap: 1.5 }}>
-                {slots.map((slot) => (
-                  <Swatch
-                    key={slot}
-                    item={items?.find(({ id }) => id === comingUp[slot]?.id)}
-                  />
-                ))}
+                {pieceIdsOf(comingUp)
+                  .slice(0, 4)
+                  .map((id) => (
+                    <Swatch key={id} item={itemsById.get(id)} />
+                  ))}
               </Flex>
               <Icon as={MdChevronRight} sx={{ w: 5, h: 5, color: "muted" }} />
             </Flex>

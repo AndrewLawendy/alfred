@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, RefObject } from "react";
-import { doc, orderBy } from "firebase/firestore";
+import { doc } from "firebase/firestore";
 import {
   Box,
   Button,
@@ -29,7 +29,8 @@ import useBackToClose from "hooks/useBackToClose";
 import useNotice from "hooks/useNotice";
 import useToday from "hooks/useToday";
 import useAddDocument from "resources/useAddDocument";
-import useData from "resources/useData";
+import useOutfits from "resources/useOutfits";
+import useWardrobe from "resources/useWardrobe";
 import { useLimitsState } from "resources/useLimits";
 import useUpdateDocument from "resources/useUpdateDocument";
 import useUpdateOutfits from "resources/useUpdateOutfits";
@@ -41,19 +42,23 @@ import { afterDelete, nextOrder } from "utils/rotation";
 import { Item, Outfit } from "utils/types";
 
 const slots = [
-  { key: "shirt", label: "Shirt", icon: GiShirt },
-  { key: "belt", label: "Belt", icon: GiBelt },
-  { key: "pants", label: "Pants", icon: GiTrousers },
+  { key: "top", label: "Top", icon: GiShirt },
+  { key: "accessory", label: "Accessory", icon: GiBelt },
+  { key: "bottom", label: "Bottom", icon: GiTrousers },
   { key: "shoes", label: "Shoes", icon: GiRunningShoe },
 ] as const;
 
 type SlotKey = (typeof slots)[number]["key"];
 type Picks = Partial<Record<SlotKey, string>>;
 
-const picksOf = (outfit?: Outfit): Picks =>
-  outfit
-    ? Object.fromEntries(slots.map(({ key }) => [key, outfit[key]?.id]))
-    : {};
+// ponytail: interim four-slot editor on the pieces model, replaced in Task 8
+const picksOf = (items: Item[], outfit?: Outfit): Picks =>
+  Object.fromEntries(
+    (outfit?.pieces ?? []).map(({ id }) => [
+      items.find((item) => item.id === id)?.type ?? "",
+      id,
+    ])
+  );
 
 const labelStyle = {
   fontSize: "xs",
@@ -261,7 +266,7 @@ const OutfitEditor = ({
 }: EditorProps) => {
   const [mode, setMode] = useState<"view" | "edit">(outfit ? "view" : "edit");
   const { close: closeOutfit } = useScreen();
-  const [picks, setPicks] = useState<Picks>(() => picksOf(outfit));
+  const [picks, setPicks] = useState<Picks>(() => picksOf(items, outfit));
   const [addOutfit, isAdding] = useAddDocument<Outfit>("outfits");
   const [updateOutfit, isUpdating] = useUpdateDocument<Outfit>("outfits");
   const [updateOutfits, isDeleting] = useUpdateOutfits();
@@ -275,17 +280,16 @@ const OutfitEditor = ({
 
   // Editing is its own step: Back returns to the outfit and drops changes
   useBackToClose(isEditingExisting, () => {
-    setPicks(picksOf(outfit));
+    setPicks(picksOf(items, outfit));
     setMode("view");
   });
 
   const onSave = async () => {
-    const references = Object.fromEntries(
-      slots.map(({ key }) => [
-        key,
-        doc(db, "wardrobe-items", picks[key] as string),
-      ])
-    ) as Pick<Outfit, SlotKey>;
+    const references = {
+      pieces: slots.map(({ key }) =>
+        doc(db, "wardrobe-items", picks[key] as string)
+      ),
+    };
 
     try {
       if (outfit) {
@@ -560,8 +564,8 @@ export const OutfitPanel = ({
   param: string;
   headingRef: RefObject<HTMLParagraphElement>;
 }) => {
-  const [outfits] = useData<Outfit>("outfits", orderBy("order"));
-  const [items] = useData<Item>("wardrobe-items");
+  const [outfits] = useOutfits();
+  const [items] = useWardrobe();
   const index = outfits?.findIndex(({ id }) => id === param) ?? -1;
   const found =
     outfits && index !== -1

@@ -18,7 +18,7 @@ import { Eyebrow } from "components/PageHeader";
 import Swipeable from "components/Swipeable";
 import useBackToClose from "hooks/useBackToClose";
 import useNotice from "hooks/useNotice";
-import useData from "resources/useData";
+import useWardrobe from "resources/useWardrobe";
 import useLimits from "resources/useLimits";
 import useUpdateOutfits from "resources/useUpdateOutfits";
 import useLaundryDone from "resources/useLaundryDone";
@@ -29,18 +29,20 @@ import {
   sinceLabel,
   washed,
 } from "utils/laundry";
-import { Item } from "utils/types";
+import { CATEGORIES } from "utils/wardrobe";
+import { Category } from "utils/types";
 
 type HamperSheetProps = { isOpen: boolean; onClose: () => void };
 
-const groupLabels = { shirt: "Shirts", pants: "Pants" } as const;
+const groupLabel = (type: Category) =>
+  CATEGORIES.find(({ key }) => key === type)?.plural ?? type;
 
 // What's waiting for a wash, by type: clear it all, a type at a time, or
 // piece by piece for a partial load
 const HamperSheet = ({ isOpen, onClose }: HamperSheetProps) => {
   useBackToClose(isOpen, onClose);
   const titleRef = useRef<HTMLHeadingElement>(null);
-  const [items] = useData<Item>("wardrobe-items");
+  const [items] = useWardrobe();
   const limits = useLimits();
   const [updateOutfits, isSaving] = useUpdateOutfits();
   const toast = useNotice();
@@ -103,7 +105,7 @@ const HamperSheet = ({ isOpen, onClose }: HamperSheetProps) => {
                     }}
                   >
                     <Eyebrow>
-                      {groupLabels[type]} · {pieces.length}
+                      {groupLabel(type)} · {pieces.length}
                     </Eyebrow>
                     <Button
                       variant="link"
@@ -111,7 +113,7 @@ const HamperSheet = ({ isOpen, onClose }: HamperSheetProps) => {
                       onClick={() => save(pieces.map(washed))}
                       sx={{ color: "accentText" }}
                     >
-                      Wash all {groupLabels[type].toLowerCase()}
+                      Wash all {groupLabel(type).toLowerCase()}
                     </Button>
                   </Flex>
                   {pieces.map((item) => {

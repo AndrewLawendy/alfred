@@ -7,57 +7,34 @@ export interface Common {
   user: string;
 }
 
-export interface Shirt extends Common {
-  type: "shirt";
+export type Category =
+  "top" | "bottom" | "dress" | "layer" | "shoes" | "accessory" | "outerwear";
+
+export interface Item extends Common {
+  type: Category;
   title: string;
   description: string;
   imageUrl: string;
   // Wears since the last wash; missing means clean. In the hamper once it
-  // reaches the type's limit (see utils/laundry)
+  // reaches its limit (see utils/laundry)
   wears?: number | null;
   lastWornOn?: string | null; // local "YYYY-MM-DD"
+  // Overrides the category's wear limit; 0 means not counted
+  wearLimit?: number | null;
+  // Outerwear only: suggested at this temperature or cooler
+  maxTemperature?: number;
 }
 
-export interface Belt extends Common {
-  type: "belt";
-  title: string;
-  description: string;
-  imageUrl: string;
-}
-
-export interface PantsPair extends Common {
-  type: "pants";
-  title: string;
-  description: string;
-  imageUrl: string;
-  // Wears since the last wash; missing means clean. In the hamper once it
-  // reaches the type's limit (see utils/laundry)
-  wears?: number | null;
-  lastWornOn?: string | null; // local "YYYY-MM-DD"
-}
-
-export interface ShoePair extends Common {
-  type: "shoes";
-  title: string;
-  description: string;
-  imageUrl: string;
-}
-
-export interface Jacket extends Common {
-  type: "jacket";
-  title: string;
-  description: string;
-  imageUrl: string;
-  maxTemperature: number;
-}
-
-export type Item = Shirt | Belt | PantsPair | ShoePair | Jacket;
+export type Jacket = Item & { type: "outerwear"; maxTemperature: number };
 
 export interface Outfit extends Common {
-  shirt: DocumentReference<DocumentData>;
-  belt: DocumentReference<DocumentData>;
-  pants: DocumentReference<DocumentData>;
-  shoes: DocumentReference<DocumentData>;
+  // The outfit's pieces, in the order the person picked them
+  pieces: DocumentReference<DocumentData>[];
+  // Before the flexible model; read by normalizeOutfit, never written
+  shirt?: DocumentReference<DocumentData>;
+  belt?: DocumentReference<DocumentData>;
+  pants?: DocumentReference<DocumentData>;
+  shoes?: DocumentReference<DocumentData>;
   // Today's jacket: missing or null until decided, false for "no jacket today"
   jacket?: Jacket | null | false;
   order: number;

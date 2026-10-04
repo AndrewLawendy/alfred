@@ -6,22 +6,22 @@ import { MdAdd } from "react-icons/md";
 import HamperSheet from "components/HamperSheet";
 import HamperCard from "components/HamperSheet/HamperCard";
 import PageHeader, { COMPACT_BAR_HEIGHT } from "components/PageHeader";
-import useData from "resources/useData";
+import useWardrobe from "resources/useWardrobe";
 import useLimits from "resources/useLimits";
 import { inHamper } from "utils/laundry";
 import { openNewItem } from "utils/history";
+import { CATEGORIES } from "utils/wardrobe";
 import { Item } from "utils/types";
 
 import WardrobeItem from "./WardrobeItem";
 import AddChooser from "./AddChooser";
 
-const tabs: { type: Item["type"]; label: string; singular: string }[] = [
-  { type: "shirt", label: "Shirts", singular: "shirt" },
-  { type: "jacket", label: "Jackets", singular: "jacket" },
-  { type: "belt", label: "Belts", singular: "belt" },
-  { type: "pants", label: "Pants", singular: "pants" },
-  { type: "shoes", label: "Shoes", singular: "shoes" },
-];
+const tabs: { type: Item["type"]; label: string; singular: string }[] =
+  CATEGORIES.map(({ key, label, plural }) => ({
+    type: key,
+    label: plural,
+    singular: label.toLowerCase(),
+  }));
 
 const Wardrobe = () => {
   const [, navigate] = useLocation();
@@ -38,7 +38,7 @@ const Wardrobe = () => {
         : `item=${encodeURIComponent(oldLink.item)}`;
     navigate(`/${oldLink.type}?${query}`, { replace: true });
   }, [isOldItemLink, oldLink?.type, oldLink?.item]);
-  const [allItems] = useData<Item>("wardrobe-items");
+  const [allItems] = useWardrobe();
   const limits = useLimits();
   const hamper = inHamper(allItems || [], limits);
   const {

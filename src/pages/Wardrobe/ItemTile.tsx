@@ -60,7 +60,7 @@ const ItemTile = ({ item, onClick, badge, isDimmed }: ItemTileProps) => (
           {badge}
         </Text>
       )}
-      {item.type === "jacket" && (
+      {item.type === "outerwear" && (
         // The limit that decides when this jacket is suggested
         <Text
           sx={{
