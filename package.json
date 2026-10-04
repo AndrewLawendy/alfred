@@ -32,6 +32,7 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --port 5055",
     "test": "vitest",
+    "test:migration": "node --test scripts/*.test.mjs",
     "test:rules": "npx -y firebase-tools@15 emulators:exec --only firestore,storage --project alfred-rules-test \"node --test rules.test.mjs\"",
     "lint": "eslint src --fix --cache --quiet",
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
