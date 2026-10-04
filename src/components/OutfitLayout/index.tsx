@@ -35,6 +35,8 @@ type OutfitLayoutProps = {
   isPhotoMarked?: boolean;
   // Tapping the outfit photo
   onPhoto?: () => void;
+  // Editing: a control on the photo's corner
+  photoAction?: ReactNode;
 };
 
 const GAP = 8;
@@ -77,6 +79,7 @@ const OutfitLayout = ({
   title,
   isPhotoMarked,
   onPhoto,
+  photoAction,
 }: OutfitLayoutProps) => {
   if (photoUrl) {
     return (
@@ -87,6 +90,9 @@ const OutfitLayout = ({
         badge={badge}
         isMarked={isPhotoMarked}
         onPhoto={onPhoto}
+        photoAction={photoAction}
+        onRemove={onRemove}
+        onPiece={onPiece}
       />
     );
   }

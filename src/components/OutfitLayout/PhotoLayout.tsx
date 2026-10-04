@@ -1,8 +1,9 @@
 import { ReactNode } from "react";
-import { Box, Flex, Icon, Image } from "@chakra-ui/react";
-import { MdPhotoCamera } from "react-icons/md";
+import { Box, Flex, Icon, IconButton, Image } from "@chakra-ui/react";
+import { MdClose, MdPhotoCamera } from "react-icons/md";
 
 import OutfitItem from "components/OutfitItem";
+import { frosted } from "utils/theme";
 import { layoutOf } from "utils/wardrobe";
 import { Item } from "utils/types";
 
@@ -15,6 +16,10 @@ type PhotoLayoutProps = {
   isMarked?: boolean;
   // Tapping the photo, as tapping a piece opens it
   onPhoto?: () => void;
+  // Editing: a control on the photo's corner, and taking a piece out
+  photoAction?: ReactNode;
+  onRemove?: (item: Item) => void;
+  onPiece?: (item: Item) => void;
 };
 
 const GAP = 8;
@@ -34,6 +39,9 @@ const PhotoLayout = ({
   badge,
   isMarked,
   onPhoto,
+  photoAction,
+  onRemove,
+  onPiece,
 }: PhotoLayoutProps) => {
   const { main, side, small } = layoutOf(pieces);
   const sorted = [...main, ...side, ...small];
@@ -53,6 +61,7 @@ const PhotoLayout = ({
       key={item.id}
       style={{ "--outfit-photo-height": height } as React.CSSProperties}
       sx={{
+        position: "relative",
         flex: isSingle ? "none" : 1,
         minW: 0,
         w: isSingle ? UNDER : undefined,
@@ -65,7 +74,27 @@ const PhotoLayout = ({
         imageUrl={item.imageUrl}
         badge={badge?.(item)}
         radius="thumb"
+        {...(onPiece && {
+          onClick: () => onPiece(item),
+          role: "button",
+          "aria-label": item.title,
+        })}
       />
+      {onRemove && (
+        <IconButton
+          aria-label={`Remove ${item.title}`}
+          icon={<Icon as={MdClose} />}
+          size="xs"
+          onClick={() => onRemove(item)}
+          sx={{
+            ...frosted,
+            position: "absolute",
+            top: 2,
+            right: 2,
+            borderRadius: "full",
+          }}
+        />
+      )}
     </Box>
   );
 
@@ -81,11 +110,14 @@ const PhotoLayout = ({
         }}
       >
         <Box
-          {...(onPhoto && {
-            as: "button",
-            onClick: onPhoto,
-            "aria-label": title,
-          })}
+          // With a control on it (editing), the tap goes on the image: a
+          // button can't hold another button
+          {...(onPhoto &&
+            !photoAction && {
+              as: "button",
+              onClick: onPhoto,
+              "aria-label": title,
+            })}
           sx={{
             position: "relative",
             flexShrink: 0,
@@ -102,6 +134,7 @@ const PhotoLayout = ({
           <Image
             src={photoUrl}
             alt={title ?? ""}
+            {...(photoAction && onPhoto && { onClick: onPhoto })}
             sx={{
               display: "block",
               h: "var(--photo-height)",
@@ -111,7 +144,12 @@ const PhotoLayout = ({
               backgroundColor: "surface",
             }}
           />
-          {isMarked && (
+          {photoAction && (
+            <Box sx={{ position: "absolute", left: 2, top: 2 }}>
+              {photoAction}
+            </Box>
+          )}
+          {isMarked && !photoAction && (
             <Flex
               aria-hidden
               sx={{

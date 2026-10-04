@@ -1,4 +1,4 @@
-import { useState, RefObject } from "react";
+import { useEffect, useState, RefObject } from "react";
 import { deleteField, doc } from "firebase/firestore";
 import {
   Box,
@@ -7,9 +7,11 @@ import {
   Heading,
   Icon,
   IconButton,
+  Input,
   Text,
+  useDisclosure,
 } from "@chakra-ui/react";
-import { MdArrowBack } from "react-icons/md";
+import { MdArrowBack, MdGridView, MdPhotoCamera } from "react-icons/md";
 
 import Confirm from "components/Confirm";
 import Loading from "components/Loading";
@@ -35,6 +37,7 @@ import useDeleteImage from "resources/useDeleteImage";
 import useUploadImage from "resources/useUploadImage";
 import { db } from "utils/firebase";
 import geFileURL from "utils/geFileURL";
+import resizeImage from "utils/resizeImage";
 import { deleteOutfit, saveOutfit } from "utils/outfitSave";
 import { activeIndex, byId, sinceLabel, wearToday } from "utils/laundry";
 import { afterDelete, nextOrder } from "utils/rotation";
@@ -44,12 +47,24 @@ import {
   gapsFor,
   isOutfitValid,
   MAX_PIECES,
+  NAME_MAX,
   outfitTitle,
   pieceIdsOf,
   togglePick,
 } from "utils/wardrobe";
-import { Category, Item, Outfit } from "utils/types";
-import Picker from "./Picker";
+import { Item, Outfit } from "utils/types";
+import Picker, { PickerTab } from "./Picker";
+import PhotoMenu from "./PhotoMenu";
+
+// Still read by screen readers, but not seen (the name field shows instead)
+const srOnly = {
+  position: "absolute",
+  w: "1px",
+  h: "1px",
+  overflow: "hidden",
+  clip: "rect(0 0 0 0)",
+  whiteSpace: "nowrap",
+} as const;
 
 // The board's empty places: the required top and bottom (unless there's a
 // dress), then a faint place for each optional category still open
@@ -108,17 +123,42 @@ const OutfitEditor = ({
   const [name, setName] = useState(outfit?.name ?? "");
   const [photo, setPhoto] = useState<Promise<File>>();
   const [isPhotoRemoved, setIsPhotoRemoved] = useState(false);
+  // Saving can take a while with a photo to upload
+  const [isSaving, setIsSaving] = useState(false);
   const [uploadImage] = useUploadImage();
   const [deleteImage] = useDeleteImage();
   const pickedItems = picks.flatMap((id) => itemById(id) ?? []);
   const pickedTypes = pickedItems.map(({ type }) => type);
   // The picker opens on the first thing missing
-  const [tab, setTab] = useState<Category>(
+  const [tab, setTab] = useState<PickerTab>(
     () => gapsFor(pickedTypes)[0] ?? "top"
   );
-  const isValid = isOutfitValid(picks.length);
-  const isMulti = (category: Category) =>
-    CATEGORIES.find(({ key }) => key === category)?.multi;
+  // A newly picked photo's preview, until it's saved
+  const [preview, setPreview] = useState<string>();
+  useEffect(
+    () => () => {
+      if (preview) URL.revokeObjectURL(preview);
+    },
+    [preview]
+  );
+  const boardPhoto = preview ?? (isPhotoRemoved ? undefined : outfit?.photoUrl);
+  const onPhotoPick = (file: File) => {
+    setPhoto(resizeImage(file));
+    setPreview(URL.createObjectURL(file));
+    setIsPhotoRemoved(false);
+  };
+  const onPhotoRemove = () => {
+    setPhoto(undefined);
+    setPreview(undefined);
+    setIsPhotoRemoved(true);
+  };
+  const photoMenu = useDisclosure();
+  // A new outfit starts by choosing: a photo, or pieces
+  const [hasStarted, setHasStarted] = useState(!!outfit);
+  const isValid = isOutfitValid(picks.length, !!boardPhoto);
+  const isMulti = (key: PickerTab) =>
+    key !== "photo" &&
+    CATEGORIES.find((category) => category.key === key)?.multi;
 
   const onPick = (id: string) => {
     const next = togglePick(picks, id, typeOf);
@@ -133,6 +173,7 @@ const OutfitEditor = ({
     setPicks(savedPicks);
     setName(outfit?.name ?? "");
     setPhoto(undefined);
+    setPreview(undefined);
     setIsPhotoRemoved(false);
     setMode("view");
   });
@@ -149,6 +190,7 @@ const OutfitEditor = ({
       });
       return;
     }
+    setIsSaving(true);
     try {
       await saveOutfit(
         {
@@ -198,6 +240,7 @@ const OutfitEditor = ({
         deleteImage(outfit.photoUrl).catch(() => undefined);
       }
       setPhoto(undefined);
+      setPreview(undefined);
       setIsPhotoRemoved(false);
       if (outfit) setMode("view");
       else closeOutfit();
@@ -207,6 +250,8 @@ const OutfitEditor = ({
         title: "Couldn't save the outfit",
         description: "Nothing was changed. Please try again.",
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -292,14 +337,36 @@ const OutfitEditor = ({
         <Text
           ref={headingRef}
           tabIndex={-1}
-          sx={{ flexGrow: 1, _focus: { outline: "none" } }}
+          sx={{
+            flexGrow: 1,
+            _focus: { outline: "none" },
+            // While editing, the name field takes the title's place
+            ...(isEditing && hasStarted && srOnly),
+          }}
         >
           {heading}
         </Text>
+        {isEditing && hasStarted && (
+          <Input
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            maxLength={NAME_MAX}
+            placeholder="Name it (optional)"
+            aria-label="Outfit name"
+            variant="unstyled"
+            sx={{
+              flex: 1,
+              minW: 0,
+              fontFamily: "heading",
+              fontSize: "2xl",
+              _placeholder: { color: "muted" },
+            }}
+          />
+        )}
         {isEditing ? (
           <Button
             onClick={onSave}
-            isLoading={isLoading}
+            isLoading={isLoading || isSaving}
             isDisabled={!isValid}
             colorScheme="brand"
           >
@@ -313,6 +380,14 @@ const OutfitEditor = ({
       </ScreenHeader>
 
       <ScreenBody sx={{ pt: 2, pb: 5 }}>
+        {(isEditing ? boardPhoto : outfit?.photoUrl) && (
+          <PhotoViewer
+            photoUrl={(isEditing ? boardPhoto : outfit?.photoUrl) as string}
+            title={outfit ? outfitTitle(outfit, number) : "Outfit photo"}
+            isOpen={isPhotoOpen}
+            onClose={() => setIsPhotoOpen(false)}
+          />
+        )}
         {!isEditing && outfit?.active && (
           <Text
             sx={{
@@ -331,7 +406,67 @@ const OutfitEditor = ({
             TODAY&apos;S OUTFIT
           </Text>
         )}
-        {isEditing ? (
+        {isEditing && !hasStarted ? (
+          <Flex sx={{ flexDirection: "column", gap: 3, pt: 4 }}>
+            <Text sx={{ fontFamily: "heading", fontSize: "2xl", mb: 1 }}>
+              How do you want to start?
+            </Text>
+            {[
+              {
+                icon: MdPhotoCamera,
+                title: "Photo of the outfit",
+                text: "One photo of the whole look. Add its pieces later, or not.",
+                start: "photo" as const,
+              },
+              {
+                icon: MdGridView,
+                title: "Pick pieces",
+                text: "From your wardrobe, 2 to 6.",
+                start: "top" as const,
+              },
+            ].map(({ icon, title, text, start }) => (
+              <Flex
+                key={title}
+                as="button"
+                onClick={() => {
+                  setHasStarted(true);
+                  setTab(start);
+                }}
+                sx={{
+                  gap: 4,
+                  p: 4,
+                  alignItems: "center",
+                  textAlign: "left",
+                  borderRadius: "card",
+                  backgroundColor: "card",
+                  transition: "transform 0.1s",
+                  _active: { transform: "scale(0.98)" },
+                }}
+              >
+                <Flex
+                  sx={{
+                    w: 14,
+                    h: 16,
+                    flexShrink: 0,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: "thumb",
+                    backgroundColor: "surface",
+                    color: "accentText",
+                  }}
+                >
+                  <Icon as={icon} sx={{ w: 6, h: 6 }} />
+                </Flex>
+                <Box>
+                  <Text sx={{ fontFamily: "heading", fontSize: "xl" }}>
+                    {title}
+                  </Text>
+                  <Text sx={{ fontSize: "sm", color: "muted" }}>{text}</Text>
+                </Box>
+              </Flex>
+            ))}
+          </Flex>
+        ) : isEditing ? (
           <Box
             // The board shares the screen with the picker below
             style={{ "--outfit-height": "300px" } as React.CSSProperties}
@@ -344,14 +479,19 @@ const OutfitEditor = ({
                 setPicks(picks.filter((id) => id !== item.id))
               }
               onPiece={(item) => setTab(categoryOf(item.type))}
-              highlight={isMulti(tab) ? undefined : tab}
+              highlight={tab === "photo" || isMulti(tab) ? undefined : tab}
+              photoUrl={boardPhoto}
+              title={name || "Outfit photo"}
+              onPhoto={photoMenu.onOpen}
+              photoAction={
+                <PhotoMenu
+                  {...photoMenu}
+                  onPick={onPhotoPick}
+                  onView={() => setIsPhotoOpen(true)}
+                  onRemove={onPhotoRemove}
+                />
+              }
             />
-            {!isValid && (
-              <Text sx={{ mt: 3, fontSize: "sm", color: "muted" }}>
-                Pick 2 to 6 pieces — a top and bottom, or a dress, plus anything
-                else.
-              </Text>
-            )}
           </Box>
         ) : (
           <>
@@ -364,14 +504,7 @@ const OutfitEditor = ({
               isPhotoMarked
               onPhoto={() => setIsPhotoOpen(true)}
             />
-            {outfit?.photoUrl && (
-              <PhotoViewer
-                photoUrl={outfit.photoUrl}
-                title={outfitTitle(outfit, number)}
-                isOpen={isPhotoOpen}
-                onClose={() => setIsPhotoOpen(false)}
-              />
-            )}
+
             {outfit?.photoUrl && !savedIds.length && (
               <Button
                 variant="link"
@@ -457,7 +590,7 @@ const OutfitEditor = ({
         )}
       </ScreenBody>
 
-      {isEditing && (
+      {isEditing && hasStarted && (
         // The wardrobe to pick from, a sheet under the board; its grid
         // scrolls on its own so the board stays in view
         <ScreenFooter
@@ -469,6 +602,14 @@ const OutfitEditor = ({
             backgroundColor: "card",
           }}
         >
+          {/* The rule, right above where you pick */}
+          {(!isValid || (boardPhoto && !picks.length)) && (
+            <Text sx={{ px: 4, pb: 2, fontSize: "sm", color: "muted" }}>
+              {isValid
+                ? "A photo is enough. Add its pieces to track laundry."
+                : "Add a photo, or pick 2 to 6 pieces — a top and bottom, or a dress, plus anything else."}
+            </Text>
+          )}
           <Box sx={{ maxH: "44dvh", overflowY: "auto" }}>
             <Picker
               items={items}
@@ -476,6 +617,11 @@ const OutfitEditor = ({
               active={tab}
               onTab={setTab}
               onPick={onPick}
+              photo={{
+                url: boardPhoto,
+                onPick: onPhotoPick,
+                onRemove: onPhotoRemove,
+              }}
             />
           </Box>
         </ScreenFooter>

@@ -60,3 +60,40 @@ test("at 6 pieces, only swaps are left", () => {
   );
   expect(screen.getByRole("button", { name: "Polo" })).toBeEnabled();
 });
+
+test("the Photo tab offers to take or choose a photo", () => {
+  render(
+    <Picker
+      items={items}
+      picks={[]}
+      active="photo"
+      onTab={vi.fn()}
+      onPick={vi.fn()}
+      photo={{ onPick: vi.fn(), onRemove: vi.fn() }}
+    />
+  );
+  expect(screen.getByRole("tab", { name: /Photo/ })).toHaveAttribute(
+    "aria-selected",
+    "true"
+  );
+  expect(screen.getByRole("button", { name: "Take photo" })).toBeTruthy();
+  expect(
+    screen.getByRole("button", { name: "Choose from library" })
+  ).toBeTruthy();
+});
+
+test("with a photo, the Photo tab can remove it", () => {
+  const onRemove = vi.fn();
+  render(
+    <Picker
+      items={items}
+      picks={[]}
+      active="photo"
+      onTab={vi.fn()}
+      onPick={vi.fn()}
+      photo={{ url: "https://p", onPick: vi.fn(), onRemove }}
+    />
+  );
+  screen.getByRole("button", { name: "Remove photo" }).click();
+  expect(onRemove).toHaveBeenCalled();
+});
