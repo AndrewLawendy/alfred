@@ -13,6 +13,9 @@ const {
   upNext,
   cleanCount,
   isInHamper,
+  DEFAULT_LIMITS,
+  categoryOf,
+  pieceIdsOf,
 } = require("./reminder");
 
 initializeApp();
@@ -50,7 +53,14 @@ const compose = async (uid, reminder, now) => {
     .sort((a, b) => a.order - b.order);
   if (outfits.length === 0) return null;
 
-  const limits = { shirt: 1, pants: 3, ...settingsSnapshot.data()?.limits };
+  // Saved limits may still use the old names, read as the app reads them
+  const { shirt, pants, ...saved } = settingsSnapshot.data()?.limits ?? {};
+  const limits = {
+    ...DEFAULT_LIMITS,
+    ...(shirt !== undefined && { top: shirt }),
+    ...(pants !== undefined && { bottom: pants }),
+    ...saved,
+  };
   const items = Object.fromEntries(
     itemsSnapshot.docs.map((doc) => [doc.id, doc.data()])
   );
@@ -65,12 +75,12 @@ const compose = async (uid, reminder, now) => {
   // Nudge towards picking today's, unless it's picked or there's only one
   const isNudge = outfits.length > 1 && current.pickedOn !== today;
   const outfit = isNudge ? upNext(outfits, items, limits) : current;
-  const pieces = ["shirt", "belt", "pants", "shoes"]
-    .map((slot) => items[outfit[slot]?.id]?.title)
+  const pieces = pieceIdsOf(outfit)
+    .map((id) => items[id]?.title)
     .filter(Boolean);
   const jackets = itemsSnapshot.docs
     .map((doc) => ({ ...doc.data(), id: doc.id }))
-    .filter(({ type }) => type === "jacket");
+    .filter(({ type }) => categoryOf(type) === "outerwear");
   // The outfit keeps a copy of its jacket: use the jacket as it is now, and
   // treat a deleted one as not decided yet
   const chosen = outfit.jacket

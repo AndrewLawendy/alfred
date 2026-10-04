@@ -1,6 +1,12 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { isDue, describe, upNext, cleanCount } = require("./reminder");
+const {
+  isDue,
+  describe,
+  upNext,
+  cleanCount,
+  isInHamper,
+} = require("./reminder");
 
 const cairo = {
   time: "07:30",
@@ -118,7 +124,7 @@ const wardrobe = {
   s2: { type: "shirt" },
   p: { type: "pants", wears: 3 },
 };
-const limits = { shirt: 1, pants: 3 };
+const limits = { top: 1, bottom: 3 };
 const fit = (id, shirt, pants, extra = {}) => ({
   id,
   shirt: { id: shirt },
@@ -208,4 +214,34 @@ test("laundry line only at 2 or fewer clean outfits with something in the hamper
     /laundry/
   );
   assert.equal(describe(base).title, "Time for the next outfit");
+});
+
+test("pieces count by category, with per-piece limits", () => {
+  const items = {
+    d: { type: "dress", wears: 1 },
+    h: { type: "accessory", wears: 2, wearLimit: 2 },
+    s: { type: "shirt", wears: 1 },
+    f: { type: "shoes", wears: 99 },
+  };
+  const limits = { top: 1, bottom: 3, dress: 1, layer: 5 };
+  assert.equal(isInHamper(items.d, limits), true);
+  assert.equal(isInHamper(items.h, limits), true);
+  assert.equal(isInHamper(items.s, limits), true); // old type reads as top
+  assert.equal(isInHamper(items.f, limits), false);
+});
+
+test("up next reads new pieces and old slots alike", () => {
+  const items = {
+    a: { type: "top" },
+    b: { type: "top", wears: 1 },
+    c: { type: "top" },
+    p: { type: "bottom" },
+  };
+  const limits = { top: 1, bottom: 3 };
+  const outfits = [
+    { id: "x", active: true, pieces: [{ id: "a" }, { id: "p" }] },
+    { id: "y", shirt: { id: "b" }, pants: { id: "p" } },
+    { id: "z", pieces: [{ id: "c" }, { id: "p" }] },
+  ];
+  assert.equal(upNext(outfits, items, limits).id, "z");
 });
