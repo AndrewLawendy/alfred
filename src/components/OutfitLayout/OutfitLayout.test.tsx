@@ -11,7 +11,7 @@ const titlesIn = (name: string) =>
     .queryAllByRole("button")
     .map((button) => button.getAttribute("aria-label"));
 
-test("tops, dresses, bottoms and layers share the tall row; shoes and accessories go in the strip", () => {
+test("tops, dresses and bottoms make the column; the layer, shoes and accessories go in the rail", () => {
   render(
     <OutfitLayout
       pieces={[
@@ -23,18 +23,40 @@ test("tops, dresses, bottoms and layers share the tall row; shoes and accessorie
       ]}
     />
   );
-  expect(titlesIn("Main pieces")).toEqual(["Blouse", "Trousers", "Blazer"]);
-  expect(titlesIn("Small pieces")).toEqual(["Loafers", "Hijab"]);
+  expect(titlesIn("Main pieces")).toEqual(["Blouse", "Trousers"]);
+  expect(titlesIn("Side pieces")).toEqual(["Blazer", "Loafers", "Hijab"]);
 });
 
-test("an outfit of only small pieces fills the tall row", () => {
+test("an outfit of only shoes and accessories fills the column", () => {
   render(
     <OutfitLayout
       pieces={[piece("Loafers", "shoes"), piece("Watch", "accessory")]}
     />
   );
   expect(titlesIn("Main pieces")).toEqual(["Loafers", "Watch"]);
-  expect(screen.queryByRole("group", { name: "Small pieces" })).toBeNull();
+  expect(screen.queryByRole("group", { name: "Side pieces" })).toBeNull();
+});
+
+test("a top and bottom alone stand side by side; with a rail they stack", () => {
+  const { unmount } = render(
+    <OutfitLayout pieces={[piece("Polo", "top"), piece("Jeans", "bottom")]} />
+  );
+  expect(
+    screen.getByRole("group", { name: "Main pieces" }).dataset.arrangement
+  ).toBe("row");
+  unmount();
+  render(
+    <OutfitLayout
+      pieces={[
+        piece("Polo", "top"),
+        piece("Jeans", "bottom"),
+        piece("Sneakers", "shoes"),
+      ]}
+    />
+  );
+  expect(
+    screen.getByRole("group", { name: "Main pieces" }).dataset.arrangement
+  ).toBe("column");
 });
 
 test("a deleted piece leaves a gap that leads to picking another", () => {

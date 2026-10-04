@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { Box, Grid } from "@chakra-ui/react";
+import { Box, Flex } from "@chakra-ui/react";
 
 import OutfitItem from "components/OutfitItem";
 import { MissingPiece } from "components/OutfitReference";
@@ -15,11 +15,20 @@ type OutfitLayoutProps = {
 };
 
 const GAP = 8;
+const RAIL = 110;
+const HEIGHT = "var(--outfit-height, 440px)";
 
-// Tops, dresses, bottoms and layers share one tall row; shoes and accessories
-// sit in a strip of squares under it. The tall row takes what the strip
-// leaves of --outfit-height, so the outfit keeps one height whatever its
-// pieces.
+type Cell = { item?: Item; weight: number };
+
+// Each cell's share of a column's height, after the gaps between them
+const heightOf = (cells: Cell[], cell: Cell) => {
+  const total = cells.reduce((sum, { weight }) => sum + weight, 0);
+  return `calc((${HEIGHT} - ${(cells.length - 1) * GAP}px) * ${cell.weight / total})`;
+};
+
+// Tops, dresses and bottoms stack in a wide column, read top to bottom; the
+// layer, shoes and accessories share a narrow rail beside it, the layer at
+// double height. Every outfit keeps the same height (--outfit-height).
 const OutfitLayout = ({
   pieces,
   missing = 0,
@@ -27,72 +36,81 @@ const OutfitLayout = ({
   badge,
 }: OutfitLayoutProps) => {
   const { main, side, small } = layoutOf(pieces);
-  const hasMain = main.length + side.length > 0;
-  // An outfit of only shoes and accessories fills the tall row instead
-  const tall = hasMain ? [...main, ...side] : small;
-  const strip = hasMain ? small : [];
-  const stripCount = strip.length + missing;
-  // At least four across, so a lone pair of shoes stays a small square
-  const columns = Math.max(4, stripCount);
-  // Capped, so a wide screen keeps small squares and a tall row
-  const square = `min((100cqw - ${(columns - 1) * GAP}px) / ${columns}, 104px)`;
-  const tallHeight = stripCount
-    ? `max(160px, var(--outfit-height, 440px) - ${square} - ${GAP}px)`
-    : "var(--outfit-height, 440px)";
+  const toCell = (item: Item): Cell => ({
+    item,
+    weight: item.type === "layer" ? 2 : 1,
+  });
+  const rail = [
+    ...[...side, ...small].map(toCell),
+    ...Array.from({ length: missing }, () => ({ weight: 1 })),
+  ];
+  // An outfit of only shoes and accessories fills the column instead
+  const column = main.length ? main.map(toCell) : rail.splice(0);
+  // A top and bottom alone stand side by side: stacked full width, both
+  // photos would crop to wide bands
+  const isRow = rail.length === 0 && column.length === 2;
+
+  const renderCell = (cells: Cell[], isRail: boolean) =>
+    cells.map((cell, index) => (
+      <Box
+        key={cell.item?.id ?? `missing-${index}`}
+        style={
+          {
+            "--outfit-photo-height": isRow ? HEIGHT : heightOf(cells, cell),
+          } as React.CSSProperties
+        }
+        sx={{ flex: 1, minW: 0 }}
+      >
+        {cell.item ? (
+          <OutfitItem
+            id={cell.item.id}
+            type={cell.item.type}
+            title={cell.item.title}
+            imageUrl={cell.item.imageUrl}
+            badge={badge?.(cell.item)}
+            // Names don't fit the rail, except the layer's taller photo
+            isLabelled={!isRail || cell.item.type === "layer"}
+            radius={isRail ? "thumb" : "card"}
+          />
+        ) : (
+          <MissingPiece
+            radius={isRail ? "thumb" : "card"}
+            onMissing={onMissing}
+          />
+        )}
+      </Box>
+    ));
 
   return (
-    <Box sx={{ containerType: "inline-size" }}>
-      <Grid
+    <Flex sx={{ gap: `${GAP}px` }}>
+      <Flex
         role="group"
         aria-label="Main pieces"
-        gridAutoFlow="column"
-        gridAutoColumns="minmax(0, 1fr)"
-        gap={`${GAP}px`}
-        style={{ "--outfit-photo-height": tallHeight } as React.CSSProperties}
+        data-arrangement={isRow ? "row" : "column"}
+        sx={{
+          flex: 1,
+          minW: 0,
+          gap: `${GAP}px`,
+          flexDirection: isRow ? "row" : "column",
+        }}
       >
-        {tall.map((item) => (
-          <OutfitItem
-            key={item.id}
-            id={item.id}
-            type={item.type}
-            title={item.title}
-            imageUrl={item.imageUrl}
-            badge={badge?.(item)}
-            isLabelled
-          />
-        ))}
-      </Grid>
-      {stripCount > 0 && (
-        <Grid
+        {renderCell(column, false)}
+      </Flex>
+      {rail.length > 0 && (
+        <Flex
           role="group"
-          aria-label="Small pieces"
-          templateColumns={`repeat(${columns}, ${square})`}
-          gap={`${GAP}px`}
-          sx={{ mt: `${GAP}px` }}
+          aria-label="Side pieces"
+          sx={{
+            w: `${RAIL}px`,
+            flexShrink: 0,
+            gap: `${GAP}px`,
+            flexDirection: "column",
+          }}
         >
-          {strip.map((item) => (
-            <OutfitItem
-              key={item.id}
-              id={item.id}
-              type={item.type}
-              title={item.title}
-              imageUrl={item.imageUrl}
-              badge={badge?.(item)}
-              aspectRatio={1}
-              radius="thumb"
-            />
-          ))}
-          {Array.from({ length: missing }, (_, index) => (
-            <MissingPiece
-              key={index}
-              aspectRatio={1}
-              radius="thumb"
-              onMissing={onMissing}
-            />
-          ))}
-        </Grid>
+          {renderCell(rail, true)}
+        </Flex>
       )}
-    </Box>
+    </Flex>
   );
 };
 
