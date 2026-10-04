@@ -103,3 +103,16 @@ test("the hamper groups by category in layout order", () => {
     "accessory",
   ]);
 });
+
+test("a photo-only outfit is never counted or skipped", () => {
+  const items = byId([item("t", "top", 1)]);
+  const outfits: Queued[] = [
+    { id: "a", order: 0, active: true, pieces: [], photoUrl: "https://p" },
+    { id: "b", order: 1, pieces: [], photoUrl: "https://q" },
+  ];
+  const result = pick({ outfits, items, limits, date: TUE });
+  expect(result.items).toEqual([]);
+  expect(result.outfits.find(({ id }) => id === "b")?.changes.active).toBe(
+    true
+  );
+});

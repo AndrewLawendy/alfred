@@ -29,6 +29,8 @@ type Ref = { id: string };
 export type Queued = Pick<Outfit, "id" | "order"> & {
   active?: boolean;
   pieces?: Ref[];
+  // A photo-only outfit has no pieces: never counted, never skipped
+  photoUrl?: string;
   // Old outfits, read through pieceIdsOf
   shirt?: Ref;
   pants?: Ref;

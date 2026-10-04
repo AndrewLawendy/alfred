@@ -30,6 +30,10 @@ export type Jacket = Item & { type: "outerwear"; maxTemperature: number };
 export interface Outfit extends Common {
   // The outfit's pieces, in the order the person picked them
   pieces: DocumentReference<DocumentData>[];
+  // The outfit's own photo, its cover
+  photoUrl?: string;
+  // Optional, e.g. "Office Monday"
+  name?: string;
   // Before the flexible model; read by normalizeOutfit, never written
   shirt?: DocumentReference<DocumentData>;
   belt?: DocumentReference<DocumentData>;

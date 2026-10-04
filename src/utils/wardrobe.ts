@@ -150,9 +150,37 @@ export const layoutOf = <I extends { id: string; type: string }>(
   };
 };
 
-// Phase 2 adds "or a photo"
-export const isOutfitValid = (pieceCount: number) =>
-  pieceCount >= MIN_PIECES && pieceCount <= MAX_PIECES;
+// A photo alone is an outfit; without one, 2 to 6 pieces
+export const isOutfitValid = (pieceCount: number, hasPhoto = false) =>
+  pieceCount <= MAX_PIECES && (hasPhoto || pieceCount >= MIN_PIECES);
+
+export const NAME_MAX = 40;
+
+// What's kept of a typed name: trimmed, single spaces, capped; blank is none
+export const cleanName = (raw: string) =>
+  raw.trim().replace(/\s+/g, " ").slice(0, NAME_MAX) || undefined;
+
+// How an outfit is called on screen: its name, else its number
+export const outfitTitle = (outfit: { name?: string }, number: number) =>
+  outfit.name || `No. ${number}`;
+
+// The fields an outfit saves; a cleared photo or name is removed, not blank
+export const outfitFields = (draft: {
+  picks: string[];
+  photoUrl?: string;
+  name: string;
+}) => {
+  const name = cleanName(draft.name);
+  return {
+    pieces: draft.picks,
+    ...(draft.photoUrl && { photoUrl: draft.photoUrl }),
+    ...(name && { name }),
+    remove: [
+      ...(draft.photoUrl ? [] : ["photoUrl" as const]),
+      ...(name ? [] : ["name" as const]),
+    ],
+  };
+};
 
 // Picking a piece for an outfit: accessories add up; in any other category
 // it replaces that category's pick. Tapping a pick again takes it out. A
