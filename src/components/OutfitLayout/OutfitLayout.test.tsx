@@ -97,3 +97,26 @@ test("while editing, × takes a piece out", () => {
   screen.getByRole("button", { name: "Remove Oxford" }).click();
   expect(onRemove).toHaveBeenCalledWith(oxford);
 });
+
+test("a deleted bottom shows as a bottom gap in the column", () => {
+  render(
+    <OutfitLayout
+      pieces={[piece("Blouse", "top"), piece("Bag", "accessory")]}
+      missing={1}
+      onMissing={vi.fn()}
+    />
+  );
+  expect(titlesIn("Main pieces")).toEqual(["Blouse", "Pick a bottom"]);
+  expect(titlesIn("Side pieces")).toEqual(["Bag"]);
+});
+
+test("a deleted piece that can't be told stays a plain rail gap", () => {
+  render(
+    <OutfitLayout
+      pieces={[piece("Blouse", "top"), piece("Jeans", "bottom")]}
+      missing={1}
+      onMissing={vi.fn()}
+    />
+  );
+  expect(titlesIn("Side pieces")).toEqual(["Pick a piece"]);
+});

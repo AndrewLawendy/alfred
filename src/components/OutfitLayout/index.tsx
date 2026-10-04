@@ -6,7 +6,7 @@ import OutfitItem from "components/OutfitItem";
 import { MissingPiece } from "components/OutfitReference";
 import { pickedRing } from "components/PickedMark";
 import { frosted } from "utils/theme";
-import { categoryOf, CATEGORIES, rank } from "utils/wardrobe";
+import { categoryOf, CATEGORIES, gapsFor, rank } from "utils/wardrobe";
 import { Category, Item } from "utils/types";
 
 // An empty place on the editor's board: a required one (a top and bottom,
@@ -33,10 +33,11 @@ const RAIL = 110;
 const HEIGHT = "var(--outfit-height, 440px)";
 const CORE: Category[] = ["top", "dress", "bottom"];
 
-type Cell = { item?: Item; slot?: Slot; weight: number };
+// lost: a deleted piece whose category the rest of the outfit tells
+type Cell = { item?: Item; slot?: Slot; lost?: Category; weight: number };
 
-const categoryOfCell = ({ item, slot }: Cell) =>
-  item ? categoryOf(item.type) : slot?.category;
+const categoryOfCell = ({ item, slot, lost }: Cell) =>
+  item ? categoryOf(item.type) : (slot?.category ?? lost);
 
 const addLabel = (category: Category) => {
   const label = CATEGORIES.find(({ key }) => key === category)?.label ?? "";
@@ -64,9 +65,14 @@ const OutfitLayout = ({
   onPiece,
   highlight,
 }: OutfitLayoutProps) => {
+  // A top with no bottom (or the reverse) and a deleted piece: that piece
+  // was the bottom. Otherwise a deleted piece can't be told.
+  const needed = gapsFor(pieces.map(({ type }) => type));
+  const lost = needed.length && needed.length <= missing ? needed : [];
   const cells: Cell[] = [
     ...pieces.map((item) => ({ item })),
     ...slots.map((slot) => ({ slot })),
+    ...lost.map((category) => ({ lost: category })),
   ]
     .map((cell) => ({
       ...cell,
@@ -79,7 +85,7 @@ const OutfitLayout = ({
   const isCore = (cell: Cell) => CORE.includes(categoryOfCell(cell)!);
   const rail = [
     ...cells.filter((cell) => !isCore(cell)),
-    ...Array.from({ length: missing }, () => ({ weight: 1 })),
+    ...Array.from({ length: missing - lost.length }, () => ({ weight: 1 })),
   ];
   // An outfit of only shoes and accessories fills the column instead
   const core = cells.filter(isCore);
@@ -94,7 +100,7 @@ const OutfitLayout = ({
       const { item, slot } = cell;
       return (
         <Box
-          key={item?.id ?? slot?.category ?? `missing-${index}`}
+          key={item?.id ?? slot?.category ?? `missing-${cell.lost ?? index}`}
           style={
             {
               "--outfit-photo-height": isRow ? HEIGHT : heightOf(cells, cell),
@@ -174,7 +180,12 @@ const OutfitLayout = ({
             </Flex>
           )}
           {!item && !slot && (
-            <MissingPiece radius={radius} onMissing={onMissing} />
+            <MissingPiece
+              category={cell.lost}
+              isLabelled={!isRail}
+              radius={radius}
+              onMissing={onMissing}
+            />
           )}
         </Box>
       );

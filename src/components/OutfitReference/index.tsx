@@ -3,8 +3,10 @@ import { Flex, Icon, Text } from "@chakra-ui/react";
 import OutfitItem from "components/OutfitItem";
 import { useDocumentData } from "react-firebase-hooks/firestore";
 import { DocumentReference, DocumentData } from "firebase/firestore";
+import { MdAdd } from "react-icons/md";
 
 import { categoryIcons } from "utils/categoryIcons";
+import { CATEGORIES } from "utils/wardrobe";
 import { Category, Item } from "utils/types";
 
 type OutfitReferenceProps = {
@@ -19,9 +21,19 @@ type OutfitReferenceProps = {
   badge?: ReactNode;
 };
 
-// A piece whose item was deleted: a gap that says what to pick
+// What a gap asks for: its category when known, else any piece
+const pickLabel = (category?: Category) =>
+  category
+    ? `Pick ${category === "shoes" ? "" : category === "accessory" ? "an " : "a "}${
+        CATEGORIES.find(({ key }) => key === category)?.label.toLowerCase() ??
+        "piece"
+      }`
+    : "Pick a piece";
+
+// A piece whose item was deleted: a gap that says what to pick. Once deleted,
+// its category is gone, unless the outfit's other pieces tell it.
 export const MissingPiece = ({
-  category = "top",
+  category,
   aspectRatio,
   radius,
   isLabelled,
@@ -31,7 +43,7 @@ export const MissingPiece = ({
     {...(onMissing && {
       as: "button",
       onClick: onMissing,
-      "aria-label": "Pick a piece",
+      "aria-label": pickLabel(category),
     })}
     sx={{
       w: "100%",
@@ -49,10 +61,10 @@ export const MissingPiece = ({
     }}
   >
     <Icon
-      as={categoryIcons[category]}
+      as={category ? categoryIcons[category] : MdAdd}
       sx={{ w: isLabelled ? 8 : 5, h: isLabelled ? 8 : 5 }}
     />
-    {isLabelled && <Text sx={{ fontSize: "sm" }}>Pick a piece</Text>}
+    {isLabelled && <Text sx={{ fontSize: "sm" }}>{pickLabel(category)}</Text>}
   </Flex>
 );
 
