@@ -93,6 +93,10 @@ export const LEGACY: Record<string, Category> = {
 const isCategory = (type: string): type is Category =>
   CATEGORIES.some(({ key }) => key === type);
 
+// The Wardrobe tab for a URL segment: old type names open their category
+export const tabFor = (param?: string): Category =>
+  (param && (LEGACY[param] || (isCategory(param) && param))) || "top";
+
 export const categoryOf = (type: string): Category =>
   LEGACY[type] ?? (isCategory(type) ? type : "accessory");
 

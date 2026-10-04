@@ -2,10 +2,13 @@ import {
   Box,
   Button,
   Flex,
+  FormControl,
+  FormLabel,
   Grid,
   Heading,
   Icon,
   Image,
+  Select,
   Text,
 } from "@chakra-ui/react";
 import { WiThermometer } from "react-icons/wi";
@@ -17,6 +20,7 @@ import useOutfits from "resources/useOutfits";
 import useLimits from "resources/useLimits";
 import useUpdateOutfits from "resources/useUpdateOutfits";
 import {
+  DEFAULT_LIMITS,
   isInHamper,
   limitOf,
   localDate,
@@ -52,6 +56,18 @@ const ItemDetails = ({ item }: { item: Item }) => {
       toast({
         status: "error",
         title: "Couldn't update this piece",
+        description: "Nothing was changed. Please try again.",
+      })
+    );
+  const categoryLimit = limits[item.type] ?? DEFAULT_LIMITS[item.type] ?? 0;
+  // Its own count, or "" to follow its category's
+  const onWearLimit = (value: string) =>
+    updateOutfits([], undefined, [
+      { id: item.id, changes: { wearLimit: value === "" ? null : +value } },
+    ]).catch(() =>
+      toast({
+        status: "error",
+        title: "Couldn't save this piece",
         description: "Nothing was changed. Please try again.",
       })
     );
@@ -106,6 +122,41 @@ const ItemDetails = ({ item }: { item: Item }) => {
               {isDirty ? "Washed" : "Put in hamper"}
             </Button>
           </Flex>
+        )}
+
+        {item.type !== "outerwear" && (
+          <FormControl
+            sx={{
+              mt: 3,
+              p: 4,
+              display: "flex",
+              alignItems: "center",
+              gap: 3,
+              borderRadius: "card",
+              backgroundColor: "card",
+            }}
+          >
+            <FormLabel sx={{ flex: 1, minW: 0, m: 0, fontWeight: "semibold" }}>
+              Wears before washing
+            </FormLabel>
+            <Select
+              value={item.wearLimit ?? ""}
+              onChange={(event) => onWearLimit(event.target.value)}
+              rootProps={{ w: "auto", flexShrink: 0 }}
+            >
+              <option value="">
+                {categoryLimit
+                  ? `Default (${categoryLimit})`
+                  : "Default (not counted)"}
+              </option>
+              {Array.from({ length: 10 }, (_, index) => (
+                <option key={index + 1} value={index + 1}>
+                  {index + 1}
+                </option>
+              ))}
+              <option value={0}>Not counted</option>
+            </Select>
+          </FormControl>
         )}
 
         {item.type === "outerwear" ? (

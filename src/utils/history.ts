@@ -1,6 +1,7 @@
 import { useMemo, useSyncExternalStore } from "react";
 
 import { Item } from "utils/types";
+import { tabFor } from "utils/wardrobe";
 
 // Anything opened on top of a page (a screen, a sheet, edit mode) pushes a
 // history entry, so Back closes the topmost layer instead of leaving the page.
@@ -31,7 +32,9 @@ const stackFromUrl = (): StackEntry[] => {
   const params = new URLSearchParams(window.location.search);
   const outfit = params.get("outfit");
   const item = params.get("item");
-  const type = params.get("new") as Item["type"] | null;
+  const newType = params.get("new");
+  // Old links name the old types (?new=shirt)
+  const type = newType ? tabFor(newType) : null;
   return [
     ...(outfit ? [{ kind: "outfit" as const, id: outfit, depth: null }] : []),
     ...(item ? [{ kind: "item" as const, id: item, depth: null }] : []),

@@ -37,7 +37,7 @@ import { useSearchParam } from "utils/history";
 import { clearSharedPhoto, readSharedPhoto } from "utils/sharedPhoto";
 import geFileURL from "utils/geFileURL";
 import resizeImage from "utils/resizeImage";
-import { pieceIdsOf } from "utils/wardrobe";
+import { normalizeItem, pieceIdsOf } from "utils/wardrobe";
 import { Item } from "utils/types";
 
 import ItemDetails from "./ItemDetails";
@@ -62,7 +62,7 @@ const examples: Record<Item["type"], string> = {
   layer: "e.g. Camel blazer",
   shoes: "e.g. Tan loafers",
   accessory: "e.g. Silk scarf",
-  outerwear: "e.g. Grey wool overcoat",
+  outerwear: "e.g. Wool coat",
 };
 
 const formFor = (
@@ -459,7 +459,9 @@ export const ItemPanel = ({
       })
       .catch(() => undefined);
   }, []);
-  const item = data && itemId ? ({ ...data, id: itemId } as Item) : undefined;
+  // Read as its category, whatever shape it was stored in
+  const item =
+    data && itemId ? normalizeItem({ ...data, id: itemId } as Item) : undefined;
 
   if (newType) {
     if (isShared && sharedPhoto === undefined) {

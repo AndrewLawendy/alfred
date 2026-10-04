@@ -40,7 +40,11 @@ export type Queued = Pick<Outfit, "id" | "order"> & {
 };
 export type ItemUpdate = {
   id: string;
-  changes: { wears?: number | null; lastWornOn?: string | null };
+  changes: {
+    wears?: number | null;
+    lastWornOn?: string | null;
+    wearLimit?: number | null;
+  };
 };
 
 // Local "YYYY-MM-DD", built from its parts rather than a locale's format,

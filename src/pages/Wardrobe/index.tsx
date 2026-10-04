@@ -10,7 +10,7 @@ import useWardrobe from "resources/useWardrobe";
 import useLimits from "resources/useLimits";
 import { inHamper } from "utils/laundry";
 import { openNewItem } from "utils/history";
-import { CATEGORIES } from "utils/wardrobe";
+import { CATEGORIES, tabFor } from "utils/wardrobe";
 import { Item } from "utils/types";
 
 import WardrobeItem from "./WardrobeItem";
@@ -27,17 +27,24 @@ const Wardrobe = () => {
   const [, navigate] = useLocation();
   // The tab lives in the URL (/wardrobe/:type/...), so deep links open the right one
   const [, params] = useRoute("/:type/:rest*");
-  const active = tabs.find(({ type }) => type === params?.type) || tabs[0];
+  const activeType = tabFor(params?.type);
+  const active = tabs.find(({ type }) => type === activeType) || tabs[0];
   // Old item links (/wardrobe/<type>/<id> or /new) now open the item on top of the tab
   const [isOldItemLink, oldLink] = useRoute("/:type/:item");
   useEffect(() => {
     if (!isOldItemLink || !oldLink) return;
+    const type = tabFor(oldLink.type);
     const query =
       oldLink.item === "new"
-        ? `new=${oldLink.type}`
+        ? `new=${type}`
         : `item=${encodeURIComponent(oldLink.item)}`;
-    navigate(`/${oldLink.type}?${query}`, { replace: true });
+    navigate(`/${type}?${query}`, { replace: true });
   }, [isOldItemLink, oldLink?.type, oldLink?.item]);
+  // Old tab names (/wardrobe/shirt) move to their category
+  useEffect(() => {
+    if (isOldItemLink || !params?.type || params.type === activeType) return;
+    navigate(`/${activeType}${window.location.search}`, { replace: true });
+  }, [isOldItemLink, params?.type, activeType]);
   const [allItems] = useWardrobe();
   const limits = useLimits();
   const hamper = inHamper(allItems || [], limits);
