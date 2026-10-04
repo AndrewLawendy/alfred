@@ -27,7 +27,7 @@ import Weather from "components/Weather";
 import EmptyState from "components/EmptyState";
 import HamperSheet from "components/HamperSheet";
 import Loading from "components/Loading";
-import OutfitReference from "components/OutfitReference";
+import OutfitLayout from "components/OutfitLayout";
 import Swipeable from "components/Swipeable";
 
 import useAuth from "hooks/useAuth";
@@ -153,11 +153,14 @@ const Home = () => {
     const [firstOutfit] = outfits || [];
     return outfits?.find(({ active }) => active) || firstOutfit;
   }, [outfits]);
-  const [items] = useWardrobe();
+  const [items, isItemsLoading] = useWardrobe();
   const { limits, isLoading: isLimitsLoading } = useLimitsState();
   // Counting waits for the wardrobe and the person's own limits
   const isCountReady = !!items && !isLimitsLoading;
   const itemsById = useMemo(() => byId(items || []), [items]);
+  const activePieces = activeOutfit
+    ? pieceIdsOf(activeOutfit).flatMap((id) => itemsById.get(id) ?? [])
+    : [];
   const date = useToday();
   const isPickedToday = activeOutfit?.pickedOn === date;
   const comingUp =
@@ -326,7 +329,7 @@ const Home = () => {
         />
       </Box>
 
-      {isOutfitsLoading ? (
+      {isOutfitsLoading || isItemsLoading ? (
         <Loading message="Laying out today's clothes" columns={2} />
       ) : activeOutfit ? (
         <>
@@ -414,29 +417,23 @@ const Home = () => {
             <Eyebrow>{pickedLabel}</Eyebrow>
           </Box>
 
-          <Grid
-            templateColumns="repeat(2, 1fr)"
-            gap={2}
+          <Box
             // Chakra's sx drops custom properties, so set the variable directly
             style={
               {
                 // Fit the whole outfit on screen: what's left after the rest
-                // of the page and the nav, over two rows (8px gap between);
-                // between 110px and 190px
-                "--outfit-photo-height": `clamp(110px, calc((100dvh - ${fixedHeight}px - env(safe-area-inset-top) - var(--chakra-space-nav)) / 2 - 4px), 190px)`,
+                // of the page and the nav; between 228px and 480px
+                "--outfit-height": `clamp(228px, calc(100dvh - ${fixedHeight}px - env(safe-area-inset-top) - var(--chakra-space-nav)), 480px)`,
               } as React.CSSProperties
             }
           >
-            {activeOutfit.pieces.map((reference) => (
-              <OutfitReference
-                key={reference.id}
-                reference={reference}
-                isLabelled
-                onMissing={() => openOutfit(activeOutfit.id)}
-                badge={wearBadge(itemsById.get(reference.id), limits)}
-              />
-            ))}
-          </Grid>
+            <OutfitLayout
+              pieces={activePieces}
+              missing={pieceIdsOf(activeOutfit).length - activePieces.length}
+              onMissing={() => openOutfit(activeOutfit.id)}
+              badge={(item) => wearBadge(item, limits)}
+            />
+          </Box>
 
           {hasJacketCard && (
             <Flex sx={{ ...card, mt: 2, minH: 16 }}>

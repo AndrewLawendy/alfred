@@ -4,14 +4,12 @@ import {
   Box,
   Button,
   Flex,
-  Grid,
   Heading,
   Icon,
   IconButton,
   Image,
   Text,
 } from "@chakra-ui/react";
-import { IconType } from "react-icons";
 import { MdAdd, MdArrowBack } from "react-icons/md";
 import { GiShirt, GiBelt, GiTrousers, GiRunningShoe } from "react-icons/gi";
 
@@ -24,6 +22,7 @@ import {
   useScreen,
 } from "components/Screen";
 import PickedMark, { pickedRing } from "components/PickedMark";
+import OutfitLayout from "components/OutfitLayout";
 
 import useBackToClose from "hooks/useBackToClose";
 import useNotice from "hooks/useNotice";
@@ -36,9 +35,9 @@ import useUpdateDocument from "resources/useUpdateDocument";
 import useUpdateOutfits from "resources/useUpdateOutfits";
 import { db } from "utils/firebase";
 import { openNewItem } from "utils/history";
-import { openItemFromPhoto } from "utils/photoTransition";
 import { activeIndex, byId, sinceLabel, wearToday } from "utils/laundry";
 import { afterDelete, nextOrder } from "utils/rotation";
+import { pieceIdsOf } from "utils/wardrobe";
 import { Item, Outfit } from "utils/types";
 
 const slots = [
@@ -59,77 +58,6 @@ const picksOf = (items: Item[], outfit?: Outfit): Picks =>
       id,
     ])
   );
-
-const labelStyle = {
-  fontSize: "xs",
-  fontWeight: "semibold",
-  textTransform: "uppercase",
-  letterSpacing: "0.12em",
-  color: "muted",
-} as const;
-
-// One piece of the outfit: its photo, opening the item. A deleted piece is a
-// gap that opens the editor to pick another.
-const Slot = ({
-  label,
-  icon,
-  item,
-  onMissing,
-}: {
-  label: string;
-  icon: IconType;
-  item?: Item;
-  onMissing: () => void;
-}) => (
-  <Box
-    as="button"
-    onClick={(event: React.MouseEvent<HTMLElement>) =>
-      item
-        ? openItemFromPhoto(item.id, event.currentTarget.querySelector("img"))
-        : onMissing()
-    }
-    sx={{
-      textAlign: "left",
-      minW: 0,
-      transition: "transform 0.1s",
-      _active: { transform: "scale(0.97)" },
-    }}
-  >
-    <Flex
-      sx={{
-        aspectRatio: "4 / 5",
-        borderRadius: "card",
-        overflow: "hidden",
-        alignItems: "center",
-        justifyContent: "center",
-        color: "gray.400",
-        backgroundColor: "surface",
-        ...(!item && { border: "1.5px dashed", borderColor: "line" }),
-      }}
-    >
-      {item ? (
-        <Image
-          src={item.imageUrl}
-          alt={item.title}
-          data-photo-source={item.id}
-          sx={{ w: "100%", h: "100%", objectFit: "cover" }}
-        />
-      ) : (
-        <Icon as={icon} sx={{ w: 10, h: 10 }} />
-      )}
-    </Flex>
-    <Text sx={{ ...labelStyle, pt: 3 }}>{label}</Text>
-    <Text
-      noOfLines={1}
-      sx={{ fontFamily: "heading", fontSize: "lg", lineHeight: 1.3, minH: 6 }}
-    >
-      {item?.title ||
-        `Pick ${
-          label === "Pants" || label === "Shoes" ? "" : "a "
-        }${label.toLowerCase()}`}
-    </Text>
-  </Box>
-);
 
 const tileWidth = "8rem";
 
@@ -277,6 +205,8 @@ const OutfitEditor = ({
   const isEditingExisting = isEditing && outfit !== undefined;
   const itemById = (id?: string) => items.find((item) => item.id === id);
   const missing = slots.filter(({ key }) => !itemById(picks[key]));
+  const savedIds = outfit ? pieceIdsOf(outfit) : [];
+  const savedPieces = savedIds.flatMap((id) => itemById(id) ?? []);
 
   // Editing is its own step: Back returns to the outfit and drops changes
   useBackToClose(isEditingExisting, () => {
@@ -439,17 +369,11 @@ const OutfitEditor = ({
             />
           ))
         ) : (
-          <Grid templateColumns="repeat(2, 1fr)" columnGap={3} rowGap={5}>
-            {slots.map((slot) => (
-              <Slot
-                key={slot.key}
-                label={slot.label}
-                icon={slot.icon}
-                item={itemById(picks[slot.key])}
-                onMissing={() => setMode("edit")}
-              />
-            ))}
-          </Grid>
+          <OutfitLayout
+            pieces={savedPieces}
+            missing={savedIds.length - savedPieces.length}
+            onMissing={() => setMode("edit")}
+          />
         )}
 
         {outfit && outfit.id !== onToday?.id && !isEditing && (

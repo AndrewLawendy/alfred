@@ -20,7 +20,7 @@ type OutfitReferenceProps = {
 };
 
 // A piece whose item was deleted: a gap that says what to pick
-const MissingPiece = ({
+export const MissingPiece = ({
   category = "top",
   aspectRatio,
   radius,
@@ -28,7 +28,11 @@ const MissingPiece = ({
   onMissing,
 }: Omit<OutfitReferenceProps, "reference">) => (
   <Flex
-    {...(onMissing && { as: "button", onClick: onMissing })}
+    {...(onMissing && {
+      as: "button",
+      onClick: onMissing,
+      "aria-label": "Pick a piece",
+    })}
     sx={{
       w: "100%",
       flexDirection: "column",
