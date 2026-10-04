@@ -6,6 +6,7 @@ const {
   upNext,
   cleanCount,
   isInHamper,
+  outfitLabel,
 } = require("./reminder");
 
 const cairo = {
@@ -250,4 +251,28 @@ test("old slots written after pieces win in the push too", () => {
   const items = { a: { type: "top" }, n: { type: "top", wears: 1 } };
   const outfit = { pieces: [{ id: "a" }], shirt: { id: "n" } };
   assert.equal(cleanCount([outfit], items, { top: 1 }), 0);
+});
+
+test("the push calls an outfit by its name, its pieces, or its number", () => {
+  const items = { a: { title: "Navy shirt" }, b: { title: "Grey chinos" } };
+  assert.equal(
+    outfitLabel({ name: "Office Monday", pieces: [{ id: "a" }] }, items, 3),
+    "Office Monday"
+  );
+  assert.equal(
+    outfitLabel({ pieces: [{ id: "a" }, { id: "b" }] }, items, 3),
+    "Navy shirt, Grey chinos"
+  );
+  assert.equal(
+    outfitLabel({ pieces: [], photoUrl: "https://p" }, items, 4),
+    "Outfit No. 4"
+  );
+});
+
+test("a photo-only outfit is never skipped by up next", () => {
+  const outfits = [
+    { id: "x", active: true, pieces: [{ id: "a" }] },
+    { id: "photo", pieces: [], photoUrl: "https://p" },
+  ];
+  assert.equal(upNext(outfits, { a: { type: "top" } }, { top: 1 }).id, "photo");
 });

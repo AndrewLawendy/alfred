@@ -78,7 +78,7 @@ const weatherLine = ({ weather, jackets, chosen }) => {
   return `${sky} — ${count.toLowerCase()} jackets would suit.`;
 };
 
-// ponytail: repeats categoryOf, pieceIdsOf, limitOf, DEFAULT_LIMITS,
+// ponytail: repeats categoryOf, pieceIdsOf, outfitLabel, limitOf, DEFAULT_LIMITS,
 // isInHamper, cleanCount and upNext from src/utils/wardrobe.ts and
 // src/utils/laundry.ts, as the functions are CommonJS outside the Vite build.
 // Change both together; reminder.test.js pins this copy.
@@ -109,6 +109,15 @@ const pieceIdsOf = (outfit) => {
     .filter(Boolean)
     .map(({ id }) => id);
 };
+
+// How the push names an outfit: its name, its pieces, or its number
+const outfitLabel = (outfit, items, number) =>
+  outfit.name ||
+  pieceIdsOf(outfit)
+    .map((id) => items[id]?.title)
+    .filter(Boolean)
+    .join(", ") ||
+  `Outfit No. ${number}`;
 
 // A piece's own limit, else its category's; outerwear is never counted
 const limitOf = (item, limits) => {
@@ -208,4 +217,5 @@ module.exports = {
   DEFAULT_LIMITS,
   categoryOf,
   pieceIdsOf,
+  outfitLabel,
 };

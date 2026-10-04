@@ -15,7 +15,7 @@ const {
   isInHamper,
   DEFAULT_LIMITS,
   categoryOf,
-  pieceIdsOf,
+  outfitLabel,
 } = require("./reminder");
 
 initializeApp();
@@ -75,9 +75,8 @@ const compose = async (uid, reminder, now) => {
   // Nudge towards picking today's, unless it's picked or there's only one
   const isNudge = outfits.length > 1 && current.pickedOn !== today;
   const outfit = isNudge ? upNext(outfits, items, limits) : current;
-  const pieces = pieceIdsOf(outfit)
-    .map((id) => items[id]?.title)
-    .filter(Boolean);
+  // Named by its name, its pieces, or its number for a photo-only outfit
+  const pieces = [outfitLabel(outfit, items, outfits.indexOf(outfit) + 1)];
   const jackets = itemsSnapshot.docs
     .map((doc) => ({ ...doc.data(), id: doc.id }))
     .filter(({ type }) => categoryOf(type) === "outerwear");
