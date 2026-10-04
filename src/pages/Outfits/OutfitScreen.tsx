@@ -54,7 +54,7 @@ import {
 } from "utils/wardrobe";
 import { Item, Outfit } from "utils/types";
 import Picker, { PickerTab } from "./Picker";
-import PhotoMenu from "./PhotoMenu";
+import PhotoMenu, { AddPhoto } from "./PhotoMenu";
 
 // Still read by screen readers, but not seen (the name field shows instead)
 const srOnly = {
@@ -491,6 +491,12 @@ const OutfitEditor = ({
               onPiece={(item) => setTab(categoryOf(item.type))}
               highlight={tab === "photo" || isMulti(tab) ? undefined : tab}
               photoUrl={boardPhoto}
+              // On the Photo tab with none yet, its frame leads the board
+              photoPlaceholder={
+                tab === "photo" && !boardPhoto ? (
+                  <AddPhoto onPick={onPhotoPick} />
+                ) : undefined
+              }
               title={name || "Outfit photo"}
               onPhoto={photoMenu.onOpen}
               photoAction={
@@ -612,28 +618,32 @@ const OutfitEditor = ({
             backgroundColor: "card",
           }}
         >
-          {/* The rule, right above where you pick */}
-          {(!isValid || (boardPhoto && !picks.length)) && (
-            <Text sx={{ px: 4, pb: 2, fontSize: "sm", color: "muted" }}>
-              {isValid
-                ? "A photo is enough. Add its pieces to track laundry."
-                : "Add a photo, or pick 2 to 6 pieces — a top and bottom, or a dress, plus anything else."}
-            </Text>
-          )}
-          <Box sx={{ maxH: "44dvh", overflowY: "auto" }}>
-            <Picker
-              items={items}
-              picks={picks}
-              active={tab}
-              onTab={setTab}
-              onPick={onPick}
-              photo={{
-                url: boardPhoto,
-                onPick: onPhotoPick,
-                onRemove: onPhotoRemove,
-              }}
-            />
-          </Box>
+          {/* One fixed height whatever the tab, so the sheet never jumps;
+              what doesn't fit scrolls inside it */}
+          <Flex sx={{ h: "44dvh", flexDirection: "column" }}>
+            {/* The rule, right above where you pick */}
+            {(!isValid || (boardPhoto && !picks.length)) && (
+              <Text sx={{ px: 4, pb: 2, fontSize: "sm", color: "muted" }}>
+                {isValid
+                  ? "A photo is enough. Add its pieces to track laundry."
+                  : "Add a photo, or pick 2 to 6 pieces — a top and bottom, or a dress, plus anything else."}
+              </Text>
+            )}
+            <Box sx={{ flex: 1, minH: 0, overflowY: "auto" }}>
+              <Picker
+                items={items}
+                picks={picks}
+                active={tab}
+                onTab={setTab}
+                onPick={onPick}
+                photo={{
+                  url: boardPhoto,
+                  onPick: onPhotoPick,
+                  onRemove: onPhotoRemove,
+                }}
+              />
+            </Box>
+          </Flex>
         </ScreenFooter>
       )}
     </>

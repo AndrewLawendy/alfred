@@ -180,3 +180,20 @@ test("the outfit photo can be tapped, like its pieces", () => {
   screen.getByRole("button", { name: "Office Monday" }).click();
   expect(onPhoto).toHaveBeenCalled();
 });
+
+test("adding a photo puts its frame first on the board, not piece gaps", () => {
+  render(
+    <OutfitLayout
+      pieces={[piece("Loafers", "shoes")]}
+      slots={[
+        { category: "top", isRequired: true },
+        { category: "bottom", isRequired: true },
+      ]}
+      onSlot={vi.fn()}
+      photoPlaceholder={<p>Add a photo</p>}
+    />
+  );
+  expect(screen.getByText("Add a photo")).toBeTruthy();
+  expect(screen.queryByRole("button", { name: "Add a top" })).toBeNull();
+  expect(titlesIn("Pieces")).toEqual(["Loafers"]);
+});

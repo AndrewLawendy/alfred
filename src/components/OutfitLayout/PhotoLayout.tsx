@@ -8,7 +8,9 @@ import { layoutOf } from "utils/wardrobe";
 import { Item } from "utils/types";
 
 type PhotoLayoutProps = {
-  photoUrl: string;
+  // Without a photo, `placeholder` fills its frame (adding one in the editor)
+  photoUrl?: string;
+  placeholder?: ReactNode;
   title?: string;
   pieces: Item[];
   badge?: (item: Item) => ReactNode;
@@ -42,6 +44,7 @@ const PhotoLayout = ({
   photoAction,
   onRemove,
   onPiece,
+  placeholder,
 }: PhotoLayoutProps) => {
   const { main, side, small } = layoutOf(pieces);
   const sorted = [...main, ...side, ...small];
@@ -109,66 +112,87 @@ const PhotoLayout = ({
           justifyContent: sorted.length ? "start" : "center",
         }}
       >
-        <Box
-          // With a control on it (editing), the tap goes on the image: a
-          // button can't hold another button
-          {...(onPhoto &&
-            !photoAction && {
-              as: "button",
-              onClick: onPhoto,
-              "aria-label": title,
-            })}
-          sx={{
-            position: "relative",
-            flexShrink: 0,
-            borderRadius: "card",
-            transition: "transform 0.1s",
-            _active: { transform: "scale(0.98)" },
-            // Marked as the look itself, as its swatch is in the list
-            ...(isMarked && {
-              boxShadow:
-                "0 0 0 3px var(--chakra-colors-page), 0 0 0 5px var(--chakra-colors-accent-500)",
-            }),
-          }}
-        >
-          <Image
-            src={photoUrl}
-            alt={title ?? ""}
-            {...(photoAction && onPhoto && { onClick: onPhoto })}
+        {photoUrl ? (
+          <Box
+            // With a control on it (editing), the tap goes on the image: a
+            // button can't hold another button
+            {...(onPhoto &&
+              !photoAction && {
+                as: "button",
+                onClick: onPhoto,
+                "aria-label": title,
+              })}
             sx={{
-              display: "block",
+              position: "relative",
+              flexShrink: 0,
+              borderRadius: "card",
+              transition: "transform 0.1s",
+              _active: { transform: "scale(0.98)" },
+              // Marked as the look itself, as its swatch is in the list
+              ...(isMarked && {
+                boxShadow:
+                  "0 0 0 3px var(--chakra-colors-page), 0 0 0 5px var(--chakra-colors-accent-500)",
+              }),
+            }}
+          >
+            <Image
+              src={photoUrl}
+              alt={title ?? ""}
+              {...(photoAction && onPhoto && { onClick: onPhoto })}
+              sx={{
+                display: "block",
+                h: "var(--photo-height)",
+                w: "calc(var(--photo-height) * 0.75)",
+                objectFit: "cover",
+                borderRadius: "card",
+                backgroundColor: "surface",
+              }}
+            />
+            {photoAction && (
+              <Box sx={{ position: "absolute", left: 2, top: 2 }}>
+                {photoAction}
+              </Box>
+            )}
+            {isMarked && !photoAction && (
+              <Flex
+                aria-hidden
+                sx={{
+                  position: "absolute",
+                  left: 2,
+                  top: 2,
+                  w: 7,
+                  h: 7,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: "full",
+                  backgroundColor: "card",
+                  color: "accentText",
+                }}
+              >
+                <Icon as={MdPhotoCamera} sx={{ w: 4, h: 4 }} />
+              </Flex>
+            )}
+          </Box>
+        ) : (
+          <Flex
+            sx={{
+              flexShrink: 0,
               h: "var(--photo-height)",
               w: "calc(var(--photo-height) * 0.75)",
-              objectFit: "cover",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 3,
+              p: 3,
               borderRadius: "card",
-              backgroundColor: "surface",
+              border: "2px dashed",
+              borderColor: "accentText",
+              color: "accentText",
             }}
-          />
-          {photoAction && (
-            <Box sx={{ position: "absolute", left: 2, top: 2 }}>
-              {photoAction}
-            </Box>
-          )}
-          {isMarked && !photoAction && (
-            <Flex
-              aria-hidden
-              sx={{
-                position: "absolute",
-                left: 2,
-                top: 2,
-                w: 7,
-                h: 7,
-                alignItems: "center",
-                justifyContent: "center",
-                borderRadius: "full",
-                backgroundColor: "card",
-                color: "accentText",
-              }}
-            >
-              <Icon as={MdPhotoCamera} sx={{ w: 4, h: 4 }} />
-            </Flex>
-          )}
-        </Box>
+          >
+            {placeholder}
+          </Flex>
+        )}
         {beside.length > 0 && (
           <Flex
             role="group"

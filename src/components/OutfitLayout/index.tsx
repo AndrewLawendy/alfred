@@ -37,6 +37,8 @@ type OutfitLayoutProps = {
   onPhoto?: () => void;
   // Editing: a control on the photo's corner
   photoAction?: ReactNode;
+  // Editing, adding a photo: what fills its frame until there is one
+  photoPlaceholder?: ReactNode;
 };
 
 const GAP = 8;
@@ -80,8 +82,9 @@ const OutfitLayout = ({
   isPhotoMarked,
   onPhoto,
   photoAction,
+  photoPlaceholder,
 }: OutfitLayoutProps) => {
-  if (photoUrl) {
+  if (photoUrl || photoPlaceholder) {
     return (
       <PhotoLayout
         photoUrl={photoUrl}
@@ -93,6 +96,7 @@ const OutfitLayout = ({
         photoAction={photoAction}
         onRemove={onRemove}
         onPiece={onPiece}
+        placeholder={photoPlaceholder}
       />
     );
   }

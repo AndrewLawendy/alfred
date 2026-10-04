@@ -1,10 +1,12 @@
 import {
+  Button,
   Icon,
   IconButton,
   Menu,
   MenuButton,
   MenuItem,
   MenuList,
+  Text,
 } from "@chakra-ui/react";
 import {
   MdDelete,
@@ -82,3 +84,24 @@ const PhotoMenu = ({
 };
 
 export default PhotoMenu;
+
+// What fills the photo's frame on the board until there is one: the two
+// ways to add it, right where the eye already is
+export const AddPhoto = ({ onPick }: { onPick: (file: File) => void }) => {
+  const { take, choose, inputs } = usePhotoFiles(onPick);
+  return (
+    <>
+      {inputs}
+      <Icon as={MdPhotoCamera} sx={{ w: 8, h: 8 }} />
+      <Text sx={{ fontFamily: "heading", fontSize: "xl", color: "ink" }}>
+        Add a photo
+      </Text>
+      <Button size="sm" variant="outline" onClick={take} sx={{ w: "100%" }}>
+        Take photo
+      </Button>
+      <Button size="sm" variant="outline" onClick={choose} sx={{ w: "100%" }}>
+        Choose from library
+      </Button>
+    </>
+  );
+};
