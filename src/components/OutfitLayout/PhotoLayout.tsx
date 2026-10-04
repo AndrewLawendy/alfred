@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
-import { Box, Flex, Image } from "@chakra-ui/react";
+import { Box, Flex, Icon, Image } from "@chakra-ui/react";
+import { MdPhotoCamera } from "react-icons/md";
 
 import OutfitItem from "components/OutfitItem";
 import { layoutOf } from "utils/wardrobe";
@@ -10,6 +11,8 @@ type PhotoLayoutProps = {
   title?: string;
   pieces: Item[];
   badge?: (item: Item) => ReactNode;
+  // The brass ring and camera mark on the photo (the outfit screen)
+  isMarked?: boolean;
 };
 
 const GAP = 8;
@@ -22,7 +25,13 @@ const BESIDE_MIN = 110;
 // An outfit with its own photo: the photo keeps the 3:4 shape phones shoot
 // in, so a whole person shows uncropped. Its pieces wrap it, beside first,
 // then under: 1–2 beside; 3 as 2 + 1; then half and half (3 + 3 for six).
-const PhotoLayout = ({ photoUrl, title, pieces, badge }: PhotoLayoutProps) => {
+const PhotoLayout = ({
+  photoUrl,
+  title,
+  pieces,
+  badge,
+  isMarked,
+}: PhotoLayoutProps) => {
   const { main, side, small } = layoutOf(pieces);
   const sorted = [...main, ...side, ...small];
   const besideCount =
@@ -68,18 +77,50 @@ const PhotoLayout = ({ photoUrl, title, pieces, badge }: PhotoLayoutProps) => {
           justifyContent: sorted.length ? "start" : "center",
         }}
       >
-        <Image
-          src={photoUrl}
-          alt={title ?? ""}
+        <Box
           sx={{
+            position: "relative",
             flexShrink: 0,
-            h: "var(--photo-height)",
-            w: "calc(var(--photo-height) * 0.75)",
-            objectFit: "cover",
             borderRadius: "card",
-            backgroundColor: "surface",
+            // Marked as the look itself, as its swatch is in the list
+            ...(isMarked && {
+              boxShadow:
+                "0 0 0 3px var(--chakra-colors-page), 0 0 0 5px var(--chakra-colors-accent-500)",
+            }),
           }}
-        />
+        >
+          <Image
+            src={photoUrl}
+            alt={title ?? ""}
+            sx={{
+              display: "block",
+              h: "var(--photo-height)",
+              w: "calc(var(--photo-height) * 0.75)",
+              objectFit: "cover",
+              borderRadius: "card",
+              backgroundColor: "surface",
+            }}
+          />
+          {isMarked && (
+            <Flex
+              aria-hidden
+              sx={{
+                position: "absolute",
+                left: 2,
+                top: 2,
+                w: 7,
+                h: 7,
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: "full",
+                backgroundColor: "card",
+                color: "accentText",
+              }}
+            >
+              <Icon as={MdPhotoCamera} sx={{ w: 4, h: 4 }} />
+            </Flex>
+          )}
+        </Box>
         {beside.length > 0 && (
           <Flex
             role="group"

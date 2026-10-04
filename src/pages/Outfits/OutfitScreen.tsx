@@ -303,6 +303,7 @@ const OutfitEditor = ({
               onMissing={() => setMode("edit")}
               photoUrl={outfit?.photoUrl}
               title={outfit ? outfitTitle(outfit, number) : undefined}
+              isPhotoMarked
             />
             {outfit?.photoUrl && !savedIds.length && (
               <Button

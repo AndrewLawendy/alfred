@@ -31,6 +31,8 @@ type OutfitLayoutProps = {
   photoUrl?: string;
   // What the outfit is called, the photo's accessible name
   title?: string;
+  // Ring and mark the photo as the look (the outfit screen)
+  isPhotoMarked?: boolean;
 };
 
 const GAP = 8;
@@ -71,6 +73,7 @@ const OutfitLayout = ({
   highlight,
   photoUrl,
   title,
+  isPhotoMarked,
 }: OutfitLayoutProps) => {
   if (photoUrl) {
     return (
@@ -79,6 +82,7 @@ const OutfitLayout = ({
         title={title}
         pieces={pieces}
         badge={badge}
+        isMarked={isPhotoMarked}
       />
     );
   }
