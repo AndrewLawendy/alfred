@@ -1,4 +1,10 @@
-import Resizer from "react-image-file-resizer";
+import ResizerModule from "react-image-file-resizer";
+
+// A CommonJS package: Vite hands its default export over still wrapped in the
+// package's own `default`, where the tests unwrap it, so take it either way
+const Resizer =
+  (ResizerModule as unknown as { default?: typeof ResizerModule }).default ??
+  ResizerModule;
 
 const resizeImage = async (file: File) => {
   // The resizer never calls back on a photo this browser can't read (HEIC
