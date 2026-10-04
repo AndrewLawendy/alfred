@@ -31,7 +31,11 @@ import useWardrobe from "resources/useWardrobe";
 import { useLimitsState } from "resources/useLimits";
 import useUpdateDocument from "resources/useUpdateDocument";
 import useUpdateOutfits from "resources/useUpdateOutfits";
+import useDeleteImage from "resources/useDeleteImage";
+import useUploadImage from "resources/useUploadImage";
 import { db } from "utils/firebase";
+import geFileURL from "utils/geFileURL";
+import { deleteOutfit, saveOutfit } from "utils/outfitSave";
 import { activeIndex, byId, sinceLabel, wearToday } from "utils/laundry";
 import { afterDelete, nextOrder } from "utils/rotation";
 import {
@@ -100,6 +104,12 @@ const OutfitEditor = ({
   // Deleted pieces drop out when editing; their gap is filled from the board
   const savedPicks = savedPieces.map(({ id }) => id);
   const [picks, setPicks] = useState(savedPicks);
+  // The draft's name, and a newly picked photo (resizing) or a removal
+  const [name, setName] = useState(outfit?.name ?? "");
+  const [photo, setPhoto] = useState<Promise<File>>();
+  const [isPhotoRemoved, setIsPhotoRemoved] = useState(false);
+  const [uploadImage] = useUploadImage();
+  const [deleteImage] = useDeleteImage();
   const pickedItems = picks.flatMap((id) => itemById(id) ?? []);
   const pickedTypes = pickedItems.map(({ type }) => type);
   // The picker opens on the first thing missing
@@ -121,34 +131,76 @@ const OutfitEditor = ({
   // Editing is its own step: Back returns to the outfit and drops changes
   useBackToClose(isEditingExisting, () => {
     setPicks(savedPicks);
+    setName(outfit?.name ?? "");
+    setPhoto(undefined);
+    setIsPhotoRemoved(false);
     setMode("view");
   });
 
   const onSave = async () => {
-    const references = {
-      pieces: picks.map((id) => doc(db, "wardrobe-items", id)),
-    };
-
+    // A new photo needs a connection; the rest saves offline and syncs
+    if (photo && !navigator.onLine) {
+      toast({
+        id: "offline",
+        status: "info",
+        title: "You're offline",
+        description:
+          "A new photo needs a connection. Try again once you're back online.",
+      });
+      return;
+    }
     try {
-      if (outfit) {
-        await updateOutfit(outfit.id, {
-          ...references,
-          // The old four-slot fields go once it's saved as pieces
-          shirt: deleteField(),
-          belt: deleteField(),
-          pants: deleteField(),
-          shoes: deleteField(),
-        } as unknown as Partial<Outfit>);
-        setMode("view");
-      } else {
-        await addOutfit({
-          ...references,
-          order: nextOrder(outfits),
-          // The first outfit becomes today's
-          active: outfits.length === 0,
-        });
-        closeOutfit();
+      await saveOutfit(
+        {
+          picks,
+          name,
+          photo,
+          photoUrl: outfit?.photoUrl,
+          isPhotoRemoved,
+        },
+        {
+          upload: async (file, path) => {
+            const response = await uploadImage(file, path);
+            if (!response) throw new Error("Photo upload failed");
+            return geFileURL(response.metadata.name);
+          },
+          write: async ({ pieces, remove, ...fields }) => {
+            const changes = {
+              ...fields,
+              pieces: pieces.map((id) => doc(db, "wardrobe-items", id)),
+            };
+            if (outfit) {
+              await updateOutfit(outfit.id, {
+                ...changes,
+                // A cleared name or removed photo; a new outfit has none
+                ...Object.fromEntries(
+                  remove.map((key) => [key, deleteField()])
+                ),
+                // The old four-slot fields go once it's saved as pieces
+                shirt: deleteField(),
+                belt: deleteField(),
+                pants: deleteField(),
+                shoes: deleteField(),
+              } as unknown as Partial<Outfit>);
+            } else {
+              await addOutfit({
+                ...(changes as unknown as Partial<Outfit>),
+                order: nextOrder(outfits),
+                // The first outfit becomes today's
+                active: outfits.length === 0,
+              } as Outfit);
+            }
+          },
+        }
+      );
+      // A removed photo's file goes once the outfit no longer points to it
+      if (isPhotoRemoved && !photo && outfit?.photoUrl) {
+        deleteImage(outfit.photoUrl).catch(() => undefined);
       }
+      setPhoto(undefined);
+      setIsPhotoRemoved(false);
+      if (outfit) setMode("view");
+      else closeOutfit();
     } catch {
       toast({
         status: "error",
@@ -163,7 +215,10 @@ const OutfitEditor = ({
   const onDelete = () => {
     if (!outfit) return;
     closeOutfit();
-    updateOutfits(afterDelete(outfits, outfit.id), outfit.id).catch(() =>
+    deleteOutfit(outfit, {
+      remove: () => updateOutfits(afterDelete(outfits, outfit.id), outfit.id),
+      deletePhoto: deleteImage,
+    }).catch(() =>
       toast({
         status: "error",
         title: "Couldn't delete the outfit",
