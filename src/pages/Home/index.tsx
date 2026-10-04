@@ -725,22 +725,12 @@ const Home = () => {
           </Flex>
         </>
       ) : (
+        // A photo is enough for an outfit: the first one needs no wardrobe
         <EmptyState
-          {...(items?.length
-            ? {
-                title: "Your wardrobe is in. Now, a first outfit.",
-                description:
-                  "Pick 2 to 6 pieces from your wardrobe. Alfred will add it to the rotation.",
-                actionLabel: "Create an outfit",
-                onAction: openNewOutfit,
-              }
-            : {
-                title: "Shall we begin with your wardrobe?",
-                description:
-                  "Photograph a few pieces you wear. Once they're in, Alfred will lay out something to wear each morning.",
-                actionLabel: "Open wardrobe",
-                to: "/wardrobe",
-              })}
+          title="Shall we begin?"
+          description="Take one photo of an outfit. 3 is enough to start."
+          actionLabel="Add an outfit"
+          onAction={openNewOutfit}
         />
       )}
     </>

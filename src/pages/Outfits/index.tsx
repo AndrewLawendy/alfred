@@ -25,7 +25,6 @@ import PageHeader from "components/PageHeader";
 import EmptyState from "components/EmptyState";
 
 import useOutfits from "resources/useOutfits";
-import useWardrobe from "resources/useWardrobe";
 import useNotice from "hooks/useNotice";
 import useUpdateOutfits from "resources/useUpdateOutfits";
 
@@ -33,8 +32,6 @@ const Outfits = () => {
   const [outfits, isOutfitsLoading] = useOutfits();
   const [updateOutfits] = useUpdateOutfits();
   const toast = useNotice();
-  // With no clothes yet, the wardrobe comes before any outfit
-  const [items] = useWardrobe();
 
   const onDragEnd = (result: DropResult) => {
     const { destination, source } = result;
@@ -79,21 +76,13 @@ const Outfits = () => {
       {isOutfitsLoading || !outfits ? (
         <Loading message="Loading your outfits" columns={1} />
       ) : outfits.length === 0 ? (
-        items && items.length === 0 ? (
-          <EmptyState
-            title="Your wardrobe comes first"
-            description="Outfits are made from your own clothes. Add a few pieces to your wardrobe, then come back here."
-            actionLabel="Go to Wardrobe"
-            to="/wardrobe"
-          />
-        ) : (
-          <EmptyState
-            title="No outfits yet"
-            description="Pick 2 to 6 pieces. Each outfit you make joins the rotation."
-            actionLabel="Create an outfit"
-            onAction={openNewOutfit}
-          />
-        )
+        // A photo is enough for an outfit: no wardrobe needed first
+        <EmptyState
+          title="No outfits yet"
+          description="Take one photo of an outfit. 3 is enough to start."
+          actionLabel="Add an outfit"
+          onAction={openNewOutfit}
+        />
       ) : (
         <DragDropContext onDragEnd={onDragEnd}>
           <Droppable droppableId="outfits">
