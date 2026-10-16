@@ -346,9 +346,9 @@ export const wearBadge = (piece: Counted | undefined, limits: Limits) => {
 export const isOnScreen = (outfits: Queued[], id: string) =>
   outfits[activeIndex(outfits)]?.id === id;
 
-// Wear today, from an outfit's screen: bring `to` up, counting nothing. When
-// the outfit on screen was worn after all (the person says so), it's counted
-// first, exactly as Next outfit then Wear today would.
+// Wear today (or Choose on Home): bring `to` up. When the outfit on screen
+// came up on an earlier day it's counted first, exactly as Next outfit then
+// Wear today would.
 export const wearToday = <O extends Queued>({
   outfits,
   items,
@@ -360,6 +360,22 @@ export const wearToday = <O extends Queued>({
   outfits: OutfitUpdate[];
   items: ItemUpdate[];
 } => {
+  const current = outfits[activeIndex(outfits)];
+  // Worn again: count it, and it stays today's; nothing else moves
+  if (countCurrent && to === current?.id) {
+    return {
+      outfits: [
+        {
+          id: current.id,
+          changes: {
+            pickedOn: date,
+            ...(current.jacket != null && { jacket: null }),
+          },
+        },
+      ],
+      items: pick({ outfits, items, limits, date }).items,
+    };
+  }
   if (!countCurrent) {
     return {
       outfits: notToday({ outfits, items, limits, date, to }) ?? [],
@@ -383,4 +399,33 @@ export const wearToday = <O extends Queued>({
       merged[index] = { id, changes: { ...merged[index].changes, ...changes } };
   });
   return { outfits: merged, items: picked.items };
+};
+
+// The outfits Surprise me picks from: wearable ones other than today's. In
+// the morning they're judged after today's outfit is counted, as choosing
+// counts it first.
+export const surpriseCandidates = <O extends Queued>({
+  outfits,
+  items,
+  limits,
+  isPicked,
+}: {
+  outfits: O[];
+  items: Map<string, Counted>;
+  limits: Limits;
+  isPicked: boolean;
+}): O[] => {
+  const current = outfits[activeIndex(outfits)];
+  const worn = new Map<string, Counted>(items);
+  if (!isPicked) {
+    pick({ outfits, items, limits, date: "" }).items.forEach(
+      ({ id, changes }) => {
+        const piece = worn.get(id);
+        if (piece) worn.set(id, { ...piece, ...changes });
+      }
+    );
+  }
+  return outfits.filter(
+    (outfit) => outfit !== current && isWearable(outfit, worn, limits)
+  );
 };
