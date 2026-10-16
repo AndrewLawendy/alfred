@@ -157,7 +157,7 @@ const describe = ({
   const firstLine = !outfit
     ? "Tap to see it."
     : isNudge
-      ? `Up next: ${outfit}.`
+      ? `Up next: ${outfit}. Or choose another.`
       : `${outfit}.`;
   return {
     title: isNudge ? "Time for the next outfit" : "Your outfit is laid out",
