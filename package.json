@@ -28,7 +28,7 @@
     "wouter": "^2.8.0-alpha.2"
   },
   "scripts": {
-    "start": "vite",
+    "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --port 5055",
     "test": "vitest",
@@ -39,7 +39,7 @@
     "lint-staged": "lint-staged",
     "prepare": "husky install",
     "deploy": "npm run build && firebase deploy --only hosting",
-    "deploy:preview": "npm run build && sed -i 's/\"short_name\": \"Alfred\"/\"short_name\": \"Alfred Dev\"/' build/manifest.json && sed -i 's/content=\"Alfred\"/content=\"Alfred Dev\"/; s/<title>Alfred/<title>Alfred Dev/' build/index.html && npx -y firebase-tools@15 hosting:channel:deploy dev --expires 7d",
+    "deploy:dev": "npm run build && sed -i 's/\"short_name\": \"Alfred\"/\"short_name\": \"Alfred Dev\"/' build/manifest.json && sed -i 's/content=\"Alfred\"/content=\"Alfred Dev\"/; s/<title>Alfred/<title>Alfred Dev/' build/index.html && npx -y firebase-tools@15 hosting:channel:deploy dev --expires 7d",
     "update": "yarn deploy"
   },
   "lint-staged": {

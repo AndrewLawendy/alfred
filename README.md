@@ -62,7 +62,7 @@ VITE_WEATHER_API_ID=<your OpenWeather key>
 Then:
 
 ```sh
-yarn start   # opens http://localhost:3000
+yarn dev   # opens http://localhost:3000
 ```
 
 The service worker (offline, install, shortcuts, sharing, notifications) only
@@ -93,33 +93,34 @@ Authorized domains**, or sign-in fails with `auth/unauthorized-domain`.
 
 | Command           | What it does                                                   |
 | ----------------- | -------------------------------------------------------------- |
-| `yarn start`      | Vite dev server with hot reload; opens the browser             |
+| `yarn dev`        | Vite dev server with hot reload; opens the browser             |
 | `yarn build`      | Type-check, then a production build in `build/`                |
 | `yarn preview`    | Serve that build on port 5055 (service worker included)        |
 | `yarn test`       | Vitest in watch mode (`yarn test run` for a single run)        |
 | `yarn test:rules` | Firestore and Storage rules against the emulators (needs Java) |
 | `yarn lint`       | ESLint 9 with type-aware and React Compiler rules, with fixes  |
 | `yarn format`     | Prettier over `src/`                                           |
+| `yarn deploy:dev` | Build and deploy to the `dev` preview channel as "Alfred Dev"  |
+| `yarn deploy`     | Build and deploy to production                                 |
 
 The app version shown on the Account page comes from `version` in
 `package.json`.
 
 ## Deploying
 
-Build first, then preview on a Firebase Hosting channel before going live:
+Preview on a Firebase Hosting channel before going live:
 
 ```sh
-yarn build
+# Preview at a temporary URL (printed at the end), valid for 7 days. It's
+# named "Alfred Dev" on the home screen, so it installs beside the real app.
+yarn deploy:dev
 
-# Preview at a temporary URL (printed at the end), valid for 7 days
-npx firebase-tools hosting:channel:deploy dev --expires 7d
-
-# Promote exactly what's on the preview to production
-npx firebase-tools hosting:clone alfred-wardrobe-stylist:dev alfred-wardrobe-stylist:live
+# Then build again and deploy to production
+yarn deploy
 ```
 
-`yarn update` builds and deploys straight to production, skipping the
-preview.
+Don't promote the preview with `hosting:clone`: it carries the "Alfred Dev"
+name into production.
 
 The morning reminder function has no preview channel; deploy it on its own:
 
