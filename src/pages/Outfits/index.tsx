@@ -69,7 +69,7 @@ const Outfits = () => {
       <PageHeader
         eyebrow="Rotation"
         title="Outfits"
-        description="Alfred wears these in order, top to bottom, then starts again. Hold the handle and drag to change the order."
+        description="Alfred suggests these in order. Drag to change it, or choose any day from Today."
         action={
           <Button
             onClick={openNewOutfit}
