@@ -10,6 +10,7 @@ import {
   localDate,
   notToday,
   wearToday,
+  surpriseCandidates,
   isOnScreen,
   pick,
   sinceLabel,
@@ -468,4 +469,55 @@ test("the hamper groups by type, shirts first, oldest first within each", () => 
     ["pants", ["old pants"]],
   ]);
   expect(hamperGroups([])).toEqual([]);
+});
+
+test("wearing today's outfit again counts it and keeps it, moving nothing else", () => {
+  const outfits = queue({ a: { jacket: false } });
+  const items = wardrobe();
+  const result = wearToday({
+    outfits,
+    items,
+    limits,
+    date: TUE,
+    to: "a",
+    countCurrent: true,
+  });
+  // Dated to the day it came up, like Next outfit; the shirt reaches its limit
+  expect(result.items).toEqual(
+    pick({ outfits, items, limits, date: TUE }).items
+  );
+  expect(result.items[0]).toEqual({
+    id: "sa",
+    changes: { wears: 1, lastWornOn: MON },
+  });
+  expect(result.outfits).toEqual([
+    { id: "a", changes: { pickedOn: TUE, jacket: null } },
+  ]);
+  // Tomorrow's Next outfit counts it again and brings up B: no turn skipped
+  const after = apply(outfits, result.outfits);
+  expect(onScreen(after)).toBe("a");
+  const next = pick({ outfits: after, items, limits, date: WED });
+  expect(next.items[0].changes.lastWornOn).toBe(TUE);
+  expect(onScreen(apply(after, next.outfits))).toBe("b");
+});
+
+test("Surprise me offers clean outfits other than today's, judged after today's wear before it's picked", () => {
+  const ids = (isPicked: boolean, items = wardrobe()) =>
+    surpriseCandidates({ outfits: queue(), items, limits, isPicked }).map(
+      ({ id }) => id
+    );
+  expect(ids(false)).toEqual(["b", "c", "d"]);
+  // A shirt in the hamper leaves its outfit out
+  expect(ids(false, wardrobe({ sc: 1 }))).toEqual(["b", "d"]);
+  // Shared pants one wear from the limit: counting today's fills them
+  expect(ids(false, wardrobe({ p: 2 }))).toEqual([]);
+  // Once picked, nothing more is counted
+  expect(ids(true, wardrobe({ p: 2 }))).toEqual(["b", "c", "d"]);
+});
+
+test("Surprise me's candidates leave the wardrobe as it was", () => {
+  const items = wardrobe({ p: 2 });
+  const before = structuredClone([...items.entries()]);
+  surpriseCandidates({ outfits: queue(), items, limits, isPicked: false });
+  expect([...items.entries()]).toEqual(before);
 });
