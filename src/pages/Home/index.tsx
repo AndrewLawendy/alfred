@@ -313,16 +313,16 @@ const Home = () => {
     );
   };
 
-  // Surprise me's candidates, worked out only while the sheet is open
-  const candidates =
-    isChooseOpen && outfits
-      ? surpriseCandidates({
-          outfits,
-          items: itemsById,
-          limits,
-          isPicked: isPickedToday,
-        })
-      : [];
+  // The clean outfits the sheet offers; also worked out while it's closed, so
+  // nothing dims as it slides away
+  const candidates = outfits
+    ? surpriseCandidates({
+        outfits,
+        items: itemsById,
+        limits,
+        isPicked: isPickedToday,
+      })
+    : [];
   const canChoose = (outfits?.length ?? 0) > 1;
 
   // The push button and the Next outfit app shortcut open /?action=next.
@@ -605,7 +605,6 @@ const Home = () => {
             onClose={onChooseClose}
             outfits={outfits ?? []}
             items={items ?? []}
-            limits={limits}
             todayId={activeOutfit.id}
             upNextId={comingUp?.id}
             candidates={candidates}

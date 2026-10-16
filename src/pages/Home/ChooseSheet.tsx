@@ -16,7 +16,7 @@ import {
 import { Eyebrow } from "components/PageHeader";
 import Swipeable from "components/Swipeable";
 import useBackToClose from "hooks/useBackToClose";
-import { byId, isWearable, Limits } from "utils/laundry";
+import { byId } from "utils/laundry";
 import { Item, Outfit } from "utils/types";
 
 const slots = ["shirt", "belt", "pants", "shoes"] as const;
@@ -54,11 +54,11 @@ type ChooseSheetProps = {
   onClose: () => void;
   outfits: Outfit[];
   items: Item[];
-  limits: Limits;
   todayId: string;
   // Marked UP NEXT; undefined once today is picked
   upNextId?: string;
-  // What Surprise me picks from (see surpriseCandidates)
+  // The clean outfits other than today's (see surpriseCandidates): what
+  // Surprise me picks from; the rest are dimmed
   candidates: Outfit[];
   onChoose: (id: string) => void;
 };
@@ -70,7 +70,6 @@ const ChooseSheet = ({
   onClose,
   outfits,
   items,
-  limits,
   todayId,
   upNextId,
   candidates,
@@ -142,7 +141,9 @@ const ChooseSheet = ({
               {outfits.map((outfit, index) => {
                 const isToday = outfit.id === todayId;
                 const isUpNext = outfit.id === upNextId;
-                const isDirty = !isWearable(outfit, itemsById, limits);
+                // Judged like Surprise me: after today's wear in the morning
+                const isDirty =
+                  !isToday && !candidates.some(({ id }) => id === outfit.id);
                 const state = isToday
                   ? "today's"
                   : isUpNext
@@ -164,7 +165,7 @@ const ChooseSheet = ({
                       backgroundColor: "card",
                       border: "1.5px solid",
                       borderColor: isToday ? "accent.500" : "transparent",
-                      opacity: isDirty && !isToday ? 0.45 : 1,
+                      opacity: isDirty ? 0.45 : 1,
                     }}
                   >
                     <Flex sx={{ alignItems: "baseline", gap: 1.5, mb: 1.5 }}>
