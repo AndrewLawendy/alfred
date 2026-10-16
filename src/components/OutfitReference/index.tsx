@@ -17,7 +17,8 @@ const slotIcons = {
 };
 
 type OutfitReferenceProps = {
-  reference: DocumentReference<DocumentData>;
+  // Missing on an outfit saved without this slot (a newer outfit format)
+  reference?: DocumentReference<DocumentData>;
   slot: Slot;
   aspectRatio?: number;
   radius?: string;
@@ -76,7 +77,7 @@ const OutfitReference = ({
   badge,
 }: OutfitReferenceProps) => {
   const [item, isItemLoading] = useDocumentData(reference);
-  if (!isItemLoading && !item) {
+  if (!reference || (!isItemLoading && !item)) {
     return (
       <MissingPiece
         slot={slot}
