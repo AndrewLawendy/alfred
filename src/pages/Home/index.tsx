@@ -30,7 +30,7 @@ import HamperSheet from "components/HamperSheet";
 import Loading from "components/Loading";
 import OutfitReference from "components/OutfitReference";
 import Swipeable from "components/Swipeable";
-import { Swatch } from "pages/Home/ChooseSheet";
+import ChooseSheet, { Swatch } from "pages/Home/ChooseSheet";
 
 import useAuth from "hooks/useAuth";
 import useBackToClose from "hooks/useBackToClose";
@@ -41,6 +41,7 @@ import useLaundryDone from "resources/useLaundryDone";
 import useData from "resources/useData";
 import useUpdateDocument from "resources/useUpdateDocument";
 import useUpdateOutfits from "resources/useUpdateOutfits";
+import type { OutfitUpdate } from "resources/useUpdateOutfits";
 import useWeather from "resources/useWeather";
 import { useLimitsState } from "resources/useLimits";
 
@@ -55,11 +56,14 @@ import {
   isOnScreen,
   pick,
   sinceLabel,
+  surpriseCandidates,
   undoOf,
   upNext,
   washed,
   wearBadge,
+  wearToday,
 } from "utils/laundry";
+import type { ItemUpdate } from "utils/laundry";
 import { Item, Jacket, Outfit } from "utils/types";
 
 const slots = ["shirt", "belt", "pants", "shoes"] as const;
@@ -123,6 +127,11 @@ const Home = () => {
     onOpen: onHamperOpen,
     onClose: onHamperClose,
   } = useDisclosure();
+  const {
+    isOpen: isChooseOpen,
+    onOpen: onChooseOpen,
+    onClose: onChooseClose,
+  } = useDisclosure();
   // Focus the title on open, so no focus ring lands on the first jacket
   const sheetTitleRef = useRef<HTMLHeadingElement>(null);
   const { data: weatherData, isLoading: isWeatherLoading } = useWeather();
@@ -144,8 +153,9 @@ const Home = () => {
   const itemsById = useMemo(() => byId(items || []), [items]);
   const date = useToday();
   const isPickedToday = activeOutfit?.pickedOn === date;
+  // Up next only matters until today is picked
   const comingUp =
-    outfits && outfits.length > 1
+    outfits && outfits.length > 1 && !isPickedToday
       ? upNext(outfits, itemsById, limits)
       : undefined;
   const blocked = activeOutfit
@@ -227,10 +237,14 @@ const Home = () => {
     latestOutfits.current = outfits;
   });
 
-  const onNextOutfit = () => {
-    if (!outfits?.length || !items || !isCountReady || isPickedToday) return;
-    const result = pick({ outfits, items: itemsById, limits, date });
-    // The outfit this pick brings on screen (the same one if it's the only one)
+  // Writes a move, then offers Undo while the outfit it brought up is still
+  // today's
+  const commitMove = (
+    result: { outfits: OutfitUpdate[]; items: ItemUpdate[] },
+    title: string
+  ) => {
+    if (!outfits || !items) return;
+    // The outfit this move brings on screen (the same one if it stays)
     const broughtUp =
       result.outfits.find(({ changes }) => changes.active)?.id ??
       activeOutfit.id;
@@ -238,12 +252,11 @@ const Home = () => {
       outfits: undoOf(outfits, result.outfits),
       items: undoOf(items, result.items),
     };
-    const number = outfits.indexOf(activeOutfit) + 1;
     updateOutfits(result.outfits, undefined, result.items)
       .then(() =>
         toast({
           status: "success",
-          title: `Counted outfit No. ${number}`,
+          title,
           action: {
             label: "Undo",
             onClick: () => {
@@ -265,6 +278,52 @@ const Home = () => {
       )
       .catch(onWriteError);
   };
+
+  const onNextOutfit = () => {
+    if (!outfits?.length || !items || !isCountReady || isPickedToday) return;
+    const number = outfits.indexOf(activeOutfit) + 1;
+    commitMove(
+      pick({ outfits, items: itemsById, limits, date }),
+      `Counted outfit No. ${number}`
+    );
+  };
+
+  // Choose (morning): count today's outfit, then bring up the one tapped.
+  // Change (picked): swap, counting nothing.
+  const onChoose = (id: string) => {
+    onChooseClose();
+    if (!outfits || !items || !isCountReady) return;
+    if (isPickedToday && id === activeOutfit.id) return;
+    const result = wearToday({
+      outfits,
+      items: itemsById,
+      limits,
+      date,
+      to: id,
+      countCurrent: !isPickedToday,
+    });
+    if (!result.outfits.length) return;
+    const counted = outfits.indexOf(activeOutfit) + 1;
+    const chosen = outfits.findIndex((outfit) => outfit.id === id) + 1;
+    commitMove(
+      result,
+      isPickedToday
+        ? `No. ${chosen} is today's`
+        : `Counted outfit No. ${counted}`
+    );
+  };
+
+  // Surprise me's candidates, worked out only while the sheet is open
+  const candidates =
+    isChooseOpen && outfits
+      ? surpriseCandidates({
+          outfits,
+          items: itemsById,
+          limits,
+          isPicked: isPickedToday,
+        })
+      : [];
+  const canChoose = (outfits?.length ?? 0) > 1;
 
   // The push button and the Next outfit app shortcut open /?action=next.
   // Drop the parameter first, so a reload can't count a second time.
@@ -541,6 +600,18 @@ const Home = () => {
 
           <HamperSheet isOpen={isHamperOpen} onClose={onHamperClose} />
 
+          <ChooseSheet
+            isOpen={isChooseOpen}
+            onClose={onChooseClose}
+            outfits={outfits ?? []}
+            items={items ?? []}
+            limits={limits}
+            todayId={activeOutfit.id}
+            upNextId={comingUp?.id}
+            candidates={candidates}
+            onChoose={onChoose}
+          />
+
           <Drawer
             isOpen={isJacketSheetOpen}
             onClose={onJacketSheetClose}
@@ -666,6 +737,7 @@ const Home = () => {
               position: "sticky",
               bottom: "nav",
               mt: 4,
+              gap: 2,
             }}
           >
             {isPickedToday ? (
@@ -698,6 +770,18 @@ const Home = () => {
                 sx={{ flex: 1, px: 4 }}
               >
                 Next outfit
+              </Button>
+            )}
+            {canChoose && (
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={onChooseOpen}
+                isDisabled={!isCountReady}
+                // Solid: the bar is sticky and sits over the cards
+                sx={{ px: 5, backgroundColor: "card" }}
+              >
+                {isPickedToday ? "Change" : "Choose"}
               </Button>
             )}
           </Flex>
