@@ -64,7 +64,7 @@ test("nudges to the next outfit, naming its pieces and the weather", () => {
     {
       title: "Time for the next outfit",
       body:
-        "Up next: White oxford, Brown leather, Charcoal wool, Brown oxfords.\n" +
+        "Up next: White oxford, Brown leather, Charcoal wool, Brown oxfords. Or choose another.\n" +
         "9° and light rain — two jackets would suit.",
     }
   );
