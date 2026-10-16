@@ -260,8 +260,8 @@ const Home = () => {
           action: {
             label: "Undo",
             onClick: () => {
-              // After Wear today, undoing would leave two
-              // outfits marked as today's
+              // After another move (or Wear today), undoing would
+              // leave two outfits marked as today's
               if (!isOnScreen(latestOutfits.current || [], broughtUp)) {
                 toast({
                   title: "Can't undo now",
