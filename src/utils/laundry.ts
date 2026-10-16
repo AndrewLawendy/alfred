@@ -320,9 +320,9 @@ export const wearBadge = (piece: Counted | undefined, limits: Limits) => {
 export const isOnScreen = (outfits: Queued[], id: string) =>
   outfits[activeIndex(outfits)]?.id === id;
 
-// Wear today (or Choose on Home): bring `to` up. When the outfit on screen
-// came up on an earlier day it's counted first, exactly as Next outfit then
-// Wear today would.
+// Wear today (or Choose on Home): bring `to` up. With `countCurrent`, the
+// outfit on screen is counted first, exactly as Next outfit then Wear today
+// would; when `to` is that same outfit, it's counted and stays today's.
 export const wearToday = <O extends Queued>({
   outfits,
   items,
