@@ -1,5 +1,5 @@
 import { useEffect, useState, RefObject } from "react";
-import { deleteField, doc } from "firebase/firestore";
+import { deleteField, doc, getDoc } from "firebase/firestore";
 import {
   Box,
   Button,
@@ -39,7 +39,7 @@ import { db } from "utils/firebase";
 import geFileURL from "utils/geFileURL";
 import resizeImage from "utils/resizeImage";
 import { deleteOutfit, saveOutfit, watchPhoto } from "utils/outfitSave";
-import { activeIndex, byId, sinceLabel, wearToday } from "utils/laundry";
+import { activeIndex, byId, undoOf, wearToday } from "utils/laundry";
 import { afterDelete, nextOrder } from "utils/rotation";
 import {
   categoryOf,
@@ -285,17 +285,22 @@ const OutfitEditor = ({
 
   // Counting waits for the person's own limits
   const { limits, isLoading: isLimitsLoading } = useLimitsState();
-  // Wear today: bring this outfit on screen, counting nothing; today's keeps
-  // its turn
-  // The outfit on Today, and whether it was picked on an earlier day: then
-  // Wear today asks whether it was worn, so that wear isn't lost
+  // The outfit on Today, and whether it came up on an earlier day: then
+  // Wear today counts it first
   const onToday = outfits[activeIndex(outfits)];
   const today = useToday();
   const isUnpickedToday = !!onToday && onToday.pickedOn !== today;
 
-  // Wear today: bring this outfit on screen. Today's keeps its turn, and is
-  // counted first only if it was worn after all.
-  const onWearToday = (countCurrent: boolean) => {
+  const onWearTodayError = () =>
+    toast({
+      status: "error",
+      title: "Couldn't change today's outfit",
+      description: "Nothing was changed. Please try again.",
+    });
+
+  // Wear today: bring this outfit on screen. Today's outfit is counted first
+  // when it came up on an earlier day (no question; Undo puts it back).
+  const onWearToday = () => {
     if (!outfit) return;
     const updates = wearToday({
       outfits,
@@ -303,21 +308,45 @@ const OutfitEditor = ({
       limits,
       date: today,
       to: outfit.id,
-      countCurrent,
+      countCurrent: isUnpickedToday,
     });
     if (!updates.outfits.length) return;
+    const undo = {
+      outfits: undoOf(outfits, updates.outfits),
+      items: undoOf(items, updates.items),
+    };
+    const counted = outfits.indexOf(onToday) + 1;
+    const broughtUp = outfit.id;
     closeOutfit();
     updateOutfits(updates.outfits, undefined, updates.items)
       .then(() =>
-        toast({ status: "success", title: `Outfit No. ${number} is today's` })
-      )
-      .catch(() =>
         toast({
-          status: "error",
-          title: "Couldn't change today's outfit",
-          description: "Nothing was changed. Please try again.",
+          status: "success",
+          title: isUnpickedToday
+            ? `Counted No. ${counted}. No. ${number} is today's`
+            : `Outfit No. ${number} is today's`,
+          action: {
+            label: "Undo",
+            // The screen is gone, so check the outfit itself: undoing after
+            // today's outfit moved on would leave two marked as today's
+            onClick: () => {
+              getDoc(doc(db, "outfits", broughtUp))
+                .then((snapshot) => {
+                  if (!snapshot.data()?.active) {
+                    toast({
+                      title: "Can't undo now",
+                      description: "Today's outfit has changed since.",
+                    });
+                    return;
+                  }
+                  return updateOutfits(undo.outfits, undefined, undo.items);
+                })
+                .catch(onWearTodayError);
+            },
+          },
         })
-      );
+      )
+      .catch(onWearTodayError);
   };
 
   const heading = !outfit
@@ -535,38 +564,16 @@ const OutfitEditor = ({
         )}
 
         {outfit && outfit.id !== onToday?.id && !isEditing && (
-          <Confirm
-            message={
-              <>
-                <Heading sx={{ fontSize: "2xl" }}>
-                  Did you wear No. {outfits.indexOf(onToday) + 1}?
-                </Heading>
-                <Text sx={{ mt: 2, color: "muted" }}>
-                  {onToday?.pickedOn
-                    ? `You picked it on ${sinceLabel(onToday.pickedOn, today)}. `
-                    : "It's the outfit on Today. "}
-                  If you wore it, Alfred counts it before switching.
-                </Text>
-              </>
-            }
-            okText="Yes, count it"
-            cancelText="No"
-            onConfirm={() => onWearToday(true)}
-            onDecline={() => onWearToday(false)}
+          <Button
+            size="lg"
+            colorScheme="brand"
+            onClick={onWearToday}
+            isLoading={isLoading}
+            isDisabled={isLimitsLoading}
+            sx={{ w: "100%", mt: 5 }}
           >
-            {({ onOpen }) => (
-              <Button
-                size="lg"
-                colorScheme="brand"
-                onClick={isUnpickedToday ? onOpen : () => onWearToday(false)}
-                isLoading={isLoading}
-                isDisabled={isLimitsLoading}
-                sx={{ w: "100%", mt: 5 }}
-              >
-                Wear today
-              </Button>
-            )}
-          </Confirm>
+            Wear today
+          </Button>
         )}
 
         {isEditingExisting && outfit && (
