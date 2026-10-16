@@ -38,6 +38,7 @@
     "lint-staged": "lint-staged",
     "prepare": "husky install",
     "deploy": "firebase deploy --only hosting",
+    "deploy:preview": "npm run build && sed -i 's/\"short_name\": \"Alfred\"/\"short_name\": \"Alfred Dev\"/' build/manifest.json && sed -i 's/content=\"Alfred\"/content=\"Alfred Dev\"/; s/<title>Alfred/<title>Alfred Dev/' build/index.html && npx -y firebase-tools@15 hosting:channel:deploy dev --expires 7d",
     "update": "yarn build && yarn deploy"
   },
   "lint-staged": {
