@@ -30,6 +30,7 @@ import HamperSheet from "components/HamperSheet";
 import Loading from "components/Loading";
 import OutfitReference from "components/OutfitReference";
 import Swipeable from "components/Swipeable";
+import { Swatch } from "pages/Home/ChooseSheet";
 
 import useAuth from "hooks/useAuth";
 import useBackToClose from "hooks/useBackToClose";
@@ -80,27 +81,6 @@ const greeting = () => {
   if (hour < 18) return "Good afternoon";
   return "Good evening";
 };
-
-// Uses the wardrobe Home already has, rather than a listener per swatch
-const Swatch = ({ item }: { item?: Item }) => (
-  <Box
-    sx={{
-      w: 10,
-      h: 10,
-      borderRadius: "thumb",
-      overflow: "hidden",
-      backgroundColor: "surface",
-    }}
-  >
-    {item && (
-      <Image
-        src={item.imageUrl}
-        alt=""
-        sx={{ w: "100%", h: "100%", objectFit: "cover" }}
-      />
-    )}
-  </Box>
-);
 
 // Outfit whose jacket prompt was shown; survives tab switches, resets on reload
 let promptedFor: string | undefined;
