@@ -80,8 +80,7 @@ export const MIN_PIECES = 2;
 export const MAX_PIECES = 6;
 
 // Before the flexible model, items had five fixed types
-// ponytail: scripts/migration.mjs and functions/reminder.js repeat this
-// mapping; change all three together
+// ponytail: functions/reminder.js repeats this mapping; change both together
 export const LEGACY: Record<string, Category> = {
   shirt: "top",
   pants: "bottom",
