@@ -528,3 +528,56 @@ test("Surprise me's candidates leave the wardrobe as it was", () => {
   surpriseCandidates({ outfits: queue(), items, limits, isPicked: false });
   expect([...items.entries()]).toEqual(before);
 });
+
+test("choosing in the morning when today's wear rules out the next outfit", () => {
+  // A and B share the chinos at 2 of 3: counting A puts them in the hamper
+  const items = byId([
+    item("sa", "top"),
+    item("sb", "top"),
+    item("sc", "top"),
+    item("sd", "top"),
+    item("chinos", "bottom", 2),
+    item("jeans", "bottom"),
+  ]);
+  const queued = [
+    outfit("a", 0, "sa", "chinos", { active: true, pickedOn: MON }),
+    outfit("b", 1, "sb", "chinos"),
+    outfit("c", 2, "sc", "jeans"),
+    outfit("d", 3, "sd", "jeans"),
+  ];
+  const choose = (to: string) =>
+    apply(
+      queued,
+      wearToday({
+        outfits: queued,
+        items,
+        limits,
+        date: TUE,
+        to,
+        countCurrent: true,
+      }).outfits
+    );
+  // D chosen: only D is today's, and B (skipped while dirty) keeps its turn
+  let outfits = choose("d");
+  expect(outfits.filter(({ active }) => active).map(({ id }) => id)).toEqual([
+    "d",
+  ]);
+  expect(outfits.find(({ id }) => id === "b")?.heldTurn).toBe(true);
+  // The chinos washed: B comes up next
+  outfits = apply(
+    outfits,
+    pick({
+      outfits,
+      items: byId([...items.values()].map((i) => ({ ...i, wears: 0 }))),
+      limits,
+      date: WED,
+    }).outfits
+  );
+  expect(onScreen(outfits)).toBe("b");
+  // B chosen anyway: it's today's and no longer holds a turn
+  outfits = choose("b");
+  expect(outfits.filter(({ active }) => active).map(({ id }) => id)).toEqual([
+    "b",
+  ]);
+  expect(outfits.find(({ id }) => id === "b")?.heldTurn).toBeFalsy();
+});
