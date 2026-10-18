@@ -109,7 +109,6 @@ const OutfitEditor = ({
   const [updateOutfit, isUpdating] = useUpdateDocument<Outfit>("outfits");
   const [updateOutfits, isDeleting] = useUpdateOutfits();
   const toast = useNotice();
-  const isLoading = isAdding || isUpdating || isDeleting || isSaving;
 
   const isEditing = mode === "edit";
   const isEditingExisting = isEditing && outfit !== undefined;
@@ -126,6 +125,7 @@ const OutfitEditor = ({
   const [isPhotoRemoved, setIsPhotoRemoved] = useState(false);
   // Saving can take a while with a photo to upload
   const [isSaving, setIsSaving] = useState(false);
+  const isLoading = isAdding || isUpdating || isDeleting || isSaving;
   const [uploadImage] = useUploadImage();
   const [deleteImage] = useDeleteImage();
   const pickedItems = picks.flatMap((id) => itemById(id) ?? []);
