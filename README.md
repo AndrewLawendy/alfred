@@ -1,8 +1,8 @@
 # Alfred
 
-Your own wardrobe stylist. Photograph your shirts, belts, pants, shoes and
-jackets, build outfits from them, and each morning Alfred lays out the next
-outfit in your rotation and suggests a jacket when the weather calls for one.
+Your own wardrobe stylist. Photograph your clothes, or whole outfits, build
+outfits from them, and each morning Alfred lays out the next outfit in your
+rotation and suggests a jacket when the weather calls for one.
 
 Alfred is a mobile-first progressive web app: install it from the browser
 ("Add to Home Screen") and it runs full screen, works offline with the
@@ -14,17 +14,19 @@ Live: https://alfred-wardrobe-stylist.web.app
 ## What it does
 
 - **Today:** today's outfit with the weather. **Next outfit** moves on in the
-  rotation; **Swap with next** wears the next one today and this one after it.
+  rotation; **Choose** picks any outfit for today, or **Surprise me** a clean
+  one at random.
 - **Jackets:** each jacket has the temperature it suits. When one or more
   suit the forecast, Alfred asks which to wear with the new outfit (or none),
   and remembers the pick for that outfit.
-- **Outfits:** the rotation, in order. Drag to reorder; build or edit an
-  outfit by picking one piece per category.
+- **Outfits:** the rotation, in order. Drag to reorder; build an outfit from
+  2 to 6 pieces (a top and bottom, or a dress, plus layers, shoes and
+  accessories), or from a photo, with an optional name.
 - **Wardrobe:** your clothes by category, each with a photo, a title and an
   optional description.
 - **Morning reminder:** a notification at your time on your days (Account)
-  nudging you to the next outfit, naming its pieces, with the weather and
-  jacket call; on Android, **Wear it** moves the rotation on from there. On iPhone it needs
+  nudging you to the next outfit, by its name or its pieces, with the weather
+  and jacket call; on Android, **Next outfit** moves the rotation on from there. On iPhone it needs
   Alfred installed to the Home Screen.
 - **Shortcuts and sharing (Android):** long-press the icon for Next outfit,
   New outfit or Add to wardrobe, and share a photo from the gallery straight

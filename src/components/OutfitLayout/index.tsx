@@ -16,7 +16,8 @@ export type Slot = { category: Category; isRequired: boolean };
 
 type OutfitLayoutProps = {
   pieces: Item[];
-  // Pieces whose item was deleted, shown as gaps
+  // Pieces whose item was deleted, shown as gaps (not on a photo outfit,
+  // where the photo stands in)
   missing?: number;
   onMissing?: () => void;
   badge?: (item: Item) => ReactNode;
