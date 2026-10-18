@@ -17,11 +17,13 @@ type PickerProps = {
   active: PickerTab;
   onTab: (tab: PickerTab) => void;
   onPick: (id: string) => void;
+  isDisabled?: boolean;
   // The outfit's photo: shown (or added) on the Photo tab
   photo?: {
     url?: string;
     onPick: (file: File) => void;
     onRemove: () => void;
+    isDisabled?: boolean;
   };
 };
 
@@ -43,7 +45,14 @@ const Picker = (props: PickerProps) =>
   );
 
 // The row of tabs: Photo (when the editor offers one), then categories
-const Tabs = ({ items, picks, active, onTab, photo }: PickerProps) => {
+const Tabs = ({
+  items,
+  picks,
+  active,
+  onTab,
+  photo,
+  isDisabled,
+}: PickerProps) => {
   const typeOf = (id: string) => items.find((item) => item.id === id)?.type;
   const isPicked = (category: Category) =>
     picks.some((id) => categoryOf(typeOf(id) ?? "") === category);
@@ -56,6 +65,7 @@ const Tabs = ({ items, picks, active, onTab, photo }: PickerProps) => {
         role="tab"
         aria-selected={isActive}
         onClick={() => onTab(key)}
+        disabled={isDisabled}
         sx={{
           flexShrink: 0,
           alignItems: "center",
@@ -127,6 +137,7 @@ const PhotoPanel = ({
   url,
   onPick,
   onRemove,
+  isDisabled,
 }: NonNullable<PickerProps["photo"]>) => {
   const { take, choose, inputs } = usePhotoFiles(onPick);
   return (
@@ -152,6 +163,7 @@ const PhotoPanel = ({
           variant="outline"
           leftIcon={<Icon as={MdPhotoCamera} />}
           onClick={take}
+          isDisabled={isDisabled}
         >
           Take photo
         </Button>
@@ -159,6 +171,7 @@ const PhotoPanel = ({
           variant="outline"
           leftIcon={<Icon as={MdPhotoLibrary} />}
           onClick={choose}
+          isDisabled={isDisabled}
         >
           Choose from library
         </Button>
@@ -166,6 +179,7 @@ const PhotoPanel = ({
           <Button
             variant="ghost"
             onClick={onRemove}
+            isDisabled={isDisabled}
             sx={{ color: "dangerText" }}
           >
             Remove photo
@@ -178,7 +192,7 @@ const PhotoPanel = ({
 
 // A category tab: its pieces, after a tile that adds a new one
 const Pieces = (props: PickerProps & { active: Category }) => {
-  const { items, picks, active, onPick } = props;
+  const { items, picks, active, onPick, isDisabled } = props;
   const typeOf = (id: string) => items.find((item) => item.id === id)?.type;
   const choices = items.filter(({ type }) => categoryOf(type) === active);
   const isFull = picks.length >= MAX_PIECES;
@@ -206,6 +220,7 @@ const Pieces = (props: PickerProps & { active: Category }) => {
         <Flex
           as="button"
           onClick={() => openNewItem(active)}
+          disabled={isDisabled}
           sx={{
             aspectRatio: "4 / 5",
             flexDirection: "column",
@@ -234,7 +249,7 @@ const Pieces = (props: PickerProps & { active: Category }) => {
               onClick={() => onPick(item.id)}
               aria-label={item.title}
               aria-pressed={isSelected}
-              disabled={isBlocked}
+              disabled={isBlocked || isDisabled}
               sx={{
                 minW: 0,
                 textAlign: "left",

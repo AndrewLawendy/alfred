@@ -22,6 +22,7 @@ type PhotoLayoutProps = {
   photoAction?: ReactNode;
   onRemove?: (item: Item) => void;
   onPiece?: (item: Item) => void;
+  isDisabled?: boolean;
 };
 
 const GAP = 8;
@@ -44,6 +45,7 @@ const PhotoLayout = ({
   photoAction,
   onRemove,
   onPiece,
+  isDisabled,
   placeholder,
 }: PhotoLayoutProps) => {
   const { main, side, small } = layoutOf(pieces);
@@ -78,12 +80,13 @@ const PhotoLayout = ({
         badge={badge?.(item)}
         radius="thumb"
         {...(onPiece && {
-          onClick: () => onPiece(item),
+          onClick: () => !isDisabled && onPiece(item),
           role: "button",
           "aria-label": item.title,
+          "aria-disabled": isDisabled,
         })}
       />
-      {onRemove && (
+      {onRemove && !isDisabled && (
         <IconButton
           aria-label={`Remove ${item.title}`}
           icon={<Icon as={MdClose} />}
@@ -117,6 +120,7 @@ const PhotoLayout = ({
             // With a control on it (editing), the tap goes on the image: a
             // button can't hold another button
             {...(onPhoto &&
+              !isDisabled &&
               !photoAction && {
                 as: "button",
                 onClick: onPhoto,
@@ -138,7 +142,9 @@ const PhotoLayout = ({
             <Image
               src={photoUrl}
               alt={title ?? ""}
-              {...(photoAction && onPhoto && { onClick: onPhoto })}
+              {...(photoAction &&
+                onPhoto &&
+                !isDisabled && { onClick: onPhoto })}
               sx={{
                 display: "block",
                 h: "var(--photo-height)",
@@ -148,7 +154,7 @@ const PhotoLayout = ({
                 backgroundColor: "surface",
               }}
             />
-            {photoAction && (
+            {photoAction && !isDisabled && (
               <Box sx={{ position: "absolute", left: 2, top: 2 }}>
                 {photoAction}
               </Box>

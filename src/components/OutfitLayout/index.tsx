@@ -40,6 +40,7 @@ type OutfitLayoutProps = {
   photoAction?: ReactNode;
   // Editing, adding a photo: what fills its frame until there is one
   photoPlaceholder?: ReactNode;
+  isDisabled?: boolean;
 };
 
 const GAP = 8;
@@ -84,6 +85,7 @@ const OutfitLayout = ({
   onPhoto,
   photoAction,
   photoPlaceholder,
+  isDisabled,
 }: OutfitLayoutProps) => {
   if (photoUrl || photoPlaceholder) {
     return (
@@ -97,6 +99,7 @@ const OutfitLayout = ({
         photoAction={photoAction}
         onRemove={onRemove}
         onPiece={onPiece}
+        isDisabled={isDisabled}
         placeholder={photoPlaceholder}
       />
     );
@@ -164,13 +167,14 @@ const OutfitLayout = ({
               isLabelled={!isRail || item.type === "layer"}
               radius={radius}
               {...(onPiece && {
-                onClick: () => onPiece(item),
+                onClick: () => !isDisabled && onPiece(item),
                 role: "button",
                 "aria-label": item.title,
+                "aria-disabled": isDisabled,
               })}
             />
           )}
-          {item && onRemove && (
+          {item && onRemove && !isDisabled && (
             <IconButton
               aria-label={`Remove ${item.title}`}
               icon={<Icon as={MdClose} />}
@@ -189,6 +193,7 @@ const OutfitLayout = ({
             <Flex
               as="button"
               onClick={() => onSlot?.(slot.category)}
+              disabled={isDisabled}
               aria-label={addLabel(slot.category)}
               sx={{
                 w: "100%",
@@ -220,7 +225,7 @@ const OutfitLayout = ({
               category={cell.lost}
               isLabelled={!isRail}
               radius={radius}
-              onMissing={onMissing}
+              onMissing={isDisabled ? undefined : onMissing}
             />
           )}
         </Box>

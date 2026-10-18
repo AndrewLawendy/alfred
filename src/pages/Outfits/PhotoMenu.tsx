@@ -24,6 +24,7 @@ type PhotoMenuProps = {
   onPick: (file: File) => void;
   onView: () => void;
   onRemove: () => void;
+  isDisabled?: boolean;
 };
 
 // The camera button on the editor's photo: replace it, see it, or remove it.
@@ -35,6 +36,7 @@ const PhotoMenu = ({
   onPick,
   onView,
   onRemove,
+  isDisabled,
 }: PhotoMenuProps) => {
   const { take, choose, inputs } = usePhotoFiles(onPick);
   return (
@@ -49,6 +51,7 @@ const PhotoMenu = ({
         <MenuButton
           as={IconButton}
           aria-label="Photo options"
+          isDisabled={isDisabled}
           icon={<Icon as={MdPhotoCamera} sx={{ w: 5, h: 5 }} />}
           sx={{
             minW: "44px",
@@ -61,16 +64,29 @@ const PhotoMenu = ({
           }}
         />
         <MenuList>
-          <MenuItem icon={<Icon as={MdPhotoCamera} />} onClick={take}>
+          <MenuItem
+            isDisabled={isDisabled}
+            icon={<Icon as={MdPhotoCamera} />}
+            onClick={take}
+          >
             Take photo
           </MenuItem>
-          <MenuItem icon={<Icon as={MdPhotoLibrary} />} onClick={choose}>
+          <MenuItem
+            isDisabled={isDisabled}
+            icon={<Icon as={MdPhotoLibrary} />}
+            onClick={choose}
+          >
             Choose from library
           </MenuItem>
-          <MenuItem icon={<Icon as={MdFullscreen} />} onClick={onView}>
+          <MenuItem
+            isDisabled={isDisabled}
+            icon={<Icon as={MdFullscreen} />}
+            onClick={onView}
+          >
             View full screen
           </MenuItem>
           <MenuItem
+            isDisabled={isDisabled}
             icon={<Icon as={MdDelete} />}
             onClick={onRemove}
             sx={{ color: "dangerText" }}
@@ -87,7 +103,13 @@ export default PhotoMenu;
 
 // What fills the photo's frame on the board until there is one: the two
 // ways to add it, right where the eye already is
-export const AddPhoto = ({ onPick }: { onPick: (file: File) => void }) => {
+export const AddPhoto = ({
+  onPick,
+  isDisabled,
+}: {
+  onPick: (file: File) => void;
+  isDisabled?: boolean;
+}) => {
   const { take, choose, inputs } = usePhotoFiles(onPick);
   return (
     <>
@@ -96,10 +118,22 @@ export const AddPhoto = ({ onPick }: { onPick: (file: File) => void }) => {
       <Text sx={{ fontFamily: "heading", fontSize: "xl", color: "ink" }}>
         Add a photo
       </Text>
-      <Button size="sm" variant="outline" onClick={take} sx={{ w: "100%" }}>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={take}
+        isDisabled={isDisabled}
+        sx={{ w: "100%" }}
+      >
         Take photo
       </Button>
-      <Button size="sm" variant="outline" onClick={choose} sx={{ w: "100%" }}>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={choose}
+        isDisabled={isDisabled}
+        sx={{ w: "100%" }}
+      >
         Choose from library
       </Button>
     </>

@@ -109,7 +109,7 @@ const OutfitEditor = ({
   const [updateOutfit, isUpdating] = useUpdateDocument<Outfit>("outfits");
   const [updateOutfits, isDeleting] = useUpdateOutfits();
   const toast = useNotice();
-  const isLoading = isAdding || isUpdating || isDeleting;
+  const isLoading = isAdding || isUpdating || isDeleting || isSaving;
 
   const isEditing = mode === "edit";
   const isEditingExisting = isEditing && outfit !== undefined;
@@ -371,6 +371,7 @@ const OutfitEditor = ({
       >
         <IconButton
           variant="ghost"
+          isDisabled={isSaving}
           // In edit mode the arrow steps back to the outfit, like Back does
           onClick={() =>
             isEditingExisting ? window.history.back() : closeOutfit()
@@ -394,6 +395,7 @@ const OutfitEditor = ({
           <Input
             value={name}
             onChange={(event) => setName(event.target.value)}
+            isDisabled={isSaving}
             maxLength={NAME_MAX}
             placeholder="Name it (optional)"
             aria-label="Outfit name"
@@ -523,12 +525,13 @@ const OutfitEditor = ({
                 setPicks(picks.filter((id) => id !== item.id))
               }
               onPiece={(item) => setTab(categoryOf(item.type))}
+              isDisabled={isSaving}
               highlight={tab === "photo" || isMulti(tab) ? undefined : tab}
               photoUrl={boardPhoto}
               // On the Photo tab with none yet, its frame leads the board
               photoPlaceholder={
                 tab === "photo" && !boardPhoto ? (
-                  <AddPhoto onPick={onPhotoPick} />
+                  <AddPhoto onPick={onPhotoPick} isDisabled={isSaving} />
                 ) : undefined
               }
               title={name || "Outfit photo"}
@@ -539,6 +542,7 @@ const OutfitEditor = ({
                   onPick={onPhotoPick}
                   onView={() => setIsPhotoOpen(true)}
                   onRemove={onPhotoRemove}
+                  isDisabled={isSaving}
                 />
               }
             />
@@ -648,10 +652,12 @@ const OutfitEditor = ({
                 active={tab}
                 onTab={setTab}
                 onPick={onPick}
+                isDisabled={isSaving}
                 photo={{
                   url: boardPhoto,
                   onPick: onPhotoPick,
                   onRemove: onPhotoRemove,
+                  isDisabled: isSaving,
                 }}
               />
             </Box>
