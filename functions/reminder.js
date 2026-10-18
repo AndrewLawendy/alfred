@@ -89,7 +89,18 @@ const LEGACY = {
   shoes: "shoes",
   jacket: "outerwear",
 };
-const categoryOf = (type) => LEGACY[type] || type;
+const CATEGORIES = [
+  "top",
+  "dress",
+  "bottom",
+  "layer",
+  "shoes",
+  "accessory",
+  "outerwear",
+];
+// An unknown type counts as an accessory, as in the app
+const categoryOf = (type) =>
+  LEGACY[type] || (CATEGORIES.includes(type) ? type : "accessory");
 
 // Wears before washing; 0 means not counted
 const DEFAULT_LIMITS = {
