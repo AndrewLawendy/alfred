@@ -13,13 +13,13 @@ import {
   Text,
 } from "@chakra-ui/react";
 
+import OutfitCover from "components/OutfitCover";
 import { Eyebrow } from "components/PageHeader";
 import Swipeable from "components/Swipeable";
 import useBackToClose from "hooks/useBackToClose";
 import { byId } from "utils/laundry";
 import { Item, Outfit } from "utils/types";
-
-const slots = ["shirt", "belt", "pants", "shoes"] as const;
+import { outfitTitle, pieceIdsOf } from "utils/wardrobe";
 
 // Uses the wardrobe Home already has, rather than a listener per swatch.
 // Square; `size` is its width (fills its cell in the sheet's narrow cards)
@@ -142,6 +142,7 @@ const ChooseSheet = ({
               {outfits.map((outfit, index) => {
                 const isToday = outfit.id === todayId;
                 const isUpNext = outfit.id === upNextId;
+                const title = outfitTitle(outfit, index + 1);
                 // Judged like Surprise me: after today's wear in the morning
                 const isDirty =
                   !isToday && !candidates.some(({ id }) => id === outfit.id);
@@ -157,7 +158,7 @@ const ChooseSheet = ({
                     key={outfit.id}
                     as="button"
                     onClick={() => onChoose(outfit.id)}
-                    aria-label={`No. ${index + 1}${state ? `, ${state}` : ""}`}
+                    aria-label={`${title}${state ? `, ${state}` : ""}`}
                     sx={{
                       position: "relative",
                       p: 2,
@@ -170,8 +171,11 @@ const ChooseSheet = ({
                     }}
                   >
                     <Flex sx={{ alignItems: "baseline", gap: 1.5, mb: 1.5 }}>
-                      <Text sx={{ fontFamily: "heading", fontSize: "md" }}>
-                        No. {index + 1}
+                      <Text
+                        noOfLines={1}
+                        sx={{ fontFamily: "heading", fontSize: "md", minW: 0 }}
+                      >
+                        {title}
                       </Text>
                       {isUpNext && (
                         <Text
@@ -191,14 +195,20 @@ const ChooseSheet = ({
                         </Text>
                       )}
                     </Flex>
+                    {/* Like Up next: the photo first, then pieces, four at most */}
                     <Grid templateColumns="repeat(4, 1fr)" gap={1}>
-                      {slots.map((slot) => (
-                        <Swatch
-                          key={slot}
-                          size="100%"
-                          item={itemsById.get(outfit[slot]?.id ?? "")}
-                        />
-                      ))}
+                      {outfit.photoUrl && (
+                        <OutfitCover photoUrl={outfit.photoUrl} size="100%" />
+                      )}
+                      {pieceIdsOf(outfit)
+                        .slice(0, outfit.photoUrl ? 3 : 4)
+                        .map((id) => (
+                          <Swatch
+                            key={id}
+                            size="100%"
+                            item={itemsById.get(id)}
+                          />
+                        ))}
                     </Grid>
                   </Box>
                 );
