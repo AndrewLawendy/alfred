@@ -179,6 +179,14 @@ const OutfitEditor = ({
     if (gap && !isMulti(tab) && next.length > picks.length) setTab(gap);
   };
 
+  // The draft starts from the outfit as it is now: it may have changed (on
+  // another device, or its wardrobe loaded) since this screen opened
+  const startEditing = () => {
+    setPicks(savedPicks);
+    setName(outfit?.name ?? "");
+    setMode("edit");
+  };
+
   // Editing is its own step: Back returns to the outfit and drops changes
   useBackToClose(isEditingExisting, () => {
     setPicks(savedPicks);
@@ -225,16 +233,12 @@ const OutfitEditor = ({
             if (outfit) {
               await updateOutfit(outfit.id, {
                 ...changes,
-                // A cleared name or removed photo; a new outfit has none
+                // A cleared name or removed photo, and the old slots; a new
+                // outfit has none
                 ...Object.fromEntries(
                   remove.map((key) => [key, deleteField()])
                 ),
-                // The old four-slot fields go once it's saved as pieces
-                shirt: deleteField(),
-                belt: deleteField(),
-                pants: deleteField(),
-                shoes: deleteField(),
-              } as unknown as Partial<Outfit>);
+              });
             } else {
               await addOutfit({
                 ...(changes as unknown as Partial<Outfit>),
@@ -413,7 +417,7 @@ const OutfitEditor = ({
             {outfit ? "Save" : "Add"}
           </Button>
         ) : (
-          <Button onClick={() => setMode("edit")} variant="outline">
+          <Button onClick={startEditing} variant="outline">
             Edit
           </Button>
         )}
@@ -544,7 +548,7 @@ const OutfitEditor = ({
             <OutfitLayout
               pieces={savedPieces}
               missing={savedIds.length - savedPieces.length}
-              onMissing={() => setMode("edit")}
+              onMissing={startEditing}
               photoUrl={outfit?.photoUrl}
               title={outfit ? outfitTitle(outfit, number) : undefined}
               isPhotoMarked
@@ -554,7 +558,7 @@ const OutfitEditor = ({
             {outfit?.photoUrl && !savedIds.length && (
               <Button
                 variant="link"
-                onClick={() => setMode("edit")}
+                onClick={startEditing}
                 sx={{ mt: 3, color: "accentText", whiteSpace: "normal" }}
               >
                 Track laundry for this outfit? Add its pieces.

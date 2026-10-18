@@ -63,7 +63,9 @@ test("a removed photo is written as removed", async () => {
     { upload: vi.fn(), write }
   );
   expect(write).toHaveBeenCalledWith(
-    expect.objectContaining({ remove: ["photoUrl", "name"] })
+    expect.objectContaining({
+      remove: ["photoUrl", "name", "shirt", "belt", "pants", "shoes"],
+    })
   );
 });
 

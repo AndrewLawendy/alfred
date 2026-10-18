@@ -164,7 +164,8 @@ export const cleanName = (raw: string) =>
 export const outfitTitle = (outfit: { name?: string }, number: number) =>
   outfit.name || `No. ${number}`;
 
-// The fields an outfit saves; a cleared photo or name is removed, not blank
+// The fields an outfit saves; a cleared photo or name is removed, not blank,
+// and so are the old four-slot fields, which would otherwise win over pieces
 export const outfitFields = (draft: {
   picks: string[];
   photoUrl?: string;
@@ -178,6 +179,7 @@ export const outfitFields = (draft: {
     remove: [
       ...(draft.photoUrl ? [] : ["photoUrl" as const]),
       ...(name ? [] : ["name" as const]),
+      ...(["shirt", "belt", "pants", "shoes"] as const),
     ],
   };
 };

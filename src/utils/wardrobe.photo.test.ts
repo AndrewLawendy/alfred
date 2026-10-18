@@ -25,12 +25,17 @@ test("an outfit is called by its name, else by its number", () => {
   expect(outfitTitle({}, 4)).toBe("No. 4");
 });
 
-test("saving removes a cleared photo or name instead of writing blanks", () => {
+test("saving removes a cleared photo or name, and the old slots, instead of writing blanks", () => {
   expect(outfitFields({ picks: ["a", "b"], name: " " })).toEqual({
     pieces: ["a", "b"],
-    remove: ["photoUrl", "name"],
+    remove: ["photoUrl", "name", "shirt", "belt", "pants", "shoes"],
   });
   expect(
     outfitFields({ picks: [], photoUrl: "https://p", name: "Gym" })
-  ).toEqual({ pieces: [], photoUrl: "https://p", name: "Gym", remove: [] });
+  ).toEqual({
+    pieces: [],
+    photoUrl: "https://p",
+    name: "Gym",
+    remove: ["shirt", "belt", "pants", "shoes"],
+  });
 });
