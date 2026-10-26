@@ -17,7 +17,7 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 import { GiSleevelessJacket } from "react-icons/gi";
-import { MdArrowForward, MdCheck, MdChevronRight } from "react-icons/md";
+import { MdCheck } from "react-icons/md";
 import { WiThermometer } from "react-icons/wi";
 
 import PageHeader, { Eyebrow } from "components/PageHeader";
@@ -28,10 +28,9 @@ import EmptyState from "components/EmptyState";
 import HamperSheet from "components/HamperSheet";
 import Loading from "components/Loading";
 import OutfitLayout from "components/OutfitLayout";
-import OutfitCover from "components/OutfitCover";
 import Swipeable from "components/Swipeable";
 import ChooseSheet from "pages/Home/ChooseSheet";
-import { Swatch } from "pages/Home/OutfitCard";
+import OutfitCard from "pages/Home/OutfitCard";
 
 import useAuth from "hooks/useAuth";
 import useBackToClose from "hooks/useBackToClose";
@@ -47,7 +46,7 @@ import type { OutfitUpdate } from "resources/useUpdateOutfits";
 import useWeather from "resources/useWeather";
 import { useLimitsState } from "resources/useLimits";
 
-import { openNewOutfit, openOutfit, replaceSearch } from "utils/history";
+import { openNewOutfit, openOutfit } from "utils/history";
 import { jacketState } from "utils/jacket";
 import { openItemFromPhoto } from "utils/photoTransition";
 import {
@@ -56,11 +55,10 @@ import {
   hamperPieces,
   inHamper,
   isOnScreen,
-  pick,
   sinceLabel,
   surpriseCandidates,
   undoOf,
-  upNext,
+  stripOf,
   washed,
   wearBadge,
   wearToday,
@@ -113,6 +111,7 @@ const card = {
 // Measured heights (px) of everything on Home but the photos
 const FIXED_HEIGHT = 240;
 const CARD_HEIGHT = 72;
+const STRIP_HEIGHT = 80;
 
 const Home = () => {
   const [user] = useAuth();
@@ -149,30 +148,43 @@ const Home = () => {
   // Counting waits for the wardrobe and the person's own limits
   const isCountReady = !!items && !isLimitsLoading;
   const itemsById = useMemo(() => byId(items || []), [items]);
-  const activePieces = activeOutfit
-    ? pieceIdsOf(activeOutfit).flatMap((id) => itemsById.get(id) ?? [])
-    : [];
   const date = useToday();
   const isPickedToday = activeOutfit?.pickedOn === date;
-  // Up next only matters until today is picked
-  const comingUp =
-    outfits && outfits.length > 1 && !isPickedToday
-      ? upNext(outfits, itemsById, limits)
-      : undefined;
-  const blocked = activeOutfit
-    ? hamperPieces(activeOutfit, itemsById, limits)
+  // Nothing worn yet: today's outfit has never come up on a day
+  const isFirstUse = !!activeOutfit && !activeOutfit.pickedOn;
+  const strip = outfits
+    ? stripOf({ outfits, items: itemsById, limits, isPicked: isPickedToday })
+    : { upcoming: [] };
+  // What the big card shows until a strip card is tapped: Up next in the
+  // morning, otherwise today's outfit
+  const defaultShown = strip.last ? strip.upcoming[0] : activeOutfit;
+  // Tapping a strip card only previews it; Wear or Switch writes. A preview
+  // of a deleted outfit falls back to the default.
+  const [previewId, setPreviewId] = useState<string>();
+  const shown = outfits?.find(({ id }) => id === previewId) ?? defaultShown;
+  const isShowingToday = shown?.id === activeOutfit?.id;
+  const numberOf = (outfit: Outfit) => (outfits?.indexOf(outfit) ?? 0) + 1;
+  const activePieces = shown
+    ? pieceIdsOf(shown).flatMap((id) => itemsById.get(id) ?? [])
     : [];
+  const blocked = shown ? hamperPieces(shown, itemsById, limits) : [];
   const hamper = inHamper(items || [], limits);
   const clean = outfits ? cleanCount(outfits, itemsById, limits) : 0;
   // The day "Not yet" was tapped: it hides the banner until the date moves on
   const [laundryNotYetDay, setLaundryNotYetDay] = useState(laundryNotYetOn);
   const showLaundry =
     hamper.length > 0 && clean <= 2 && laundryNotYetDay !== date;
-  const pickedLabel = !activeOutfit?.pickedOn
-    ? "Your outfit"
-    : isPickedToday
-      ? `Today · ${sinceLabel(date, date)}`
-      : `Picked ${sinceLabel(activeOutfit.pickedOn, date)}`;
+  const shownLabel = !shown
+    ? ""
+    : isFirstUse && isShowingToday
+      ? "Your first outfit"
+      : isPickedToday && isShowingToday
+        ? `Today · ${sinceLabel(date, date)}`
+        : shown === strip.last
+          ? `Last worn · ${sinceLabel(shown.pickedOn, date)}`
+          : strip.last && shown === strip.upcoming[0]
+            ? "Up next"
+            : "Preview";
   const jackets = useMemo(
     () =>
       (items || []).filter((item): item is Jacket => item.type === "outerwear"),
@@ -280,12 +292,35 @@ const Home = () => {
       .catch(onWriteError);
   };
 
-  const onNextOutfit = () => {
-    if (!outfits?.length || !items || !isCountReady || isPickedToday) return;
-    const number = outfits.indexOf(activeOutfit) + 1;
+  // Wear (morning or first use) and Switch (once picked) the outfit shown.
+  // In the morning today's outfit is counted first; on first use it was
+  // never worn, and once picked it already counts, so neither counts.
+  const onWear = () => {
+    if (!outfits || !items || !isCountReady || !shown) return;
+    setPreviewId(undefined);
+    const number = numberOf(shown);
+    if (isFirstUse && isShowingToday) {
+      commitMove(
+        { outfits: [{ id: shown.id, changes: { pickedOn: date } }], items: [] },
+        `No. ${number} is today's`
+      );
+      return;
+    }
+    const countCurrent = !isFirstUse && !isPickedToday;
+    const result = wearToday({
+      outfits,
+      items: itemsById,
+      limits,
+      date,
+      to: shown.id,
+      countCurrent,
+    });
+    if (!result.outfits.length) return;
     commitMove(
-      pick({ outfits, items: itemsById, limits, date }),
-      `Counted outfit No. ${number}`
+      result,
+      countCurrent
+        ? `Counted outfit No. ${numberOf(activeOutfit)}`
+        : `No. ${number} is today's`
     );
   };
 
@@ -293,22 +328,31 @@ const Home = () => {
   // Change (picked): swap, counting nothing.
   const onChoose = (id: string) => {
     onChooseClose();
+    setPreviewId(undefined);
     if (!outfits || !items || !isCountReady) return;
     if (isPickedToday && id === activeOutfit.id) return;
+    // First use, today's again: it was never worn, so just mark it today's
+    if (isFirstUse && id === activeOutfit.id) {
+      commitMove(
+        { outfits: [{ id, changes: { pickedOn: date } }], items: [] },
+        `No. ${numberOf(activeOutfit)} is today's`
+      );
+      return;
+    }
     const result = wearToday({
       outfits,
       items: itemsById,
       limits,
       date,
       to: id,
-      countCurrent: !isPickedToday,
+      countCurrent: !isPickedToday && !isFirstUse,
     });
     if (!result.outfits.length) return;
     const counted = outfits.indexOf(activeOutfit) + 1;
     const chosen = outfits.findIndex((outfit) => outfit.id === id) + 1;
     commitMove(
       result,
-      isPickedToday
+      isPickedToday || isFirstUse
         ? `No. ${chosen} is today's`
         : `Counted outfit No. ${counted}`
     );
@@ -324,19 +368,6 @@ const Home = () => {
         isPicked: isPickedToday,
       })
     : [];
-  const canChoose = (outfits?.length ?? 0) > 1;
-
-  // The push button and the Next outfit app shortcut open /?action=next.
-  // Drop the parameter first, so a reload can't count a second time.
-  const isShortcutPick = useRef(
-    new URLSearchParams(window.location.search).get("action") === "next"
-  );
-  useEffect(() => {
-    if (!isShortcutPick.current || !outfits || !isCountReady) return;
-    isShortcutPick.current = false;
-    replaceSearch("");
-    onNextOutfit();
-  }, [outfits, isCountReady]);
 
   // Height taken by everything but the photos: date and greeting, weather
   // card, outfit label, action bar, plus the laundry, hamper, jacket and
@@ -346,8 +377,8 @@ const Home = () => {
     24 +
     (showLaundry ? CARD_HEIGHT : 0) +
     (blocked.length > 0 ? CARD_HEIGHT : 0) +
-    (hasJacketCard ? CARD_HEIGHT : 0) +
-    (comingUp ? CARD_HEIGHT : 0);
+    (hasJacketCard && isShowingToday ? CARD_HEIGHT : 0) +
+    (strip.upcoming.length > 0 ? STRIP_HEIGHT : 0);
 
   if (!user) return null;
 
@@ -372,7 +403,7 @@ const Home = () => {
 
       {isOutfitsLoading || isItemsLoading ? (
         <Loading message="Laying out today's clothes" columns={2} />
-      ) : activeOutfit ? (
+      ) : activeOutfit && shown ? (
         <>
           {showLaundry && (
             <Flex
@@ -456,8 +487,8 @@ const Home = () => {
 
           <Box sx={{ mb: 2 }}>
             <Eyebrow>
-              {pickedLabel}
-              {activeOutfit.name && ` · ${activeOutfit.name}`}
+              {shownLabel}
+              {shown.name && ` · ${shown.name}`}
             </Eyebrow>
           </Box>
 
@@ -473,19 +504,70 @@ const Home = () => {
           >
             <OutfitLayout
               pieces={activePieces}
-              missing={pieceIdsOf(activeOutfit).length - activePieces.length}
-              onMissing={() => openOutfit(activeOutfit.id)}
+              missing={pieceIdsOf(shown).length - activePieces.length}
+              onMissing={() => openOutfit(shown.id)}
               badge={(item) => wearBadge(item, limits)}
-              photoUrl={activeOutfit.photoUrl}
-              onPhoto={() => openOutfit(activeOutfit.id)}
-              title={outfitTitle(
-                activeOutfit,
-                (outfits?.indexOf(activeOutfit) ?? 0) + 1
-              )}
+              photoUrl={shown.photoUrl}
+              onPhoto={() => openOutfit(shown.id)}
+              title={outfitTitle(shown, numberOf(shown))}
             />
           </Box>
 
-          {hasJacketCard && (
+          {strip.upcoming.length > 0 && (
+            <Grid templateColumns="repeat(4, 1fr)" gap={2} sx={{ mt: 2 }}>
+              {[...(strip.last ? [strip.last] : []), ...strip.upcoming].map(
+                (outfit) => {
+                  const isLast = outfit === strip.last;
+                  const title = isLast ? "Last" : `No. ${numberOf(outfit)}`;
+                  // Like the Choose sheet: Last as its pieces are now, the
+                  // rest after today's wear is counted
+                  const isDirty = isLast
+                    ? hamperPieces(outfit, itemsById, limits).length > 0
+                    : outfit.id !== activeOutfit.id &&
+                      !candidates.some(({ id }) => id === outfit.id);
+                  const tag = isLast
+                    ? sinceLabel(outfit.pickedOn, date).toUpperCase()
+                    : undefined;
+                  return (
+                    <OutfitCard
+                      key={outfit.id}
+                      outfit={outfit}
+                      title={title}
+                      itemsById={itemsById}
+                      isSelected={outfit.id === shown.id}
+                      isDirty={isDirty}
+                      tag={tag}
+                      ariaLabel={`Show ${isLast ? "the last outfit, " : ""}${outfitTitle(outfit, numberOf(outfit))}${isDirty ? ", a piece in the laundry basket" : ""}`}
+                      onClick={() =>
+                        setPreviewId(
+                          outfit.id === defaultShown?.id ? undefined : outfit.id
+                        )
+                      }
+                    />
+                  );
+                }
+              )}
+              <Flex
+                as="button"
+                onClick={onChooseOpen}
+                aria-label="Choose from all outfits"
+                sx={{
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: "card",
+                  border: "1.5px dashed",
+                  borderColor: "line",
+                  fontWeight: "semibold",
+                  fontSize: "sm",
+                }}
+              >
+                All
+              </Flex>
+            </Grid>
+          )}
+
+          {/* Today's jacket, so not under a previewed outfit */}
+          {hasJacketCard && isShowingToday && (
             <Flex sx={{ ...card, mt: 2, minH: 16 }}>
               {jacket ? (
                 <Box
@@ -558,49 +640,6 @@ const Home = () => {
             </Flex>
           )}
 
-          {comingUp && (
-            <Flex
-              as="button"
-              onClick={() => openOutfit(comingUp.id)}
-              aria-label="Open the next outfit"
-              sx={{
-                ...card,
-                mt: 2,
-                w: "100%",
-                minH: 16,
-                pl: 4,
-                textAlign: "left",
-                transition: "transform 0.1s",
-                _active: { transform: "scale(0.98)" },
-              }}
-            >
-              <Box sx={{ flex: 1, minW: 0 }}>
-                <Eyebrow>Up next</Eyebrow>
-                <Text
-                  noOfLines={1}
-                  sx={{
-                    fontFamily: "heading",
-                    fontSize: "lg",
-                    lineHeight: 1.3,
-                  }}
-                >
-                  {outfitTitle(comingUp, (outfits?.indexOf(comingUp) ?? 0) + 1)}
-                </Text>
-              </Box>
-              <Flex sx={{ gap: 1.5, flexShrink: 0 }}>
-                {comingUp.photoUrl && (
-                  <OutfitCover photoUrl={comingUp.photoUrl} size={10} />
-                )}
-                {pieceIdsOf(comingUp)
-                  .slice(0, comingUp.photoUrl ? 3 : 4)
-                  .map((id) => (
-                    <Swatch key={id} item={itemsById.get(id)} />
-                  ))}
-              </Flex>
-              <Icon as={MdChevronRight} sx={{ w: 5, h: 5, color: "muted" }} />
-            </Flex>
-          )}
-
           <HamperSheet isOpen={isHamperOpen} onClose={onHamperClose} />
 
           <ChooseSheet
@@ -609,7 +648,7 @@ const Home = () => {
             outfits={outfits ?? []}
             items={items ?? []}
             todayId={activeOutfit.id}
-            upNextId={comingUp?.id}
+            upNextId={strip.last ? strip.upcoming[0]?.id : undefined}
             candidates={candidates}
             onChoose={onChoose}
           />
@@ -742,7 +781,7 @@ const Home = () => {
               gap: 2,
             }}
           >
-            {isPickedToday ? (
+            {isPickedToday && isShowingToday ? (
               // Solid like the button: the bar is sticky and sits over the
               // cards while the page scrolls
               <Flex
@@ -765,25 +804,16 @@ const Home = () => {
               <Button
                 size="lg"
                 colorScheme="brand"
-                rightIcon={<Icon as={MdArrowForward} />}
-                onClick={onNextOutfit}
+                onClick={onWear}
                 isDisabled={!isCountReady}
                 isLoading={isUpdateOutfitLoading || isUpdateOutfitsLoading}
-                sx={{ flex: 1, px: 4 }}
+                sx={{ flex: 1, px: 4, minW: 0 }}
               >
-                Next outfit
-              </Button>
-            )}
-            {canChoose && (
-              <Button
-                size="lg"
-                variant="outline"
-                onClick={onChooseOpen}
-                isDisabled={!isCountReady}
-                // Solid: the bar is sticky and sits over the cards
-                sx={{ px: 5, backgroundColor: "card" }}
-              >
-                {isPickedToday ? "Change" : "Choose"}
+                <Text as="span" noOfLines={1}>
+                  {isPickedToday ? "Switch to" : "Wear"}{" "}
+                  {outfitTitle(shown, numberOf(shown))}
+                  {shown === strip.last && " again"}
+                </Text>
               </Button>
             )}
           </Flex>
