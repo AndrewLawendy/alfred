@@ -29,9 +29,12 @@ const theme = extendTheme({
       "::view-transition-old(root), ::view-transition-new(root)": {
         animationDuration: "0.28s",
       },
+      // No double-tap zoom anywhere, like an installed app (the viewport
+      // locks pinch zoom)
       "html, body": {
         overscrollBehavior: "none",
         WebkitTapHighlightColor: "transparent",
+        touchAction: "manipulation",
       },
       "a, button, [role=button], label, footer": {
         touchAction: "manipulation",
