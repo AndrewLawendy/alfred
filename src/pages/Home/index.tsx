@@ -324,38 +324,11 @@ const Home = () => {
     );
   };
 
-  // Choose (morning): count today's outfit, then bring up the one tapped.
-  // Change (picked): swap, counting nothing.
+  // All: an outfit picked in the sheet (or by Surprise me) is previewed, like
+  // a strip card; Wear or Switch writes
   const onChoose = (id: string) => {
     onChooseClose();
-    setPreviewId(undefined);
-    if (!outfits || !items || !isCountReady) return;
-    if (isPickedToday && id === activeOutfit.id) return;
-    // First use, today's again: it was never worn, so just mark it today's
-    if (isFirstUse && id === activeOutfit.id) {
-      commitMove(
-        { outfits: [{ id, changes: { pickedOn: date } }], items: [] },
-        `No. ${numberOf(activeOutfit)} is today's`
-      );
-      return;
-    }
-    const result = wearToday({
-      outfits,
-      items: itemsById,
-      limits,
-      date,
-      to: id,
-      countCurrent: !isPickedToday && !isFirstUse,
-    });
-    if (!result.outfits.length) return;
-    const counted = outfits.indexOf(activeOutfit) + 1;
-    const chosen = outfits.findIndex((outfit) => outfit.id === id) + 1;
-    commitMove(
-      result,
-      isPickedToday || isFirstUse
-        ? `No. ${chosen} is today's`
-        : `Counted outfit No. ${counted}`
-    );
+    setPreviewId(id === defaultShown?.id ? undefined : id);
   };
 
   // The clean outfits the sheet offers; also worked out while it's closed, so

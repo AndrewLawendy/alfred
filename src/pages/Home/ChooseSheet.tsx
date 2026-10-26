@@ -34,7 +34,7 @@ type ChooseSheetProps = {
   onChoose: (id: string) => void;
 };
 
-// Choose (or Change) today's outfit: any outfit, or one at random. Outfits
+// All: pick any outfit to preview on Home, or one at random. Outfits
 // Surprise me wouldn't pick (a piece in the hamper, or one there once today's
 // outfit is counted) are dimmed but can still be picked.
 const ChooseSheet = ({
