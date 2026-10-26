@@ -183,7 +183,7 @@ const comingUp = <O extends Queued>(
   return { next: at(start) === current ? at(start + 1) : at(start) };
 };
 
-// Next outfit: count the outfit on screen as worn and bring up the next one.
+// Wear: count the outfit on screen as worn and bring up the next one.
 // One picked after browsing takes the slot of the outfit holding its turn, so
 // everything it jumped keeps its turn. Positions are renumbered 0..n-1, as
 // stored orders can have gaps or duplicates.
@@ -252,7 +252,7 @@ export const pick = <O extends Queued>({
   return { outfits: outfitUpdates, items: itemUpdates };
 };
 
-// The outfit Next outfit would bring up now (for the Up next card)
+// The outfit Wear brings up in the morning (Up next on Home)
 export const upNext = <O extends Queued>(
   outfits: O[],
   items: Map<string, Counted>,
@@ -347,7 +347,7 @@ export const isOnScreen = (outfits: Queued[], id: string) =>
   outfits[activeIndex(outfits)]?.id === id;
 
 // Wear today (or Choose on Home): bring `to` up. With `countCurrent`, the
-// outfit on screen is counted first, exactly as Next outfit then Wear today
+// outfit on screen is counted first, exactly as Wear then Wear today
 // would; when `to` is that same outfit, it's counted and stays today's.
 export const wearToday = <O extends Queued>({
   outfits,
@@ -428,4 +428,35 @@ export const surpriseCandidates = <O extends Queued>({
   return outfits.filter(
     (outfit) => outfit !== current && isWearable(outfit, worn, limits)
   );
+};
+
+// The outfits Home's strip shows. In the morning: today's outfit as Last,
+// then Up next and the one after it. On first use or once today is picked:
+// today's outfit and the two after it. Outfits with a piece in the hamper
+// aren't skipped; the strip dims them.
+export const stripOf = <O extends Queued>({
+  outfits,
+  items,
+  limits,
+  isPicked,
+}: {
+  outfits: O[];
+  items: Map<string, Counted>;
+  limits: Limits;
+  isPicked: boolean;
+}): { last?: O; upcoming: O[] } => {
+  if (outfits.length < 2) return { upcoming: [] };
+  const current = outfits[activeIndex(outfits)];
+  // The outfits after `from` in rotation order, going round once
+  const after = (from: O) =>
+    Array.from(
+      { length: outfits.length - 1 },
+      (_, step) => outfits[(outfits.indexOf(from) + step + 1) % outfits.length]
+    );
+  if (isPicked || !current.pickedOn) {
+    return { upcoming: [current, ...after(current).slice(0, 2)] };
+  }
+  const up = upNext(outfits, items, limits);
+  const next = after(up).find((outfit) => outfit !== current && outfit !== up);
+  return { last: current, upcoming: next ? [up, next] : [up] };
 };
