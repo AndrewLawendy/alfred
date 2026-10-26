@@ -30,7 +30,8 @@ import Loading from "components/Loading";
 import OutfitLayout from "components/OutfitLayout";
 import OutfitCover from "components/OutfitCover";
 import Swipeable from "components/Swipeable";
-import ChooseSheet, { Swatch } from "pages/Home/ChooseSheet";
+import ChooseSheet from "pages/Home/ChooseSheet";
+import { Swatch } from "pages/Home/OutfitCard";
 
 import useAuth from "hooks/useAuth";
 import useBackToClose from "hooks/useBackToClose";

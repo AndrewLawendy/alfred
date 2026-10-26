@@ -9,45 +9,16 @@ import {
   Flex,
   Grid,
   Heading,
-  Image,
   Text,
 } from "@chakra-ui/react";
 
-import OutfitCover from "components/OutfitCover";
 import { Eyebrow } from "components/PageHeader";
 import Swipeable from "components/Swipeable";
 import useBackToClose from "hooks/useBackToClose";
 import { byId } from "utils/laundry";
 import { Item, Outfit } from "utils/types";
-import { outfitTitle, pieceIdsOf } from "utils/wardrobe";
-
-// Uses the wardrobe Home already has, rather than a listener per swatch.
-// Square; `size` is its width (fills its cell in the sheet's narrow cards)
-export const Swatch = ({
-  item,
-  size = 10,
-}: {
-  item?: Item;
-  size?: number | string;
-}) => (
-  <Box
-    sx={{
-      w: size,
-      aspectRatio: 1,
-      borderRadius: "thumb",
-      overflow: "hidden",
-      backgroundColor: "surface",
-    }}
-  >
-    {item && (
-      <Image
-        src={item.imageUrl}
-        alt=""
-        sx={{ w: "100%", h: "100%", objectFit: "cover" }}
-      />
-    )}
-  </Box>
-);
+import { outfitTitle } from "utils/wardrobe";
+import OutfitCard from "pages/Home/OutfitCard";
 
 type ChooseSheetProps = {
   isOpen: boolean;
@@ -154,63 +125,17 @@ const ChooseSheet = ({
                       ? "a piece in the hamper"
                       : undefined;
                 return (
-                  <Box
+                  <OutfitCard
                     key={outfit.id}
-                    as="button"
+                    outfit={outfit}
+                    title={title}
+                    itemsById={itemsById}
+                    isSelected={isToday}
+                    isDirty={isDirty}
+                    tag={isUpNext ? "UP NEXT" : undefined}
+                    ariaLabel={`${title}${state ? `, ${state}` : ""}`}
                     onClick={() => onChoose(outfit.id)}
-                    aria-label={`${title}${state ? `, ${state}` : ""}`}
-                    sx={{
-                      position: "relative",
-                      p: 2,
-                      textAlign: "left",
-                      borderRadius: "card",
-                      backgroundColor: "card",
-                      border: "1.5px solid",
-                      borderColor: isToday ? "accent.500" : "transparent",
-                      opacity: isDirty ? 0.45 : 1,
-                    }}
-                  >
-                    <Flex sx={{ alignItems: "baseline", gap: 1.5, mb: 1.5 }}>
-                      <Text
-                        noOfLines={1}
-                        sx={{ fontFamily: "heading", fontSize: "md", minW: 0 }}
-                      >
-                        {title}
-                      </Text>
-                      {isUpNext && (
-                        <Text
-                          sx={{
-                            fontSize: "2xs",
-                            fontWeight: "semibold",
-                            letterSpacing: "0.12em",
-                            color: "accentText",
-                          }}
-                        >
-                          UP NEXT
-                        </Text>
-                      )}
-                      {isDirty && (
-                        <Text as="span" sx={{ ml: "auto" }} aria-hidden>
-                          🧺
-                        </Text>
-                      )}
-                    </Flex>
-                    {/* Like Up next: the photo first, then pieces, four at most */}
-                    <Grid templateColumns="repeat(4, 1fr)" gap={1}>
-                      {outfit.photoUrl && (
-                        <OutfitCover photoUrl={outfit.photoUrl} size="100%" />
-                      )}
-                      {pieceIdsOf(outfit)
-                        .slice(0, outfit.photoUrl ? 3 : 4)
-                        .map((id) => (
-                          <Swatch
-                            key={id}
-                            size="100%"
-                            item={itemsById.get(id)}
-                          />
-                        ))}
-                    </Grid>
-                  </Box>
+                  />
                 );
               })}
             </Grid>
