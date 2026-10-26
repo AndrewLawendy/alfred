@@ -10,6 +10,7 @@ import {
   localDate,
   notToday,
   wearToday,
+  stripOf,
   surpriseCandidates,
   isOnScreen,
   pick,
@@ -580,4 +581,82 @@ test("choosing in the morning when today's wear rules out the next outfit", () =
     "b",
   ]);
   expect(outfits.find(({ id }) => id === "b")?.heldTurn).toBeFalsy();
+});
+
+const ids = ({ last, upcoming }: { last?: Queued; upcoming: Queued[] }) => ({
+  last: last?.id,
+  upcoming: upcoming.map(({ id }) => id),
+});
+
+test("the strip in the morning: Last, Up next and the one after it", () => {
+  expect(
+    ids(
+      stripOf({ outfits: queue(), items: wardrobe(), limits, isPicked: false })
+    )
+  ).toEqual({ last: "a", upcoming: ["b", "c"] });
+});
+
+test("the strip starts at the outfit up next, and doesn't skip the hamper after it", () => {
+  // B's shirt is in the hamper, so Up next skips to C; D follows as it is
+  const dirty = stripOf({
+    outfits: queue(),
+    items: wardrobe({ sb: 1, sd: 1 }),
+    limits,
+    isPicked: false,
+  });
+  expect(ids(dirty)).toEqual({ last: "a", upcoming: ["c", "d"] });
+  // An outfit holding its turn comes up first, then the one after it
+  const held = stripOf({
+    outfits: queue({ c: { heldTurn: true } }),
+    items: wardrobe(),
+    limits,
+    isPicked: false,
+  });
+  expect(ids(held)).toEqual({ last: "a", upcoming: ["c", "d"] });
+});
+
+test("the strip never repeats Last after Up next, going round", () => {
+  const outfits = queue({
+    a: { active: false },
+    d: { active: true, pickedOn: MON },
+  });
+  // D is today's: up next wraps to A, then B
+  expect(
+    ids(stripOf({ outfits, items: wardrobe(), limits, isPicked: false }))
+  ).toEqual({ last: "d", upcoming: ["a", "b"] });
+  // Two outfits: Last and Up next only
+  const two = queue().slice(0, 2);
+  expect(
+    ids(stripOf({ outfits: two, items: wardrobe(), limits, isPicked: false }))
+  ).toEqual({ last: "a", upcoming: ["b"] });
+});
+
+test("once picked, or before anything is worn, the strip starts at today's outfit", () => {
+  expect(
+    ids(
+      stripOf({ outfits: queue(), items: wardrobe(), limits, isPicked: true })
+    )
+  ).toEqual({ last: undefined, upcoming: ["a", "b", "c"] });
+  const fresh = queue({ a: { pickedOn: undefined } });
+  expect(
+    ids(stripOf({ outfits: fresh, items: wardrobe(), limits, isPicked: false }))
+  ).toEqual({ last: undefined, upcoming: ["a", "b", "c"] });
+  // Two outfits: no repeats
+  expect(
+    ids(
+      stripOf({
+        outfits: fresh.slice(0, 2),
+        items: wardrobe(),
+        limits,
+        isPicked: false,
+      })
+    )
+  ).toEqual({ last: undefined, upcoming: ["a", "b"] });
+});
+
+test("no strip with fewer than two outfits", () => {
+  const one = queue().slice(0, 1);
+  expect(
+    stripOf({ outfits: one, items: wardrobe(), limits, isPicked: false })
+  ).toEqual({ upcoming: [] });
 });
