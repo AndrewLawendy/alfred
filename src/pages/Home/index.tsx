@@ -467,8 +467,8 @@ const Home = () => {
               >
                 🧺 {blocked.map(({ title }) => title).join(" and ")}{" "}
                 {blocked.length === 1
-                  ? `is in the hamper since ${sinceLabel("lastWornOn" in blocked[0] ? blocked[0].lastWornOn : undefined, date)}`
-                  : "are in the hamper"}
+                  ? `is in the laundry basket since ${sinceLabel("lastWornOn" in blocked[0] ? blocked[0].lastWornOn : undefined, date)}`
+                  : "are in the laundry basket"}
                 . Clean now?
               </Text>
               <Button

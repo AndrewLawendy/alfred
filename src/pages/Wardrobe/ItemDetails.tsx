@@ -115,11 +115,11 @@ const ItemDetails = ({ item }: { item: Item }) => {
           >
             <Text sx={{ flex: 1, fontWeight: "semibold" }}>
               {isDirty
-                ? `In the hamper since ${sinceLabel(item.lastWornOn)}`
+                ? `In the laundry basket since ${sinceLabel(item.lastWornOn)}`
                 : `${item.wears ?? 0} of ${limit} wear${limit === 1 ? "" : "s"}`}
             </Text>
             <Button variant="outline" onClick={onLaundry} isLoading={isSaving}>
-              {isDirty ? "Washed" : "Put in hamper"}
+              {isDirty ? "Washed" : "Put in laundry basket"}
             </Button>
           </Flex>
         )}

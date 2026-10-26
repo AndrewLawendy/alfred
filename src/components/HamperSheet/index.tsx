@@ -52,7 +52,7 @@ const HamperSheet = ({ isOpen, onClose }: HamperSheetProps) => {
     updateOutfits([], undefined, updates).catch(() =>
       toast({
         status: "error",
-        title: "Couldn't update your hamper",
+        title: "Couldn't update your laundry basket",
         description: "Nothing was changed. Please try again.",
       })
     );
@@ -82,7 +82,7 @@ const HamperSheet = ({ isOpen, onClose }: HamperSheetProps) => {
               tabIndex={-1}
               sx={{ fontSize: "3xl", _focus: { outline: "none" } }}
             >
-              Hamper
+              Laundry basket
             </Heading>
             {hamper.length > 0 && (
               <Text sx={{ fontFamily: "body", fontSize: "md", color: "muted" }}>

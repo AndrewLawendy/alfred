@@ -122,7 +122,7 @@ const ChooseSheet = ({
                   : isUpNext
                     ? "up next"
                     : isDirty
-                      ? "a piece in the hamper"
+                      ? "a piece in the laundry basket"
                       : undefined;
                 return (
                   <OutfitCard

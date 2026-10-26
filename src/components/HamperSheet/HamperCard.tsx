@@ -53,7 +53,7 @@ const HamperCard = ({ pieces, onOpen, today }: HamperCardProps) => {
           noOfLines={1}
           sx={{ fontFamily: "heading", fontSize: "lg", lineHeight: 1.3 }}
         >
-          {count} piece{count === 1 ? "" : "s"} in the hamper
+          {count} piece{count === 1 ? "" : "s"} in the laundry basket
         </Text>
         <Text noOfLines={1} sx={{ fontSize: "sm", color: "muted" }}>
           Oldest since {sinceLabel(pieces[0].lastWornOn, today)} · tap to wash

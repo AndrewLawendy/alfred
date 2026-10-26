@@ -13,9 +13,10 @@ Live: https://alfred-wardrobe-stylist.web.app
 
 ## What it does
 
-- **Today:** today's outfit with the weather. **Next outfit** moves on in the
-  rotation; **Choose** picks any outfit for today, or **Surprise me** a clean
-  one at random.
+- **Today:** the next outfit in your order with the weather, and a strip of
+  the last one you wore and the two after it. Tap one to see it, **Wear** to
+  wear it (or **Switch** once today's is picked), **All** to choose from every
+  outfit, or **Surprise me** for a clean one at random.
 - **Jackets:** each jacket has the temperature it suits. When one or more
   suit the forecast, Alfred asks which to wear with the new outfit (or none),
   and remembers the pick for that outfit.
@@ -26,11 +27,10 @@ Live: https://alfred-wardrobe-stylist.web.app
   optional description.
 - **Morning reminder:** a notification at your time on your days (Account)
   nudging you to the next outfit, by its name or its pieces, with the weather
-  and jacket call; on Android, **Next outfit** moves the rotation on from there. On iPhone it needs
-  Alfred installed to the Home Screen.
-- **Shortcuts and sharing (Android):** long-press the icon for Next outfit,
-  New outfit or Add to wardrobe, and share a photo from the gallery straight
-  into Alfred.
+  and jacket call; tapping it opens Today. On iPhone it needs Alfred installed
+  to the Home Screen.
+- **Shortcuts and sharing (Android):** long-press the icon for New outfit or
+  Add to wardrobe, and share a photo from the gallery straight into Alfred.
 - **Back** closes whatever is on top (a sheet, edit mode, an item or outfit)
   before leaving the page, like a native app. Items and outfits have their own
   links (`?item=<id>`, `?outfit=<id>`).

@@ -37,8 +37,8 @@ const Laundry = () => {
         Laundry
       </Heading>
       <Text sx={{ mt: 1, color: "muted" }}>
-        Wears before a piece goes in the hamper. A piece can set its own in its
-        details.
+        Wears before a piece goes in the laundry basket. A piece can set its own
+        in its details.
       </Text>
       {types.map(({ key, plural }) => (
         <Flex key={key} sx={{ mt: 4, alignItems: "center", gap: 3 }}>

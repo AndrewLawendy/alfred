@@ -150,7 +150,7 @@ const isWearable = (outfit, items, limits) =>
 const cleanCount = (outfits, items, limits) =>
   outfits.filter((outfit) => isWearable(outfit, items, limits)).length;
 
-// What Next outfit brings up: the outfit holding its turn, otherwise the one
+// What Wear brings up in the morning: the outfit holding its turn, otherwise the one
 // after today's, skipping any with a piece in the hamper once today's outfit
 // has counted its wear. With nothing clean, the next one anyway.
 const upNext = (outfits, items, limits) => {
