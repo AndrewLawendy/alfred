@@ -90,26 +90,22 @@ const compose = async (uid, reminder, now) => {
     return undefined;
   });
 
-  return {
-    ...describe({
-      isNudge,
-      pieces,
-      weather,
-      jackets,
-      chosen,
-      clean: cleanCount(outfits, items, limits),
-      hasHamper: Object.values(items).some((item) => isInHamper(item, limits)),
-    }),
-    // "Next outfit" counts the outfit on screen and moves on, like the shortcut
-    ...(isNudge && { action: "/?action=next" }),
-  };
+  return describe({
+    isNudge,
+    pieces,
+    weather,
+    jackets,
+    chosen,
+    clean: cleanCount(outfits, items, limits),
+    hasHamper: Object.values(items).some((item) => isInHamper(item, limits)),
+  });
 };
 
 // Send to every device of a reminder and drop the ones that are gone
-const send = async (reference, reminder, { title, body, action }) => {
+const send = async (reference, reminder, { title, body }) => {
   const { responses } = await getMessaging().sendEachForMulticast({
     tokens: reminder.tokens,
-    data: { title, body, url: "/", ...(action && { action }) },
+    data: { title, body, url: "/" },
     webpush: { headers: { Urgency: "high", TTL: String(3 * 60 * 60) } },
   });
 

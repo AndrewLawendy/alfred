@@ -127,11 +127,7 @@ self.addEventListener("push", (event) => {
       // A new reminder replaces the last one in the tray; still buzz for it
       renotify: true,
       vibrate: [200, 100, 200],
-      data: { url: data.url || "/", action: data.action },
-      // Android shows the button; iOS just opens the app on tap
-      ...(data.action && {
-        actions: [{ action: "wear", title: "Next outfit" }],
-      }),
+      data: { url: data.url || "/" },
     } as NotificationOptions)
   );
 });
@@ -139,16 +135,11 @@ self.addEventListener("push", (event) => {
 // Tapping it opens Today, reusing an open Alfred window when there is one
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  // "Next outfit" counts the outfit on screen and moves on; tapping the
-  // notification just opens Today
-  const { url: openUrl = "/", action } = (event.notification.data ?? {}) as {
+  // Today's outfit is worn from Home, so tapping only opens it
+  const { url: openUrl = "/" } = (event.notification.data ?? {}) as {
     url?: string;
-    action?: string;
   };
-  const url = new URL(
-    event.action === "wear" && action ? action : openUrl,
-    self.location.origin
-  ).href;
+  const url = new URL(openUrl, self.location.origin).href;
   event.waitUntil(
     (async () => {
       const windows = await self.clients.matchAll({
