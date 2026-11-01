@@ -1,19 +1,17 @@
-import { useEffect, useRef, useState, RefObject } from "react";
-import { doc, orderBy } from "firebase/firestore";
+import { useEffect, useState, RefObject } from "react";
+import { deleteField, doc, getDoc } from "firebase/firestore";
 import {
   Box,
   Button,
   Flex,
-  Grid,
   Heading,
   Icon,
   IconButton,
-  Image,
+  Input,
   Text,
+  useDisclosure,
 } from "@chakra-ui/react";
-import { IconType } from "react-icons";
-import { MdAdd, MdArrowBack } from "react-icons/md";
-import { GiShirt, GiBelt, GiTrousers, GiRunningShoe } from "react-icons/gi";
+import { MdArrowBack, MdGridView, MdPhotoCamera } from "react-icons/md";
 
 import Confirm from "components/Confirm";
 import Loading from "components/Loading";
@@ -23,225 +21,75 @@ import {
   ScreenHeader,
   useScreen,
 } from "components/Screen";
-import PickedMark, { pickedRing } from "components/PickedMark";
+import OutfitLayout, { Slot } from "components/OutfitLayout";
+import PhotoViewer from "components/PhotoViewer";
 
 import useBackToClose from "hooks/useBackToClose";
 import useNotice from "hooks/useNotice";
 import useToday from "hooks/useToday";
 import useAddDocument from "resources/useAddDocument";
-import useData from "resources/useData";
+import useOutfits from "resources/useOutfits";
+import useWardrobe from "resources/useWardrobe";
 import { useLimitsState } from "resources/useLimits";
 import useUpdateDocument from "resources/useUpdateDocument";
 import useUpdateOutfits from "resources/useUpdateOutfits";
+import useDeleteImage from "resources/useDeleteImage";
+import useUploadImage from "resources/useUploadImage";
 import { db } from "utils/firebase";
-import { openNewItem } from "utils/history";
-import { openItemFromPhoto } from "utils/photoTransition";
-import { activeIndex, byId, sinceLabel, wearToday } from "utils/laundry";
+import geFileURL from "utils/geFileURL";
+import resizeImage from "utils/resizeImage";
+import { deleteOutfit, saveOutfit, watchPhoto } from "utils/outfitSave";
+import {
+  activeIndex,
+  byId,
+  countsOnLeave,
+  undoOf,
+  wearToday,
+} from "utils/laundry";
 import { afterDelete, nextOrder } from "utils/rotation";
+import {
+  categoryOf,
+  CATEGORIES,
+  gapsFor,
+  isOutfitValid,
+  MAX_PIECES,
+  NAME_MAX,
+  outfitTitle,
+  pieceIdsOf,
+  togglePick,
+} from "utils/wardrobe";
 import { Item, Outfit } from "utils/types";
+import Picker, { PickerTab } from "./Picker";
+import PhotoMenu, { AddPhoto } from "./PhotoMenu";
+import PickerSheet from "./PickerSheet";
 
-const slots = [
-  { key: "shirt", label: "Shirt", icon: GiShirt },
-  { key: "belt", label: "Belt", icon: GiBelt },
-  { key: "pants", label: "Pants", icon: GiTrousers },
-  { key: "shoes", label: "Shoes", icon: GiRunningShoe },
-] as const;
-
-type SlotKey = (typeof slots)[number]["key"];
-type Picks = Partial<Record<SlotKey, string>>;
-
-const picksOf = (outfit?: Outfit): Picks =>
-  outfit
-    ? Object.fromEntries(slots.map(({ key }) => [key, outfit[key]?.id]))
-    : {};
-
-const labelStyle = {
-  fontSize: "xs",
-  fontWeight: "semibold",
-  textTransform: "uppercase",
-  letterSpacing: "0.12em",
-  color: "muted",
+// Still read by screen readers, but not seen (the name field shows instead)
+const srOnly = {
+  position: "absolute",
+  w: "1px",
+  h: "1px",
+  overflow: "hidden",
+  clip: "rect(0 0 0 0)",
+  whiteSpace: "nowrap",
 } as const;
 
-// One piece of the outfit: its photo, opening the item. A deleted piece is a
-// gap that opens the editor to pick another.
-const Slot = ({
-  label,
-  icon,
-  item,
-  onMissing,
-}: {
-  label: string;
-  icon: IconType;
-  item?: Item;
-  onMissing: () => void;
-}) => (
-  <Box
-    as="button"
-    onClick={(event: React.MouseEvent<HTMLElement>) =>
-      item
-        ? openItemFromPhoto(item.id, event.currentTarget.querySelector("img"))
-        : onMissing()
-    }
-    sx={{
-      textAlign: "left",
-      minW: 0,
-      transition: "transform 0.1s",
-      _active: { transform: "scale(0.97)" },
-    }}
-  >
-    <Flex
-      sx={{
-        aspectRatio: "4 / 5",
-        borderRadius: "card",
-        overflow: "hidden",
-        alignItems: "center",
-        justifyContent: "center",
-        color: "gray.400",
-        backgroundColor: "surface",
-        ...(!item && { border: "1.5px dashed", borderColor: "line" }),
-      }}
-    >
-      {item ? (
-        <Image
-          src={item.imageUrl}
-          alt={item.title}
-          data-photo-source={item.id}
-          sx={{ w: "100%", h: "100%", objectFit: "cover" }}
-        />
-      ) : (
-        <Icon as={icon} sx={{ w: 10, h: 10 }} />
-      )}
-    </Flex>
-    <Text sx={{ ...labelStyle, pt: 3 }}>{label}</Text>
-    <Text
-      noOfLines={1}
-      sx={{ fontFamily: "heading", fontSize: "lg", lineHeight: 1.3, minH: 6 }}
-    >
-      {item?.title ||
-        `Pick ${
-          label === "Pants" || label === "Shoes" ? "" : "a "
-        }${label.toLowerCase()}`}
-    </Text>
-  </Box>
-);
-
-const tileWidth = "8rem";
-
-// Every item of one category in a row you swipe through; tap one to pick it
-const Carousel = ({
-  slot,
-  items,
-  selectedId,
-  onPick,
-}: {
-  slot: (typeof slots)[number];
-  items: Item[];
-  selectedId?: string;
-  onPick: (id: string) => void;
-}) => {
-  const choices = items.filter(({ type }) => type === slot.key);
-  const rowRef = useRef<HTMLDivElement>(null);
-
-  // Start with the current pick in view
-  useEffect(() => {
-    // Scroll only the row: scrollIntoView would also scroll the screen
-    const row = rowRef.current;
-    const tile = row?.querySelector<HTMLElement>("[aria-pressed=true]");
-    // Only when it's out of view, lining it up with the row's left padding
-    if (row && tile && tile.offsetLeft + tile.offsetWidth > row.clientWidth) {
-      row.scrollLeft = tile.offsetLeft - 16;
-    }
-  }, []);
-
-  return (
-    <Box as="section" aria-label={slot.label} sx={{ mb: 6 }}>
-      <Heading as="h3" sx={{ fontSize: "xl", px: 4, mb: 2 }}>
-        {slot.label}
-      </Heading>
-      <Flex
-        ref={rowRef}
-        sx={{
-          // The offsetParent for centring the current pick
-          position: "relative",
-          gap: 3,
-          px: 4,
-          // Room for the chosen tile's ring, which the scroll area would clip
-          py: 1,
-          overflowX: "auto",
-          scrollSnapType: "x mandatory",
-          scrollPaddingInline: 4,
-          scrollbarWidth: "none",
-          "::-webkit-scrollbar": { display: "none" },
-        }}
-      >
-        {choices.map((item) => {
-          const isSelected = item.id === selectedId;
-          return (
-            <Box
-              key={item.id}
-              as="button"
-              onClick={() => onPick(item.id)}
-              aria-pressed={isSelected}
-              sx={{
-                flexShrink: 0,
-                w: tileWidth,
-                textAlign: "left",
-                scrollSnapAlign: "start",
-                transition: "transform 0.1s",
-                _active: { transform: "scale(0.97)" },
-              }}
-            >
-              <Box
-                sx={{
-                  position: "relative",
-                  aspectRatio: "4 / 5",
-                  borderRadius: "card",
-                  overflow: "hidden",
-                  backgroundColor: "surface",
-                  // Chakra turns outline "none" into a 2px transparent one,
-                  // so only add it when selected
-                  ...(isSelected && pickedRing),
-                }}
-              >
-                <Image
-                  src={item.imageUrl}
-                  alt=""
-                  sx={{ w: "100%", h: "100%", objectFit: "cover" }}
-                />
-                {isSelected && <PickedMark />}
-              </Box>
-              <Text noOfLines={1} sx={{ pt: 2, fontWeight: "medium" }}>
-                {item.title}
-              </Text>
-            </Box>
-          );
-        })}
-        <Flex
-          as="button"
-          onClick={() => openNewItem(slot.key)}
-          sx={{
-            flexShrink: 0,
-            w: tileWidth,
-            aspectRatio: "4 / 5",
-            scrollSnapAlign: "start",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 1,
-            border: "1.5px dashed",
-            borderColor: "line",
-            borderRadius: "card",
-            color: "muted",
-            fontSize: "sm",
-          }}
-        >
-          <Icon as={MdAdd} sx={{ w: 7, h: 7 }} />
-          Add {slot.label.toLowerCase()}
-        </Flex>
-      </Flex>
-    </Box>
-  );
+// The board's empty places: the required top and bottom (unless there's a
+// dress), then a faint place for each optional category still open
+const slotsFor = (types: string[]): Slot[] => {
+  const categories = types.map(categoryOf);
+  const required = gapsFor(types).map((category) => ({
+    category,
+    isRequired: true,
+  }));
+  if (types.length >= MAX_PIECES) return required;
+  const optional = (["layer", "shoes", "accessory"] as const)
+    .filter(
+      (category) =>
+        CATEGORIES.find(({ key }) => key === category)?.multi ||
+        !categories.includes(category)
+    )
+    .map((category) => ({ category, isRequired: false }));
+  return [...required, ...optional];
 };
 
 type EditorProps = {
@@ -260,52 +108,168 @@ const OutfitEditor = ({
   headingRef,
 }: EditorProps) => {
   const [mode, setMode] = useState<"view" | "edit">(outfit ? "view" : "edit");
+  // The outfit photo, open full screen
+  const [isPhotoOpen, setIsPhotoOpen] = useState(false);
   const { close: closeOutfit } = useScreen();
-  const [picks, setPicks] = useState<Picks>(() => picksOf(outfit));
   const [addOutfit, isAdding] = useAddDocument<Outfit>("outfits");
   const [updateOutfit, isUpdating] = useUpdateDocument<Outfit>("outfits");
   const [updateOutfits, isDeleting] = useUpdateOutfits();
   const toast = useNotice();
-  const isLoading = isAdding || isUpdating || isDeleting;
 
   const isEditing = mode === "edit";
   const isEditingExisting = isEditing && outfit !== undefined;
   const itemById = (id?: string) => items.find((item) => item.id === id);
-  const missing = slots.filter(({ key }) => !itemById(picks[key]));
+  const typeOf = (id: string) => itemById(id)?.type;
+  const savedIds = outfit ? pieceIdsOf(outfit) : [];
+  const savedPieces = savedIds.flatMap((id) => itemById(id) ?? []);
+  // Deleted pieces drop out when editing; their gap is filled from the board
+  const savedPicks = savedPieces.map(({ id }) => id);
+  const [picks, setPicks] = useState(savedPicks);
+  // The draft's name, and a newly picked photo (resizing) or a removal
+  const [name, setName] = useState(outfit?.name ?? "");
+  const [photo, setPhoto] = useState<Promise<File>>();
+  const [isPhotoRemoved, setIsPhotoRemoved] = useState(false);
+  // Saving can take a while with a photo to upload
+  const [isSaving, setIsSaving] = useState(false);
+  const isLoading = isAdding || isUpdating || isDeleting || isSaving;
+  const [uploadImage] = useUploadImage();
+  const [deleteImage] = useDeleteImage();
+  const pickedItems = picks.flatMap((id) => itemById(id) ?? []);
+  const pickedTypes = pickedItems.map(({ type }) => type);
+  // The picker opens on the first thing missing
+  const [tab, setTab] = useState<PickerTab>(
+    () => gapsFor(pickedTypes)[0] ?? "top"
+  );
+  // A newly picked photo's preview, until it's saved
+  const [preview, setPreview] = useState<string>();
+  useEffect(
+    () => () => {
+      if (preview) URL.revokeObjectURL(preview);
+    },
+    [preview]
+  );
+  const boardPhoto = preview ?? (isPhotoRemoved ? undefined : outfit?.photoUrl);
+  const onPhotoPick = (file: File) => {
+    setPhoto(
+      watchPhoto(resizeImage(file), () => {
+        setPhoto(undefined);
+        setPreview(undefined);
+        toast({
+          status: "error",
+          title: "Couldn't read this photo",
+          description: "Try another one, or take a new photo.",
+        });
+      })
+    );
+    setPreview(URL.createObjectURL(file));
+    setIsPhotoRemoved(false);
+  };
+  const onPhotoRemove = () => {
+    setPhoto(undefined);
+    setPreview(undefined);
+    setIsPhotoRemoved(true);
+  };
+  const photoMenu = useDisclosure();
+  // A new outfit starts by choosing: a photo, or pieces
+  const [hasStarted, setHasStarted] = useState(!!outfit);
+  const isValid = isOutfitValid(picks.length, !!boardPhoto);
+  const isMulti = (key: PickerTab) =>
+    key !== "photo" &&
+    CATEGORIES.find((category) => category.key === key)?.multi;
+
+  const onPick = (id: string) => {
+    const next = togglePick(picks, id, typeOf);
+    setPicks(next);
+    // A single pick done, move on to what's still missing
+    const gap = gapsFor(next.flatMap((pick) => typeOf(pick) ?? []))[0];
+    if (gap && !isMulti(tab) && next.length > picks.length) setTab(gap);
+  };
+
+  // The draft starts from the outfit as it is now: it may have changed (on
+  // another device, or its wardrobe loaded) since this screen opened
+  const startEditing = () => {
+    setPicks(savedPicks);
+    setName(outfit?.name ?? "");
+    setMode("edit");
+  };
 
   // Editing is its own step: Back returns to the outfit and drops changes
   useBackToClose(isEditingExisting, () => {
-    setPicks(picksOf(outfit));
+    setPicks(savedPicks);
+    setName(outfit?.name ?? "");
+    setPhoto(undefined);
+    setPreview(undefined);
+    setIsPhotoRemoved(false);
     setMode("view");
   });
 
   const onSave = async () => {
-    const references = Object.fromEntries(
-      slots.map(({ key }) => [
-        key,
-        doc(db, "wardrobe-items", picks[key] as string),
-      ])
-    ) as Pick<Outfit, SlotKey>;
-
+    // A new photo needs a connection; the rest saves offline and syncs
+    if (photo && !navigator.onLine) {
+      toast({
+        id: "offline",
+        status: "info",
+        title: "You're offline",
+        description:
+          "A new photo needs a connection. Try again once you're back online.",
+      });
+      return;
+    }
+    setIsSaving(true);
     try {
-      if (outfit) {
-        await updateOutfit(outfit.id, references);
-        setMode("view");
-      } else {
-        await addOutfit({
-          ...references,
-          order: nextOrder(outfits),
-          // The first outfit becomes today's
-          active: outfits.length === 0,
-        });
-        closeOutfit();
-      }
+      await saveOutfit(
+        {
+          picks,
+          name,
+          photo,
+          photoUrl: outfit?.photoUrl,
+          isPhotoRemoved,
+        },
+        {
+          upload: async (file) => {
+            const response = await uploadImage(file);
+            if (!response) throw new Error("Photo upload failed");
+            return geFileURL(response.metadata.name);
+          },
+          write: async ({ pieces, remove, ...fields }) => {
+            const changes = {
+              ...fields,
+              pieces: pieces.map((id) => doc(db, "wardrobe-items", id)),
+            };
+            if (outfit) {
+              await updateOutfit(outfit.id, {
+                ...changes,
+                // A cleared name or removed photo, and the old slots; a new
+                // outfit has none
+                ...Object.fromEntries(
+                  remove.map((key) => [key, deleteField()])
+                ),
+              });
+            } else {
+              await addOutfit({
+                ...(changes as unknown as Partial<Outfit>),
+                order: nextOrder(outfits),
+                // The first outfit becomes today's
+                active: outfits.length === 0,
+              } as Outfit);
+            }
+          },
+          deletePhoto: deleteImage,
+        }
+      );
+      setPhoto(undefined);
+      setPreview(undefined);
+      setIsPhotoRemoved(false);
+      if (outfit) setMode("view");
+      else closeOutfit();
     } catch {
       toast({
         status: "error",
         title: "Couldn't save the outfit",
         description: "Nothing was changed. Please try again.",
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -314,7 +278,10 @@ const OutfitEditor = ({
   const onDelete = () => {
     if (!outfit) return;
     closeOutfit();
-    updateOutfits(afterDelete(outfits, outfit.id), outfit.id).catch(() =>
+    deleteOutfit(outfit, {
+      remove: () => updateOutfits(afterDelete(outfits, outfit.id), outfit.id),
+      deletePhoto: deleteImage,
+    }).catch(() =>
       toast({
         status: "error",
         title: "Couldn't delete the outfit",
@@ -325,17 +292,22 @@ const OutfitEditor = ({
 
   // Counting waits for the person's own limits
   const { limits, isLoading: isLimitsLoading } = useLimitsState();
-  // Wear today: bring this outfit on screen, counting nothing; today's keeps
-  // its turn
-  // The outfit on Today, and whether it was picked on an earlier day: then
-  // Wear today asks whether it was worn, so that wear isn't lost
+  // The outfit on Today, and whether it came up on an earlier day: then
+  // Wear today counts it first (never on first use, as on Home)
   const onToday = outfits[activeIndex(outfits)];
   const today = useToday();
-  const isUnpickedToday = !!onToday && onToday.pickedOn !== today;
+  const isUnpickedToday = countsOnLeave(onToday, today);
 
-  // Wear today: bring this outfit on screen. Today's keeps its turn, and is
-  // counted first only if it was worn after all.
-  const onWearToday = (countCurrent: boolean) => {
+  const onWearTodayError = () =>
+    toast({
+      status: "error",
+      title: "Couldn't change today's outfit",
+      description: "Nothing was changed. Please try again.",
+    });
+
+  // Wear today: bring this outfit on screen. Today's outfit is counted first
+  // when it came up on an earlier day (no question; Undo puts it back).
+  const onWearToday = () => {
     if (!outfit) return;
     const updates = wearToday({
       outfits,
@@ -343,28 +315,52 @@ const OutfitEditor = ({
       limits,
       date: today,
       to: outfit.id,
-      countCurrent,
+      countCurrent: isUnpickedToday,
     });
     if (!updates.outfits.length) return;
+    const undo = {
+      outfits: undoOf(outfits, updates.outfits),
+      items: undoOf(items, updates.items),
+    };
+    const counted = outfits.indexOf(onToday) + 1;
+    const broughtUp = outfit.id;
     closeOutfit();
     updateOutfits(updates.outfits, undefined, updates.items)
       .then(() =>
-        toast({ status: "success", title: `Outfit No. ${number} is today's` })
-      )
-      .catch(() =>
         toast({
-          status: "error",
-          title: "Couldn't change today's outfit",
-          description: "Nothing was changed. Please try again.",
+          status: "success",
+          title: isUnpickedToday
+            ? `Counted No. ${counted}. No. ${number} is today's`
+            : `Outfit No. ${number} is today's`,
+          action: {
+            label: "Undo",
+            // The screen is gone, so check the outfit itself: undoing after
+            // today's outfit moved on would leave two marked as today's
+            onClick: () => {
+              getDoc(doc(db, "outfits", broughtUp))
+                .then((snapshot) => {
+                  if (!snapshot.data()?.active) {
+                    toast({
+                      title: "Can't undo now",
+                      description: "Today's outfit has changed since.",
+                    });
+                    return;
+                  }
+                  return updateOutfits(undo.outfits, undefined, undo.items);
+                })
+                .catch(onWearTodayError);
+            },
+          },
         })
-      );
+      )
+      .catch(onWearTodayError);
   };
 
   const heading = !outfit
     ? "New outfit"
     : isEditing
       ? `Edit No. ${number}`
-      : `Outfit No. ${number}`;
+      : outfit.name || `Outfit No. ${number}`;
 
   return (
     <>
@@ -378,6 +374,7 @@ const OutfitEditor = ({
       >
         <IconButton
           variant="ghost"
+          isDisabled={isSaving}
           // In edit mode the arrow steps back to the outfit, like Back does
           onClick={() =>
             isEditingExisting ? window.history.back() : closeOutfit()
@@ -388,23 +385,57 @@ const OutfitEditor = ({
         <Text
           ref={headingRef}
           tabIndex={-1}
-          sx={{ flexGrow: 1, _focus: { outline: "none" } }}
+          sx={{
+            flexGrow: 1,
+            _focus: { outline: "none" },
+            // While editing, the name field takes the title's place
+            ...(isEditing && hasStarted && srOnly),
+          }}
         >
           {heading}
         </Text>
-        {!isEditing && (
-          <Button onClick={() => setMode("edit")} variant="outline">
+        {isEditing && hasStarted && (
+          <Input
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            isDisabled={isSaving}
+            maxLength={NAME_MAX}
+            placeholder="Name it (optional)"
+            aria-label="Outfit name"
+            variant="unstyled"
+            sx={{
+              flex: 1,
+              minW: 0,
+              fontFamily: "heading",
+              fontSize: "2xl",
+              _placeholder: { color: "muted" },
+            }}
+          />
+        )}
+        {isEditing ? (
+          <Button
+            onClick={onSave}
+            isLoading={isLoading || isSaving}
+            isDisabled={!isValid}
+            colorScheme="brand"
+          >
+            {outfit ? "Save" : "Add"}
+          </Button>
+        ) : (
+          <Button onClick={startEditing} variant="outline">
             Edit
           </Button>
         )}
       </ScreenHeader>
 
-      <ScreenBody sx={{ pt: 2, pb: 5, ...(isEditing && { px: 0 }) }}>
-        {isEditing && (
-          <Text sx={{ px: 4, mb: 5, color: "muted" }}>
-            Choose one of each. Jackets are picked on the day, based on the
-            weather.
-          </Text>
+      <ScreenBody sx={{ pt: 2, pb: 5 }}>
+        {(isEditing ? boardPhoto : outfit?.photoUrl) && (
+          <PhotoViewer
+            photoUrl={(isEditing ? boardPhoto : outfit?.photoUrl) as string}
+            title={outfit ? outfitTitle(outfit, number) : "Outfit photo"}
+            isOpen={isPhotoOpen}
+            onClose={() => setIsPhotoOpen(false)}
+          />
         )}
         {!isEditing && outfit?.active && (
           <Text
@@ -424,63 +455,136 @@ const OutfitEditor = ({
             TODAY&apos;S OUTFIT
           </Text>
         )}
-        {isEditing ? (
-          slots.map((slot) => (
-            <Carousel
-              key={slot.key}
-              slot={slot}
-              items={items}
-              selectedId={picks[slot.key]}
-              onPick={(id) => setPicks({ ...picks, [slot.key]: id })}
-            />
-          ))
-        ) : (
-          <Grid templateColumns="repeat(2, 1fr)" columnGap={3} rowGap={5}>
-            {slots.map((slot) => (
-              <Slot
-                key={slot.key}
-                label={slot.label}
-                icon={slot.icon}
-                item={itemById(picks[slot.key])}
-                onMissing={() => setMode("edit")}
-              />
+        {isEditing && !hasStarted ? (
+          <Flex sx={{ flexDirection: "column", gap: 3, pt: 4 }}>
+            <Text sx={{ fontFamily: "heading", fontSize: "2xl", mb: 1 }}>
+              How do you want to start?
+            </Text>
+            {[
+              {
+                icon: MdPhotoCamera,
+                title: "Photo of the outfit",
+                text: "One photo of the whole look. Add its pieces later, or not.",
+                start: "photo" as const,
+              },
+              {
+                icon: MdGridView,
+                title: "Pick pieces",
+                text: "From your wardrobe, 2 to 6.",
+                start: "top" as const,
+              },
+            ].map(({ icon, title, text, start }) => (
+              <Flex
+                key={title}
+                as="button"
+                onClick={() => {
+                  setHasStarted(true);
+                  setTab(start);
+                }}
+                sx={{
+                  gap: 4,
+                  p: 4,
+                  alignItems: "center",
+                  textAlign: "left",
+                  borderRadius: "card",
+                  backgroundColor: "card",
+                  transition: "transform 0.1s",
+                  _active: { transform: "scale(0.98)" },
+                }}
+              >
+                <Flex
+                  sx={{
+                    w: 14,
+                    h: 16,
+                    flexShrink: 0,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: "thumb",
+                    backgroundColor: "surface",
+                    color: "accentText",
+                  }}
+                >
+                  <Icon as={icon} sx={{ w: 6, h: 6 }} />
+                </Flex>
+                <Box>
+                  <Text sx={{ fontFamily: "heading", fontSize: "xl" }}>
+                    {title}
+                  </Text>
+                  <Text sx={{ fontSize: "sm", color: "muted" }}>{text}</Text>
+                </Box>
+              </Flex>
             ))}
-          </Grid>
+          </Flex>
+        ) : isEditing ? (
+          <Box
+            // The board shares the screen with the picker below
+            style={{ "--outfit-height": "300px" } as React.CSSProperties}
+          >
+            <OutfitLayout
+              pieces={pickedItems}
+              slots={slotsFor(pickedTypes)}
+              onSlot={setTab}
+              onRemove={(item) =>
+                setPicks(picks.filter((id) => id !== item.id))
+              }
+              onPiece={(item) => setTab(categoryOf(item.type))}
+              isDisabled={isSaving}
+              highlight={tab === "photo" || isMulti(tab) ? undefined : tab}
+              photoUrl={boardPhoto}
+              // On the Photo tab with none yet, its frame leads the board
+              photoPlaceholder={
+                tab === "photo" && !boardPhoto ? (
+                  <AddPhoto onPick={onPhotoPick} isDisabled={isSaving} />
+                ) : undefined
+              }
+              title={name || "Outfit photo"}
+              onPhoto={photoMenu.onOpen}
+              photoAction={
+                <PhotoMenu
+                  {...photoMenu}
+                  onPick={onPhotoPick}
+                  onView={() => setIsPhotoOpen(true)}
+                  onRemove={onPhotoRemove}
+                  isDisabled={isSaving}
+                />
+              }
+            />
+          </Box>
+        ) : (
+          <>
+            <OutfitLayout
+              pieces={savedPieces}
+              missing={savedIds.length - savedPieces.length}
+              onMissing={startEditing}
+              photoUrl={outfit?.photoUrl}
+              title={outfit ? outfitTitle(outfit, number) : undefined}
+              isPhotoMarked
+              onPhoto={() => setIsPhotoOpen(true)}
+            />
+
+            {outfit?.photoUrl && !savedIds.length && (
+              <Button
+                variant="link"
+                onClick={startEditing}
+                sx={{ mt: 3, color: "accentText", whiteSpace: "normal" }}
+              >
+                Track laundry for this outfit? Add its pieces.
+              </Button>
+            )}
+          </>
         )}
 
         {outfit && outfit.id !== onToday?.id && !isEditing && (
-          <Confirm
-            message={
-              <>
-                <Heading sx={{ fontSize: "2xl" }}>
-                  Did you wear No. {outfits.indexOf(onToday) + 1}?
-                </Heading>
-                <Text sx={{ mt: 2, color: "muted" }}>
-                  {onToday?.pickedOn
-                    ? `You picked it on ${sinceLabel(onToday.pickedOn, today)}. `
-                    : "It's the outfit on Today. "}
-                  If you wore it, Alfred counts it before switching.
-                </Text>
-              </>
-            }
-            okText="Yes, count it"
-            cancelText="No"
-            onConfirm={() => onWearToday(true)}
-            onDecline={() => onWearToday(false)}
+          <Button
+            size="lg"
+            colorScheme="brand"
+            onClick={onWearToday}
+            isLoading={isLoading}
+            isDisabled={isLimitsLoading}
+            sx={{ w: "100%", mt: 5 }}
           >
-            {({ onOpen }) => (
-              <Button
-                size="lg"
-                colorScheme="brand"
-                onClick={isUnpickedToday ? onOpen : () => onWearToday(false)}
-                isLoading={isLoading}
-                isDisabled={isLimitsLoading}
-                sx={{ w: "100%", mt: 5 }}
-              >
-                Wear today
-              </Button>
-            )}
-          </Confirm>
+            Wear today
+          </Button>
         )}
 
         {isEditingExisting && outfit && (
@@ -521,31 +625,46 @@ const OutfitEditor = ({
         )}
       </ScreenBody>
 
-      {isEditing && (
+      {isEditing && hasStarted && (
+        // The wardrobe to pick from, a sheet under the board; its grid
+        // scrolls on its own so the board stays in view
         <ScreenFooter
           sx={{
-            borderTop: "1px solid",
-            borderColor: "line",
-            pb: "calc(var(--chakra-space-4) + env(safe-area-inset-bottom))",
             flexDirection: "column",
+            px: 0,
+            pt: 1,
+            borderRadius: "24px 24px 0 0",
+            backgroundColor: "card",
           }}
         >
-          {missing.length > 0 && (
-            <Text sx={{ mb: 3, fontSize: "sm", color: "muted" }}>
-              Still missing:{" "}
-              {missing.map(({ label }) => label.toLowerCase()).join(", ")}
-            </Text>
-          )}
-          <Button
-            onClick={onSave}
-            isLoading={isLoading}
-            isDisabled={missing.length > 0}
-            colorScheme="brand"
-            size="lg"
-            sx={{ w: "100%", borderRadius: "full" }}
-          >
-            {outfit ? "Save changes" : "Add to rotation"}
-          </Button>
+          {/* A steady height whatever the tab (taller from its handle), so it
+              never jumps; what doesn't fit scrolls inside it */}
+          <PickerSheet>
+            {/* The rule, right above where you pick */}
+            {(!isValid || (boardPhoto && !picks.length)) && (
+              <Text sx={{ px: 4, pb: 2, fontSize: "sm", color: "muted" }}>
+                {isValid
+                  ? "A photo is enough. Add its pieces to track laundry."
+                  : "Add a photo, or pick 2 to 6 pieces — a top and bottom, or a dress, plus anything else."}
+              </Text>
+            )}
+            <Box sx={{ flex: 1, minH: 0, overflowY: "auto" }}>
+              <Picker
+                items={items}
+                picks={picks}
+                active={tab}
+                onTab={setTab}
+                onPick={onPick}
+                isDisabled={isSaving}
+                photo={{
+                  url: boardPhoto,
+                  onPick: onPhotoPick,
+                  onRemove: onPhotoRemove,
+                  isDisabled: isSaving,
+                }}
+              />
+            </Box>
+          </PickerSheet>
         </ScreenFooter>
       )}
     </>
@@ -560,8 +679,8 @@ export const OutfitPanel = ({
   param: string;
   headingRef: RefObject<HTMLParagraphElement>;
 }) => {
-  const [outfits] = useData<Outfit>("outfits", orderBy("order"));
-  const [items] = useData<Item>("wardrobe-items");
+  const [outfits] = useOutfits();
+  const [items] = useWardrobe();
   const index = outfits?.findIndex(({ id }) => id === param) ?? -1;
   const found =
     outfits && index !== -1

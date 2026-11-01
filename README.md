@@ -1,8 +1,8 @@
 # Alfred
 
-Your own wardrobe stylist. Photograph your shirts, belts, pants, shoes and
-jackets, build outfits from them, and each morning Alfred lays out the next
-outfit in your rotation and suggests a jacket when the weather calls for one.
+Your own wardrobe stylist. Photograph your clothes, or whole outfits, build
+outfits from them, and each morning Alfred lays out the next outfit in your
+rotation and suggests a jacket when the weather calls for one.
 
 Alfred is a mobile-first progressive web app: install it from the browser
 ("Add to Home Screen") and it runs full screen, works offline with the
@@ -13,22 +13,24 @@ Live: https://alfred-wardrobe-stylist.web.app
 
 ## What it does
 
-- **Today:** today's outfit with the weather. **Next outfit** moves on in the
-  rotation; **Swap with next** wears the next one today and this one after it.
+- **Today:** the next outfit in your order with the weather, and a strip of
+  the last one you wore and the two after it. Tap one to see it, **Wear** to
+  wear it (or **Switch** once today's is picked), **All** to choose from every
+  outfit, or **Surprise me** for a clean one at random.
 - **Jackets:** each jacket has the temperature it suits. When one or more
   suit the forecast, Alfred asks which to wear with the new outfit (or none),
   and remembers the pick for that outfit.
-- **Outfits:** the rotation, in order. Drag to reorder; build or edit an
-  outfit by picking one piece per category.
+- **Outfits:** the rotation, in order. Drag to reorder; build an outfit from
+  2 to 6 pieces (a top and bottom, or a dress, plus layers, shoes and
+  accessories), or from a photo, with an optional name.
 - **Wardrobe:** your clothes by category, each with a photo, a title and an
   optional description.
 - **Morning reminder:** a notification at your time on your days (Account)
-  nudging you to the next outfit, naming its pieces, with the weather and
-  jacket call; on Android, **Wear it** moves the rotation on from there. On iPhone it needs
-  Alfred installed to the Home Screen.
-- **Shortcuts and sharing (Android):** long-press the icon for Next outfit,
-  New outfit or Add to wardrobe, and share a photo from the gallery straight
-  into Alfred.
+  nudging you to the next outfit, by its name or its pieces, with the weather
+  and jacket call; tapping it opens Today. On iPhone it needs Alfred installed
+  to the Home Screen.
+- **Shortcuts and sharing (Android):** long-press the icon for New outfit or
+  Add to wardrobe, and share a photo from the gallery straight into Alfred.
 - **Back** closes whatever is on top (a sheet, edit mode, an item or outfit)
   before leaving the page, like a native app. Items and outfits have their own
   links (`?item=<id>`, `?outfit=<id>`).
@@ -62,7 +64,7 @@ VITE_WEATHER_API_ID=<your OpenWeather key>
 Then:
 
 ```sh
-yarn start   # opens http://localhost:3000
+yarn dev   # opens http://localhost:3000
 ```
 
 The service worker (offline, install, shortcuts, sharing, notifications) only
@@ -93,33 +95,34 @@ Authorized domains**, or sign-in fails with `auth/unauthorized-domain`.
 
 | Command           | What it does                                                   |
 | ----------------- | -------------------------------------------------------------- |
-| `yarn start`      | Vite dev server with hot reload; opens the browser             |
+| `yarn dev`        | Vite dev server with hot reload; opens the browser             |
 | `yarn build`      | Type-check, then a production build in `build/`                |
 | `yarn preview`    | Serve that build on port 5055 (service worker included)        |
 | `yarn test`       | Vitest in watch mode (`yarn test run` for a single run)        |
 | `yarn test:rules` | Firestore and Storage rules against the emulators (needs Java) |
 | `yarn lint`       | ESLint 9 with type-aware and React Compiler rules, with fixes  |
 | `yarn format`     | Prettier over `src/`                                           |
+| `yarn deploy:dev` | Build and deploy to the `dev` preview channel as "Alfred Dev"  |
+| `yarn deploy`     | Build and deploy to production                                 |
 
 The app version shown on the Account page comes from `version` in
 `package.json`.
 
 ## Deploying
 
-Build first, then preview on a Firebase Hosting channel before going live:
+Preview on a Firebase Hosting channel before going live:
 
 ```sh
-yarn build
+# Preview at a temporary URL (printed at the end), valid for 7 days. It's
+# named "Alfred Dev" on the home screen, so it installs beside the real app.
+yarn deploy:dev
 
-# Preview at a temporary URL (printed at the end), valid for 7 days
-npx firebase-tools hosting:channel:deploy dev --expires 7d
-
-# Promote exactly what's on the preview to production
-npx firebase-tools hosting:clone alfred-wardrobe-stylist:dev alfred-wardrobe-stylist:live
+# Then build again and deploy to production
+yarn deploy
 ```
 
-`yarn update` builds and deploys straight to production, skipping the
-preview.
+Don't promote the preview with `hosting:clone`: it carries the "Alfred Dev"
+name into production.
 
 The morning reminder function has no preview channel; deploy it on its own:
 

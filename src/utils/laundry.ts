@@ -1,32 +1,52 @@
 import type { OutfitUpdate } from "resources/useUpdateOutfits";
-import { Item, Outfit } from "utils/types";
+import { CATEGORIES, categoryOf, pieceIdsOf } from "utils/wardrobe";
+import { Category, Outfit } from "utils/types";
 
-// Laundry rules: how many wears each type takes before washing, what's in the
-// hamper, and which outfits can be worn. Pure, so Home, the Hamper and tests
-// share them. functions/reminder.js repeats isInHamper, cleanCount and upNext.
+// Laundry rules: how many wears each category (or piece) takes before
+// washing, what's in the hamper, and which outfits can be worn. Pure, so
+// Home, the Hamper and tests share them. functions/reminder.js repeats
+// limitOf, isInHamper, cleanCount and upNext.
 
-export type Limits = { shirt: number; pants: number };
-export const DEFAULT_LIMITS: Limits = { shirt: 1, pants: 3 };
-// The counted outfit slots, which are also the counted item types
-export const COUNTED = ["shirt", "pants"] as const;
+// Wears before washing per category; 0 means not counted
+export type Limits = Partial<Record<Category, number>>;
+export const DEFAULT_LIMITS: Limits = Object.fromEntries(
+  CATEGORIES.filter(({ inOutfit }) => inOutfit).map(({ key, defaultLimit }) => [
+    key,
+    defaultLimit,
+  ])
+);
 
 export type Counted = {
   id: string;
-  type: Item["type"];
+  // A category, or an old type read through categoryOf
+  type: string;
   wears?: number | null;
   lastWornOn?: string | null;
+  // Overrides the category's limit; 0 means not counted
+  wearLimit?: number | null;
 };
+type Ref = { id: string };
 export type Queued = Pick<Outfit, "id" | "order"> & {
   active?: boolean;
-  shirt?: { id: string };
-  pants?: { id: string };
+  pieces?: Ref[];
+  // A photo-only outfit has no pieces: never counted, never skipped
+  photoUrl?: string;
+  // Old outfits, read through pieceIdsOf
+  shirt?: Ref;
+  pants?: Ref;
+  belt?: Ref;
+  shoes?: Ref;
   jacket?: unknown;
   pickedOn?: string | null;
   heldTurn?: boolean | null;
 };
 export type ItemUpdate = {
   id: string;
-  changes: { wears?: number | null; lastWornOn?: string | null };
+  changes: {
+    wears?: number | null;
+    lastWornOn?: string | null;
+    wearLimit?: number | null;
+  };
 };
 
 // Local "YYYY-MM-DD", built from its parts rather than a locale's format,
@@ -35,10 +55,14 @@ const pad = (n: number) => String(n).padStart(2, "0");
 export const localDate = (date = new Date()) =>
   `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 
-export const limitOf = (item: Counted, limits: Limits) =>
-  item.type === "shirt" || item.type === "pants"
-    ? limits[item.type]
-    : undefined;
+// The piece's own limit, else its category's; 0 or none means not counted,
+// and outerwear never is
+export const limitOf = (item: Counted, limits: Limits) => {
+  const category = categoryOf(item.type);
+  if (category === "outerwear") return undefined;
+  const limit = item.wearLimit ?? limits[category] ?? DEFAULT_LIMITS[category];
+  return limit ? limit : undefined;
+};
 
 const wearsOf = (item: Counted) => item.wears ?? 0;
 
@@ -56,9 +80,9 @@ export const hamperPieces = <I extends Counted>(
   items: Map<string, I>,
   limits: Limits
 ) =>
-  COUNTED.map((slot) => items.get(outfit[slot]?.id ?? "")).filter(
-    (piece): piece is I => !!piece && isInHamper(piece, limits)
-  );
+  pieceIdsOf(outfit)
+    .map((id) => items.get(id))
+    .filter((piece): piece is I => !!piece && isInHamper(piece, limits));
 
 export const isWearable = (
   outfit: Queued,
@@ -99,12 +123,12 @@ export const inHamper = <I extends Counted>(items: I[], limits: Limits) =>
     .filter((item) => isInHamper(item, limits))
     .sort((a, b) => (a.lastWornOn ?? "").localeCompare(b.lastWornOn ?? ""));
 
-// The hamper by type, in outfit order (shirts, then pants), each oldest first;
+// The hamper by category, in CATEGORIES order, each oldest first;
 // pieces must already be in hamper order (see inHamper)
 export const hamperGroups = <I extends Counted>(pieces: I[]) =>
-  COUNTED.map((type) => ({
-    type,
-    pieces: pieces.filter((piece) => piece.type === type),
+  CATEGORIES.map(({ key }) => ({
+    type: key,
+    pieces: pieces.filter((piece) => categoryOf(piece.type) === key),
   })).filter(({ pieces }) => pieces.length > 0);
 
 export const washed = (item: Counted): ItemUpdate => ({
@@ -159,7 +183,7 @@ const comingUp = <O extends Queued>(
   return { next: at(start) === current ? at(start + 1) : at(start) };
 };
 
-// Next outfit: count the outfit on screen as worn and bring up the next one.
+// Wear: count the outfit on screen as worn and bring up the next one.
 // One picked after browsing takes the slot of the outfit holding its turn, so
 // everything it jumped keeps its turn. Positions are renumbered 0..n-1, as
 // stored orders can have gaps or duplicates.
@@ -182,8 +206,10 @@ export const pick = <O extends Queued>({
 
   // Dated to the day it came on screen, however long it stayed there
   const wornOn = current.pickedOn ?? date;
-  const itemUpdates = COUNTED.flatMap((slot): ItemUpdate[] => {
-    const piece = items.get(current[slot]?.id ?? "");
+  // Each piece once, even if it's listed twice
+  const ids = [...new Set(pieceIdsOf(current))];
+  const itemUpdates = ids.flatMap((id): ItemUpdate[] => {
+    const piece = items.get(id);
     const limit = piece && limitOf(piece, limits);
     if (!piece || limit === undefined) return [];
     return [
@@ -226,7 +252,7 @@ export const pick = <O extends Queued>({
   return { outfits: outfitUpdates, items: itemUpdates };
 };
 
-// The outfit Next outfit would bring up now (for the Up next card)
+// The outfit Wear brings up in the morning (Up next on Home)
 export const upNext = <O extends Queued>(
   outfits: O[],
   items: Map<string, Counted>,
@@ -320,9 +346,16 @@ export const wearBadge = (piece: Counted | undefined, limits: Limits) => {
 export const isOnScreen = (outfits: Queued[], id: string) =>
   outfits[activeIndex(outfits)]?.id === id;
 
-// Wear today, from an outfit's screen: bring `to` up, counting nothing. When
-// the outfit on screen was worn after all (the person says so), it's counted
-// first, exactly as Next outfit then Wear today would.
+// Whether moving on from today's outfit counts it: it came up on an earlier
+// day. Never on first use (it was never worn) or once picked today.
+export const countsOnLeave = (
+  current: { pickedOn?: string | null } | undefined,
+  date: string
+) => !!current?.pickedOn && current.pickedOn !== date;
+
+// Wear today (or Choose on Home): bring `to` up. With `countCurrent`, the
+// outfit on screen is counted first, exactly as Wear then Wear today
+// would; when `to` is that same outfit, it's counted and stays today's.
 export const wearToday = <O extends Queued>({
   outfits,
   items,
@@ -334,6 +367,22 @@ export const wearToday = <O extends Queued>({
   outfits: OutfitUpdate[];
   items: ItemUpdate[];
 } => {
+  const current = outfits[activeIndex(outfits)];
+  // Worn again: count it, and it stays today's; nothing else moves
+  if (countCurrent && to === current?.id) {
+    return {
+      outfits: [
+        {
+          id: current.id,
+          changes: {
+            pickedOn: date,
+            ...(current.jacket != null && { jacket: null }),
+          },
+        },
+      ],
+      items: pick({ outfits, items, limits, date }).items,
+    };
+  }
   if (!countCurrent) {
     return {
       outfits: notToday({ outfits, items, limits, date, to }) ?? [],
@@ -357,4 +406,64 @@ export const wearToday = <O extends Queued>({
       merged[index] = { id, changes: { ...merged[index].changes, ...changes } };
   });
   return { outfits: merged, items: picked.items };
+};
+
+// The outfits Surprise me picks from: wearable ones other than today's. In
+// the morning they're judged after today's outfit is counted, as choosing
+// counts it first.
+export const surpriseCandidates = <O extends Queued>({
+  outfits,
+  items,
+  limits,
+  isPicked,
+}: {
+  outfits: O[];
+  items: Map<string, Counted>;
+  limits: Limits;
+  isPicked: boolean;
+}): O[] => {
+  const current = outfits[activeIndex(outfits)];
+  const worn = new Map<string, Counted>(items);
+  if (!isPicked) {
+    pick({ outfits, items, limits, date: "" }).items.forEach(
+      ({ id, changes }) => {
+        const piece = worn.get(id);
+        if (piece) worn.set(id, { ...piece, ...changes });
+      }
+    );
+  }
+  return outfits.filter(
+    (outfit) => outfit !== current && isWearable(outfit, worn, limits)
+  );
+};
+
+// The outfits Home's strip shows. In the morning: today's outfit as Last,
+// then Up next and the one after it. On first use or once today is picked:
+// today's outfit and the two after it. Outfits with a piece in the hamper
+// aren't skipped; the strip dims them.
+export const stripOf = <O extends Queued>({
+  outfits,
+  items,
+  limits,
+  isPicked,
+}: {
+  outfits: O[];
+  items: Map<string, Counted>;
+  limits: Limits;
+  isPicked: boolean;
+}): { last?: O; upcoming: O[] } => {
+  if (outfits.length < 2) return { upcoming: [] };
+  const current = outfits[activeIndex(outfits)];
+  // The outfits after `from` in rotation order, going round once
+  const after = (from: O) =>
+    Array.from(
+      { length: outfits.length - 1 },
+      (_, step) => outfits[(outfits.indexOf(from) + step + 1) % outfits.length]
+    );
+  if (isPicked || !current.pickedOn) {
+    return { upcoming: [current, ...after(current).slice(0, 2)] };
+  }
+  const up = upNext(outfits, items, limits);
+  const next = after(up).find((outfit) => outfit !== current && outfit !== up);
+  return { last: current, upcoming: next ? [up, next] : [up] };
 };

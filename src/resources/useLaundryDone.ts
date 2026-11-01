@@ -10,7 +10,7 @@ const useLaundryDone = () => {
   const onError = () =>
     toast({
       status: "error",
-      title: "Couldn't update your hamper",
+      title: "Couldn't update your laundry basket",
       description: "Nothing was changed. Please try again.",
     });
 

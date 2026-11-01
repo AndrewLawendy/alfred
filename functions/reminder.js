@@ -78,30 +78,79 @@ const weatherLine = ({ weather, jackets, chosen }) => {
   return `${sky} — ${count.toLowerCase()} jackets would suit.`;
 };
 
-// ponytail: repeats isInHamper, cleanCount and upNext from
+// ponytail: repeats categoryOf, pieceIdsOf, outfitLabel, limitOf, DEFAULT_LIMITS,
+// isInHamper, cleanCount and upNext from src/utils/wardrobe.ts and
 // src/utils/laundry.ts, as the functions are CommonJS outside the Vite build.
 // Change both together; reminder.test.js pins this copy.
+const LEGACY = {
+  shirt: "top",
+  pants: "bottom",
+  belt: "accessory",
+  shoes: "shoes",
+  jacket: "outerwear",
+};
+const CATEGORIES = [
+  "top",
+  "dress",
+  "bottom",
+  "layer",
+  "shoes",
+  "accessory",
+  "outerwear",
+];
+// An unknown type counts as an accessory, as in the app
+const categoryOf = (type) =>
+  LEGACY[type] || (CATEGORIES.includes(type) ? type : "accessory");
+
+// Wears before washing; 0 means not counted
+const DEFAULT_LIMITS = {
+  top: 1,
+  dress: 1,
+  bottom: 3,
+  layer: 5,
+  shoes: 0,
+  accessory: 0,
+};
+
+// An outfit's pieces, whether saved as pieces or in the old four slots. The
+// new app never writes slots, so any slot means an old app edited it last.
+const pieceIdsOf = (outfit) => {
+  const slots = [outfit.shirt, outfit.pants, outfit.belt, outfit.shoes];
+  return (slots.some(Boolean) ? slots : outfit.pieces || [])
+    .filter(Boolean)
+    .map(({ id }) => id);
+};
+
+// How the push names an outfit: its name, its pieces, or its number
+const outfitLabel = (outfit, items, number) =>
+  outfit.name ||
+  pieceIdsOf(outfit)
+    .map((id) => items[id]?.title)
+    .filter(Boolean)
+    .join(", ") ||
+  `Outfit No. ${number}`;
+
+// A piece's own limit, else its category's; outerwear is never counted
+const limitOf = (item, limits) => {
+  if (!item) return undefined;
+  const category = categoryOf(item.type);
+  if (category === "outerwear") return undefined;
+  const limit = item.wearLimit ?? limits[category] ?? DEFAULT_LIMITS[category];
+  return limit || undefined;
+};
+
 const isInHamper = (item, limits) => {
-  const limit =
-    item && (item.type === "shirt" || item.type === "pants")
-      ? limits[item.type]
-      : undefined;
+  const limit = limitOf(item, limits);
   return limit !== undefined && (item.wears ?? 0) >= limit;
 };
 
-const cleanCount = (outfits, items, limits) =>
-  outfits.filter((outfit) =>
-    ["shirt", "pants"].every(
-      (slot) => !isInHamper(items[outfit[slot]?.id], limits)
-    )
-  ).length;
-
 const isWearable = (outfit, items, limits) =>
-  ["shirt", "pants"].every(
-    (slot) => !isInHamper(items[outfit[slot]?.id], limits)
-  );
+  pieceIdsOf(outfit).every((id) => !isInHamper(items[id], limits));
 
-// What Next outfit brings up: the outfit holding its turn, otherwise the one
+const cleanCount = (outfits, items, limits) =>
+  outfits.filter((outfit) => isWearable(outfit, items, limits)).length;
+
+// What Wear brings up in the morning: the outfit holding its turn, otherwise the one
 // after today's, skipping any with a piece in the hamper once today's outfit
 // has counted its wear. With nothing clean, the next one anyway.
 const upNext = (outfits, items, limits) => {
@@ -112,12 +161,9 @@ const upNext = (outfits, items, limits) => {
   const current = outfits[index];
   if (outfits.length === 1) return current;
   const worn = { ...items };
-  ["shirt", "pants"].forEach((slot) => {
-    const id = current[slot]?.id;
-    const limit = id && worn[id] ? limits[worn[id].type] : undefined;
-    if (limit === undefined || !["shirt", "pants"].includes(worn[id].type)) {
-      return;
-    }
+  [...new Set(pieceIdsOf(current))].forEach((id) => {
+    const limit = limitOf(worn[id], limits);
+    if (limit === undefined) return;
     worn[id] = {
       ...worn[id],
       wears: Math.min(limit, (worn[id].wears ?? 0) + 1),
@@ -157,7 +203,7 @@ const describe = ({
   const firstLine = !outfit
     ? "Tap to see it."
     : isNudge
-      ? `Up next: ${outfit}.`
+      ? `Up next: ${outfit}. Or choose another.`
       : `${outfit}.`;
   return {
     title: isNudge ? "Time for the next outfit" : "Your outfit is laid out",
@@ -179,4 +225,8 @@ module.exports = {
   upNext,
   cleanCount,
   isInHamper,
+  DEFAULT_LIMITS,
+  categoryOf,
+  pieceIdsOf,
+  outfitLabel,
 };

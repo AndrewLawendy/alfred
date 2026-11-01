@@ -21,15 +21,12 @@ import {
   useSearchParam,
 } from "utils/history";
 import { clearSharedPhoto, readSharedPhoto } from "utils/sharedPhoto";
+import { CATEGORIES } from "utils/wardrobe";
 import { Item } from "utils/types";
 
-const types: { type: Item["type"]; label: string }[] = [
-  { type: "shirt", label: "Shirt" },
-  { type: "jacket", label: "Jacket" },
-  { type: "belt", label: "Belt" },
-  { type: "pants", label: "Pants" },
-  { type: "shoes", label: "Shoes" },
-];
+const types: { type: Item["type"]; label: string }[] = CATEGORIES.map(
+  ({ key, label }) => ({ type: key, label })
+);
 
 // "What are you adding?" for the Add to wardrobe shortcut (?add=1) and for
 // photos shared into Alfred (?add=1&shared=1). It's reached from outside the

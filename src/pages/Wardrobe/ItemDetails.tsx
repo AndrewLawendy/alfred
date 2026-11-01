@@ -1,12 +1,14 @@
-import { orderBy } from "firebase/firestore";
 import {
   Box,
   Button,
   Flex,
+  FormControl,
+  FormLabel,
   Grid,
   Heading,
   Icon,
   Image,
+  Select,
   Text,
 } from "@chakra-ui/react";
 import { WiThermometer } from "react-icons/wi";
@@ -14,10 +16,11 @@ import { WiThermometer } from "react-icons/wi";
 import OutfitReference from "components/OutfitReference";
 import { Eyebrow } from "components/PageHeader";
 import useNotice from "hooks/useNotice";
-import useData from "resources/useData";
+import useOutfits from "resources/useOutfits";
 import useLimits from "resources/useLimits";
 import useUpdateOutfits from "resources/useUpdateOutfits";
 import {
+  DEFAULT_LIMITS,
   isInHamper,
   limitOf,
   localDate,
@@ -26,9 +29,8 @@ import {
   washed,
 } from "utils/laundry";
 import { openOutfit } from "utils/history";
-import { Item, Outfit } from "utils/types";
-
-const slots = ["shirt", "belt", "pants", "shoes"] as const;
+import { pieceIdsOf } from "utils/wardrobe";
+import { Item } from "utils/types";
 
 const SectionLabel = ({ children }: { children: string }) => (
   <Box sx={{ mt: 8, mb: 3 }}>
@@ -37,10 +39,10 @@ const SectionLabel = ({ children }: { children: string }) => (
 );
 
 const ItemDetails = ({ item }: { item: Item }) => {
-  const [outfits] = useData<Outfit>("outfits", orderBy("order"));
+  const [outfits] = useOutfits();
   const usedIn = (outfits || [])
     .map((outfit, index) => ({ outfit, number: index + 1 }))
-    .filter(({ outfit }) => slots.some((slot) => outfit[slot]?.id === item.id));
+    .filter(({ outfit }) => pieceIdsOf(outfit).includes(item.id));
   const limits = useLimits();
   const [updateOutfits, isSaving] = useUpdateOutfits();
   const toast = useNotice();
@@ -54,6 +56,18 @@ const ItemDetails = ({ item }: { item: Item }) => {
       toast({
         status: "error",
         title: "Couldn't update this piece",
+        description: "Nothing was changed. Please try again.",
+      })
+    );
+  const categoryLimit = limits[item.type] ?? DEFAULT_LIMITS[item.type] ?? 0;
+  // Its own count, or "" to follow its category's
+  const onWearLimit = (value: string) =>
+    updateOutfits([], undefined, [
+      { id: item.id, changes: { wearLimit: value === "" ? null : +value } },
+    ]).catch(() =>
+      toast({
+        status: "error",
+        title: "Couldn't save this piece",
         description: "Nothing was changed. Please try again.",
       })
     );
@@ -88,7 +102,7 @@ const ItemDetails = ({ item }: { item: Item }) => {
           </Text>
         )}
 
-        {(item.type === "shirt" || item.type === "pants") && limit && (
+        {limit && (
           <Flex
             sx={{
               mt: 6,
@@ -101,16 +115,51 @@ const ItemDetails = ({ item }: { item: Item }) => {
           >
             <Text sx={{ flex: 1, fontWeight: "semibold" }}>
               {isDirty
-                ? `In the hamper since ${sinceLabel(item.lastWornOn)}`
+                ? `In the laundry basket since ${sinceLabel(item.lastWornOn)}`
                 : `${item.wears ?? 0} of ${limit} wear${limit === 1 ? "" : "s"}`}
             </Text>
             <Button variant="outline" onClick={onLaundry} isLoading={isSaving}>
-              {isDirty ? "Washed" : "Put in hamper"}
+              {isDirty ? "Washed" : "Put in laundry basket"}
             </Button>
           </Flex>
         )}
 
-        {item.type === "jacket" ? (
+        {item.type !== "outerwear" && (
+          <FormControl
+            sx={{
+              mt: 3,
+              p: 4,
+              display: "flex",
+              alignItems: "center",
+              gap: 3,
+              borderRadius: "card",
+              backgroundColor: "card",
+            }}
+          >
+            <FormLabel sx={{ flex: 1, minW: 0, m: 0, fontWeight: "semibold" }}>
+              Wears before washing
+            </FormLabel>
+            <Select
+              value={item.wearLimit ?? ""}
+              onChange={(event) => onWearLimit(event.target.value)}
+              rootProps={{ w: "auto", flexShrink: 0 }}
+            >
+              <option value="">
+                {categoryLimit
+                  ? `Default (${categoryLimit})`
+                  : "Default (not counted)"}
+              </option>
+              {Array.from({ length: 10 }, (_, index) => (
+                <option key={index + 1} value={index + 1}>
+                  {index + 1}
+                </option>
+              ))}
+              <option value={0}>Not counted</option>
+            </Select>
+          </FormControl>
+        )}
+
+        {item.type === "outerwear" ? (
           <>
             <Flex
               sx={{
@@ -176,11 +225,10 @@ const ItemDetails = ({ item }: { item: Item }) => {
                   gap={1.5}
                   sx={{ flex: 1, pointerEvents: "none" }}
                 >
-                  {slots.map((slot) => (
+                  {outfit.pieces.slice(0, 4).map((reference) => (
                     <OutfitReference
-                      key={slot}
-                      reference={outfit[slot]}
-                      slot={slot}
+                      key={reference.id}
+                      reference={reference}
                       aspectRatio={1}
                       radius="thumb"
                     />

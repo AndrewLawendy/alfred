@@ -28,18 +28,32 @@ test("limits say when they're still loading, so nothing counts with the defaults
 });
 
 test("saved limits override the defaults once loaded", () => {
-  mockSettings({ limits: { pants: 2 } }, false);
+  mockSettings({ limits: { bottom: 2, accessory: 4 } }, false);
   expect(renderHook(() => useLimitsState()).result.current).toEqual({
-    limits: { shirt: 1, pants: 2 },
+    limits: {
+      top: 1,
+      dress: 1,
+      bottom: 2,
+      layer: 5,
+      shoes: 0,
+      accessory: 4,
+    },
     isLoading: false,
   });
 });
 
-test("saving one type's limit writes only that type, never the other's default", async () => {
-  await saveLimits({ shirt: 2 });
+test("old saved limits (shirt, pants) read as top and bottom", () => {
+  mockSettings({ limits: { shirt: 2, pants: 5 } }, false);
+  const { limits } = renderHook(() => useLimitsState()).result.current;
+  expect(limits).toMatchObject({ top: 2, bottom: 5, dress: 1 });
+  expect(limits).not.toHaveProperty("shirt");
+});
+
+test("saving one category's limit writes only that category", async () => {
+  await saveLimits({ top: 2 });
   expect(vi.mocked(setDoc).mock.calls[0][1]).toEqual({
     user: "alice",
-    limits: { shirt: 2 },
+    limits: { top: 2 },
     updatedAt: "now",
   });
   expect(vi.mocked(setDoc).mock.calls[0][2]).toEqual({ merge: true });

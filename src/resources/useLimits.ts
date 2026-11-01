@@ -16,8 +16,17 @@ export const useLimitsState = (): { limits: Limits; isLoading: boolean } => {
     [user?.uid]
   );
   const [data, isLoading] = useDocumentData(ref);
-  const saved = (data as { limits?: Partial<Limits> } | undefined)?.limits;
-  return { limits: { ...DEFAULT_LIMITS, ...saved }, isLoading };
+  const saved =
+    (data as { limits?: Record<string, number> } | undefined)?.limits ?? {};
+  // Before categories, limits were saved as shirt and pants
+  const { shirt, pants, ...rest } = saved;
+  const limits: Limits = {
+    ...DEFAULT_LIMITS,
+    ...(shirt !== undefined && { top: shirt }),
+    ...(pants !== undefined && { bottom: pants }),
+    ...rest,
+  };
+  return { limits, isLoading };
 };
 
 const useLimits = () => useLimitsState().limits;

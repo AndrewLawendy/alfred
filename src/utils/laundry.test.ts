@@ -3,6 +3,7 @@ import {
   activeIndex,
   byId,
   cleanCount,
+  countsOnLeave,
   hamperPieces,
   inHamper,
   hamperGroups,
@@ -10,6 +11,8 @@ import {
   localDate,
   notToday,
   wearToday,
+  stripOf,
+  surpriseCandidates,
   isOnScreen,
   pick,
   sinceLabel,
@@ -24,23 +27,30 @@ import type { Queued } from "utils/laundry";
 
 const item = (
   id: string,
-  type: "shirt" | "pants" | "belt" | "shoes" | "jacket",
+  type:
+    "top" | "bottom" | "dress" | "layer" | "shoes" | "accessory" | "outerwear",
   wears?: number,
-  lastWornOn?: string
-) => ({ id, type, wears, lastWornOn });
+  lastWornOn?: string,
+  wearLimit?: number
+) => ({
+  id,
+  type,
+  wears,
+  lastWornOn,
+  ...(wearLimit !== undefined && { wearLimit }),
+});
 
 const outfit = (
   id: string,
   order: number,
-  shirt: string,
-  pants: string,
+  top: string,
+  bottom: string,
   extra: Partial<Queued> = {}
 ): Queued => ({
   id,
   order,
   active: false,
-  shirt: { id: shirt },
-  pants: { id: pants },
+  pieces: [{ id: top }, { id: bottom }],
   ...extra,
 });
 
@@ -60,28 +70,28 @@ test("local dates don't depend on the browser's locale formats", () => {
 });
 
 test("an item is in the hamper once its wears reach its type's limit", () => {
-  expect(isInHamper(item("s", "shirt", 1), limits)).toBe(true);
-  expect(isInHamper(item("s", "shirt", 0), limits)).toBe(false);
-  expect(isInHamper(item("s", "shirt"), limits)).toBe(false);
-  expect(isInHamper(item("p", "pants", 2), limits)).toBe(false);
-  expect(isInHamper(item("p", "pants", 3), limits)).toBe(true);
+  expect(isInHamper(item("s", "top", 1), limits)).toBe(true);
+  expect(isInHamper(item("s", "top", 0), limits)).toBe(false);
+  expect(isInHamper(item("s", "top"), limits)).toBe(false);
+  expect(isInHamper(item("p", "bottom", 2), limits)).toBe(false);
+  expect(isInHamper(item("p", "bottom", 3), limits)).toBe(true);
 });
 
 test("belts, shoes and jackets never go in the hamper", () => {
-  expect(isInHamper(item("b", "belt", 99), limits)).toBe(false);
-  expect(isInHamper(item("j", "jacket", 99), limits)).toBe(false);
+  expect(isInHamper(item("b", "accessory", 99), limits)).toBe(false);
+  expect(isInHamper(item("j", "outerwear", 99), limits)).toBe(false);
 });
 
 test("lowering a limit puts items in the hamper immediately, raising takes them out", () => {
-  const chinos = item("p", "pants", 2);
-  expect(isInHamper(chinos, { ...limits, pants: 2 })).toBe(true);
-  expect(isInHamper(item("p", "pants", 3), { ...limits, pants: 4 })).toBe(
+  const chinos = item("p", "bottom", 2);
+  expect(isInHamper(chinos, { ...limits, bottom: 2 })).toBe(true);
+  expect(isInHamper(item("p", "bottom", 3), { ...limits, bottom: 4 })).toBe(
     false
   );
 });
 
 test("hamper pieces skip slots whose item is missing", () => {
-  const items = byId([item("s1", "shirt", 1)]);
+  const items = byId([item("s1", "top", 1)]);
   expect(hamperPieces(outfit("a", 0, "s1", "gone"), items, limits)).toEqual([
     items.get("s1"),
   ]);
@@ -92,9 +102,9 @@ test("hamper pieces skip slots whose item is missing", () => {
 
 test("wearable outfits are found from a position, going round once", () => {
   const items = byId([
-    item("s1", "shirt", 1),
-    item("s2", "shirt"),
-    item("p", "pants"),
+    item("s1", "top", 1),
+    item("s2", "top"),
+    item("p", "bottom"),
   ]);
   const outfits = [
     outfit("a", 0, "s1", "p"),
@@ -107,7 +117,7 @@ test("wearable outfits are found from a position, going round once", () => {
 });
 
 test("no wearable outfit gives undefined; the outfit on screen is the active one", () => {
-  const items = byId([item("s1", "shirt", 1), item("p", "pants", 3)]);
+  const items = byId([item("s1", "top", 1), item("p", "bottom", 3)]);
   const outfits = [
     outfit("a", 0, "s1", "p"),
     outfit("b", 1, "s1", "p2", { active: true }),
@@ -119,13 +129,13 @@ test("no wearable outfit gives undefined; the outfit on screen is the active one
 
 test("the hamper lists items oldest first; washing and hamper set wears", () => {
   const items = [
-    item("new", "shirt", 1, "2026-10-02"),
-    item("old", "pants", 3, "2026-09-28"),
-    item("clean", "shirt", 0),
+    item("new", "top", 1, "2026-10-02"),
+    item("old", "bottom", 3, "2026-09-28"),
+    item("clean", "top", 0),
   ];
   expect(inHamper(items, limits).map(({ id }) => id)).toEqual(["old", "new"]);
   expect(washed(items[0])).toEqual({ id: "new", changes: { wears: 0 } });
-  expect(toHamper(item("p", "pants", 1), limits, "2026-10-03")).toEqual({
+  expect(toHamper(item("p", "bottom", 1), limits, "2026-10-03")).toEqual({
     id: "p",
     changes: { wears: 3, lastWornOn: "2026-10-03" },
   });
@@ -150,8 +160,8 @@ const queue = (extra: Record<string, Partial<Queued>> = {}) =>
 const wardrobe = (wears: Record<string, number> = {}) =>
   byId(
     ["sa", "sb", "sc", "sd"]
-      .map((id) => item(id, "shirt", wears[id]))
-      .concat(item("p", "pants", wears.p))
+      .map((id) => item(id, "top", wears[id]))
+      .concat(item("p", "bottom", wears.p))
   );
 // Firestore after the writes, in rotation order
 const apply = (outfits: Queued[], updates: { id: string; changes: object }[]) =>
@@ -279,11 +289,11 @@ test("Next outfit skips an outfit with a piece in the hamper, which keeps its tu
 test("the wear just counted can rule out the next outfit", () => {
   // A and B share the chinos, at 2 of 3: wearing A puts them in the hamper
   const items = byId([
-    item("sa", "shirt"),
-    item("sb", "shirt"),
-    item("sc", "shirt"),
-    item("chinos", "pants", 2),
-    item("jeans", "pants"),
+    item("sa", "top"),
+    item("sb", "top"),
+    item("sc", "top"),
+    item("chinos", "bottom", 2),
+    item("jeans", "bottom"),
   ]);
   const outfits = [
     outfit("a", 0, "sa", "chinos", { active: true, pickedOn: MON }),
@@ -384,10 +394,10 @@ test("since labels use the weekday this week, the date before that", () => {
 });
 
 test("piece marks: hamper, pips for multi-wear types, nothing for one-wear", () => {
-  expect(wearBadge(item("s", "shirt", 1), DEFAULT_LIMITS)).toBe("🧺");
-  expect(wearBadge(item("p", "pants", 1), DEFAULT_LIMITS)).toBe("●○○");
-  expect(wearBadge(item("s", "shirt", 0), DEFAULT_LIMITS)).toBeUndefined();
-  expect(wearBadge(item("b", "belt", 5), DEFAULT_LIMITS)).toBeUndefined();
+  expect(wearBadge(item("s", "top", 1), DEFAULT_LIMITS)).toBe("🧺");
+  expect(wearBadge(item("p", "bottom", 1), DEFAULT_LIMITS)).toBe("●○○");
+  expect(wearBadge(item("s", "top", 0), DEFAULT_LIMITS)).toBeUndefined();
+  expect(wearBadge(item("b", "accessory", 5), DEFAULT_LIMITS)).toBeUndefined();
   expect(wearBadge(undefined, DEFAULT_LIMITS)).toBeUndefined();
 });
 
@@ -457,15 +467,207 @@ test("Wear today on the outfit that comes up next anyway is a plain Next outfit"
 
 test("the hamper groups by type, shirts first, oldest first within each", () => {
   const groups = hamperGroups([
-    item("old pants", "pants", 3, "2026-09-27"),
-    item("old shirt", "shirt", 1, "2026-09-28"),
-    item("new shirt", "shirt", 1, "2026-10-02"),
+    item("old pants", "bottom", 3, "2026-09-27"),
+    item("old shirt", "top", 1, "2026-09-28"),
+    item("new shirt", "top", 1, "2026-10-02"),
   ]);
   expect(
     groups.map(({ type, pieces }) => [type, pieces.map(({ id }) => id)])
   ).toEqual([
-    ["shirt", ["old shirt", "new shirt"]],
-    ["pants", ["old pants"]],
+    ["top", ["old shirt", "new shirt"]],
+    ["bottom", ["old pants"]],
   ]);
   expect(hamperGroups([])).toEqual([]);
+});
+
+test("wearing today's outfit again counts it and keeps it, moving nothing else", () => {
+  const outfits = queue({ a: { jacket: false } });
+  const items = wardrobe();
+  const result = wearToday({
+    outfits,
+    items,
+    limits,
+    date: TUE,
+    to: "a",
+    countCurrent: true,
+  });
+  // Dated to the day it came up, like Next outfit; the shirt reaches its limit
+  expect(result.items).toEqual(
+    pick({ outfits, items, limits, date: TUE }).items
+  );
+  expect(result.items[0]).toEqual({
+    id: "sa",
+    changes: { wears: 1, lastWornOn: MON },
+  });
+  expect(result.outfits).toEqual([
+    { id: "a", changes: { pickedOn: TUE, jacket: null } },
+  ]);
+  // Tomorrow's Next outfit counts it again and brings up B: no turn skipped
+  const after = apply(outfits, result.outfits);
+  expect(onScreen(after)).toBe("a");
+  const next = pick({ outfits: after, items, limits, date: WED });
+  expect(next.items[0].changes.lastWornOn).toBe(TUE);
+  expect(onScreen(apply(after, next.outfits))).toBe("b");
+});
+
+test("Surprise me offers clean outfits other than today's, judged after today's wear before it's picked", () => {
+  const ids = (isPicked: boolean, items = wardrobe()) =>
+    surpriseCandidates({ outfits: queue(), items, limits, isPicked }).map(
+      ({ id }) => id
+    );
+  expect(ids(false)).toEqual(["b", "c", "d"]);
+  // A shirt in the hamper leaves its outfit out
+  expect(ids(false, wardrobe({ sc: 1 }))).toEqual(["b", "d"]);
+  // Shared pants one wear from the limit: counting today's fills them
+  expect(ids(false, wardrobe({ p: 2 }))).toEqual([]);
+  // Once picked, nothing more is counted
+  expect(ids(true, wardrobe({ p: 2 }))).toEqual(["b", "c", "d"]);
+});
+
+test("Surprise me's candidates leave the wardrobe as it was", () => {
+  const items = wardrobe({ p: 2 });
+  const before = structuredClone([...items.entries()]);
+  surpriseCandidates({ outfits: queue(), items, limits, isPicked: false });
+  expect([...items.entries()]).toEqual(before);
+});
+
+test("choosing in the morning when today's wear rules out the next outfit", () => {
+  // A and B share the chinos at 2 of 3: counting A puts them in the hamper
+  const items = byId([
+    item("sa", "top"),
+    item("sb", "top"),
+    item("sc", "top"),
+    item("sd", "top"),
+    item("chinos", "bottom", 2),
+    item("jeans", "bottom"),
+  ]);
+  const queued = [
+    outfit("a", 0, "sa", "chinos", { active: true, pickedOn: MON }),
+    outfit("b", 1, "sb", "chinos"),
+    outfit("c", 2, "sc", "jeans"),
+    outfit("d", 3, "sd", "jeans"),
+  ];
+  const choose = (to: string) =>
+    apply(
+      queued,
+      wearToday({
+        outfits: queued,
+        items,
+        limits,
+        date: TUE,
+        to,
+        countCurrent: true,
+      }).outfits
+    );
+  // D chosen: only D is today's, and B (skipped while dirty) keeps its turn
+  let outfits = choose("d");
+  expect(outfits.filter(({ active }) => active).map(({ id }) => id)).toEqual([
+    "d",
+  ]);
+  expect(outfits.find(({ id }) => id === "b")?.heldTurn).toBe(true);
+  // The chinos washed: B comes up next
+  outfits = apply(
+    outfits,
+    pick({
+      outfits,
+      items: byId([...items.values()].map((i) => ({ ...i, wears: 0 }))),
+      limits,
+      date: WED,
+    }).outfits
+  );
+  expect(onScreen(outfits)).toBe("b");
+  // B chosen anyway: it's today's and no longer holds a turn
+  outfits = choose("b");
+  expect(outfits.filter(({ active }) => active).map(({ id }) => id)).toEqual([
+    "b",
+  ]);
+  expect(outfits.find(({ id }) => id === "b")?.heldTurn).toBeFalsy();
+});
+
+const ids = ({ last, upcoming }: { last?: Queued; upcoming: Queued[] }) => ({
+  last: last?.id,
+  upcoming: upcoming.map(({ id }) => id),
+});
+
+test("the strip in the morning: Last, Up next and the one after it", () => {
+  expect(
+    ids(
+      stripOf({ outfits: queue(), items: wardrobe(), limits, isPicked: false })
+    )
+  ).toEqual({ last: "a", upcoming: ["b", "c"] });
+});
+
+test("the strip starts at the outfit up next, and doesn't skip the hamper after it", () => {
+  // B's shirt is in the hamper, so Up next skips to C; D follows as it is
+  const dirty = stripOf({
+    outfits: queue(),
+    items: wardrobe({ sb: 1, sd: 1 }),
+    limits,
+    isPicked: false,
+  });
+  expect(ids(dirty)).toEqual({ last: "a", upcoming: ["c", "d"] });
+  // An outfit holding its turn comes up first, then the one after it
+  const held = stripOf({
+    outfits: queue({ c: { heldTurn: true } }),
+    items: wardrobe(),
+    limits,
+    isPicked: false,
+  });
+  expect(ids(held)).toEqual({ last: "a", upcoming: ["c", "d"] });
+});
+
+test("the strip never repeats Last after Up next, going round", () => {
+  const outfits = queue({
+    a: { active: false },
+    d: { active: true, pickedOn: MON },
+  });
+  // D is today's: up next wraps to A, then B
+  expect(
+    ids(stripOf({ outfits, items: wardrobe(), limits, isPicked: false }))
+  ).toEqual({ last: "d", upcoming: ["a", "b"] });
+  // Two outfits: Last and Up next only
+  const two = queue().slice(0, 2);
+  expect(
+    ids(stripOf({ outfits: two, items: wardrobe(), limits, isPicked: false }))
+  ).toEqual({ last: "a", upcoming: ["b"] });
+});
+
+test("once picked, or before anything is worn, the strip starts at today's outfit", () => {
+  expect(
+    ids(
+      stripOf({ outfits: queue(), items: wardrobe(), limits, isPicked: true })
+    )
+  ).toEqual({ last: undefined, upcoming: ["a", "b", "c"] });
+  const fresh = queue({ a: { pickedOn: undefined } });
+  expect(
+    ids(stripOf({ outfits: fresh, items: wardrobe(), limits, isPicked: false }))
+  ).toEqual({ last: undefined, upcoming: ["a", "b", "c"] });
+  // Two outfits: no repeats
+  expect(
+    ids(
+      stripOf({
+        outfits: fresh.slice(0, 2),
+        items: wardrobe(),
+        limits,
+        isPicked: false,
+      })
+    )
+  ).toEqual({ last: undefined, upcoming: ["a", "b"] });
+});
+
+test("no strip with fewer than two outfits", () => {
+  const one = queue().slice(0, 1);
+  expect(
+    stripOf({ outfits: one, items: wardrobe(), limits, isPicked: false })
+  ).toEqual({ upcoming: [] });
+});
+
+describe("countsOnLeave", () => {
+  it("counts today's outfit only when it came up on an earlier day", () => {
+    expect(countsOnLeave({ pickedOn: "2026-10-31" }, "2026-11-01")).toBe(true);
+    expect(countsOnLeave({ pickedOn: "2026-11-01" }, "2026-11-01")).toBe(false);
+    // First use: never worn, so nothing is counted
+    expect(countsOnLeave({}, "2026-11-01")).toBe(false);
+    expect(countsOnLeave(undefined, "2026-11-01")).toBe(false);
+  });
 });

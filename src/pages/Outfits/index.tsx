@@ -1,4 +1,3 @@
-import { orderBy } from "@firebase/firestore";
 import {
   Box,
   Grid,
@@ -18,28 +17,21 @@ import {
 import { MdAdd, MdDragIndicator } from "react-icons/md";
 
 import { openNewOutfit, openOutfit } from "utils/history";
-import { Item, Outfit } from "utils/types";
 
 import OutfitReference from "components/OutfitReference";
+import OutfitCover from "components/OutfitCover";
 import Loading from "components/Loading";
 import PageHeader from "components/PageHeader";
 import EmptyState from "components/EmptyState";
 
-import useData from "resources/useData";
+import useOutfits from "resources/useOutfits";
 import useNotice from "hooks/useNotice";
 import useUpdateOutfits from "resources/useUpdateOutfits";
 
-const fields = ["shirt", "belt", "pants", "shoes"] as const;
-
 const Outfits = () => {
-  const [outfits, isOutfitsLoading] = useData<Outfit>(
-    "outfits",
-    orderBy("order")
-  );
+  const [outfits, isOutfitsLoading] = useOutfits();
   const [updateOutfits] = useUpdateOutfits();
   const toast = useNotice();
-  // With no clothes yet, the wardrobe comes before any outfit
-  const [items] = useData<Item>("wardrobe-items");
 
   const onDragEnd = (result: DropResult) => {
     const { destination, source } = result;
@@ -69,7 +61,7 @@ const Outfits = () => {
       <PageHeader
         eyebrow="Rotation"
         title="Outfits"
-        description="Alfred wears these in order, top to bottom, then starts again. Hold the handle and drag to change the order."
+        description="Alfred suggests these in order. Drag to change it, or choose any day from Today."
         action={
           <Button
             onClick={openNewOutfit}
@@ -84,21 +76,13 @@ const Outfits = () => {
       {isOutfitsLoading || !outfits ? (
         <Loading message="Loading your outfits" columns={1} />
       ) : outfits.length === 0 ? (
-        items && items.length === 0 ? (
-          <EmptyState
-            title="Your wardrobe comes first"
-            description="Outfits are made from your own clothes. Add a shirt, belt, pants and shoes to your wardrobe, then come back here."
-            actionLabel="Go to Wardrobe"
-            to="/wardrobe"
-          />
-        ) : (
-          <EmptyState
-            title="No outfits yet"
-            description="Put together a shirt, belt, pants and shoes. Each outfit you make joins the rotation."
-            actionLabel="Create an outfit"
-            onAction={openNewOutfit}
-          />
-        )
+        // A photo is enough for an outfit: no wardrobe needed first
+        <EmptyState
+          title="No outfits yet"
+          description="Take one photo of an outfit. 3 is enough to start."
+          actionLabel="Add an outfit"
+          onAction={openNewOutfit}
+        />
       ) : (
         <DragDropContext onDragEnd={onDragEnd}>
           <Droppable droppableId="outfits">
@@ -177,22 +161,47 @@ const Outfits = () => {
                             </Text>
                           )}
                         </Box>
-                        <Grid
-                          templateColumns="repeat(4, 1fr)"
-                          gap={1.5}
-                          sx={{ flex: 1, minW: 0 }}
-                          pointerEvents="none"
-                        >
-                          {fields.map((field) => (
-                            <OutfitReference
-                              key={field}
-                              reference={outfit[field]}
-                              slot={field}
-                              aspectRatio={1}
-                              radius="thumb"
-                            />
-                          ))}
-                        </Grid>
+                        <Box sx={{ flex: 1, minW: 0 }} pointerEvents="none">
+                          {outfit.name && (
+                            <Text
+                              noOfLines={1}
+                              sx={{
+                                mb: 1.5,
+                                fontFamily: "heading",
+                                fontSize: "lg",
+                              }}
+                            >
+                              {outfit.name}
+                            </Text>
+                          )}
+                          {/* The photo leads the row, as a ringed swatch;
+                              then pieces, four swatches in all */}
+                          <Grid templateColumns="repeat(4, 1fr)" gap={1.5}>
+                            {outfit.photoUrl && (
+                              <OutfitCover
+                                photoUrl={outfit.photoUrl}
+                                size="100%"
+                              />
+                            )}
+                            {outfit.pieces
+                              .slice(0, outfit.photoUrl ? 3 : 4)
+                              .map((reference) => (
+                                <OutfitReference
+                                  key={reference.id}
+                                  reference={reference}
+                                  aspectRatio={1}
+                                  radius="thumb"
+                                />
+                              ))}
+                          </Grid>
+                          {outfit.photoUrl && !outfit.pieces.length && (
+                            <Text
+                              sx={{ mt: 1.5, fontSize: "sm", color: "muted" }}
+                            >
+                              Photo only
+                            </Text>
+                          )}
+                        </Box>
                       </Flex>
                     )}
                   </Draggable>

@@ -1,6 +1,13 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { isDue, describe, upNext, cleanCount } = require("./reminder");
+const {
+  isDue,
+  describe,
+  upNext,
+  cleanCount,
+  isInHamper,
+  outfitLabel,
+} = require("./reminder");
 
 const cairo = {
   time: "07:30",
@@ -57,7 +64,7 @@ test("nudges to the next outfit, naming its pieces and the weather", () => {
     {
       title: "Time for the next outfit",
       body:
-        "Up next: White oxford, Brown leather, Charcoal wool, Brown oxfords.\n" +
+        "Up next: White oxford, Brown leather, Charcoal wool, Brown oxfords. Or choose another.\n" +
         "9° and light rain — two jackets would suit.",
     }
   );
@@ -118,7 +125,7 @@ const wardrobe = {
   s2: { type: "shirt" },
   p: { type: "pants", wears: 3 },
 };
-const limits = { shirt: 1, pants: 3 };
+const limits = { top: 1, bottom: 3 };
 const fit = (id, shirt, pants, extra = {}) => ({
   id,
   shirt: { id: shirt },
@@ -208,4 +215,64 @@ test("laundry line only at 2 or fewer clean outfits with something in the hamper
     /laundry/
   );
   assert.equal(describe(base).title, "Time for the next outfit");
+});
+
+test("pieces count by category, with per-piece limits", () => {
+  const items = {
+    d: { type: "dress", wears: 1 },
+    h: { type: "accessory", wears: 2, wearLimit: 2 },
+    s: { type: "shirt", wears: 1 },
+    f: { type: "shoes", wears: 99 },
+  };
+  const limits = { top: 1, bottom: 3, dress: 1, layer: 5 };
+  assert.equal(isInHamper(items.d, limits), true);
+  assert.equal(isInHamper(items.h, limits), true);
+  assert.equal(isInHamper(items.s, limits), true); // old type reads as top
+  assert.equal(isInHamper(items.f, limits), false);
+});
+
+test("up next reads new pieces and old slots alike", () => {
+  const items = {
+    a: { type: "top" },
+    b: { type: "top", wears: 1 },
+    c: { type: "top" },
+    p: { type: "bottom" },
+  };
+  const limits = { top: 1, bottom: 3 };
+  const outfits = [
+    { id: "x", active: true, pieces: [{ id: "a" }, { id: "p" }] },
+    { id: "y", shirt: { id: "b" }, pants: { id: "p" } },
+    { id: "z", pieces: [{ id: "c" }, { id: "p" }] },
+  ];
+  assert.equal(upNext(outfits, items, limits).id, "z");
+});
+
+test("old slots written after pieces win in the push too", () => {
+  const items = { a: { type: "top" }, n: { type: "top", wears: 1 } };
+  const outfit = { pieces: [{ id: "a" }], shirt: { id: "n" } };
+  assert.equal(cleanCount([outfit], items, { top: 1 }), 0);
+});
+
+test("the push calls an outfit by its name, its pieces, or its number", () => {
+  const items = { a: { title: "Navy shirt" }, b: { title: "Grey chinos" } };
+  assert.equal(
+    outfitLabel({ name: "Office Monday", pieces: [{ id: "a" }] }, items, 3),
+    "Office Monday"
+  );
+  assert.equal(
+    outfitLabel({ pieces: [{ id: "a" }, { id: "b" }] }, items, 3),
+    "Navy shirt, Grey chinos"
+  );
+  assert.equal(
+    outfitLabel({ pieces: [], photoUrl: "https://p" }, items, 4),
+    "Outfit No. 4"
+  );
+});
+
+test("a photo-only outfit is never skipped by up next", () => {
+  const outfits = [
+    { id: "x", active: true, pieces: [{ id: "a" }] },
+    { id: "photo", pieces: [], photoUrl: "https://p" },
+  ];
+  assert.equal(upNext(outfits, { a: { type: "top" } }, { top: 1 }).id, "photo");
 });

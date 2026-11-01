@@ -24,7 +24,7 @@ test("the card counts the hamper and names the oldest day, and opens it", () => 
     />
   );
   const card = screen.getByRole("button");
-  expect(card.textContent).toContain("2 pieces in the hamper");
+  expect(card.textContent).toContain("2 pieces in the laundry basket");
   expect(card.textContent).toContain("Oldest since Mon");
   card.click();
   expect(opened).toBe(true);
@@ -39,6 +39,6 @@ test("one piece reads in the singular", () => {
     />
   );
   expect(screen.getByRole("button").textContent).toContain(
-    "1 piece in the hamper"
+    "1 piece in the laundry basket"
   );
 });
