@@ -11,22 +11,28 @@ type Draft = {
 };
 
 // Upload first, then write: a failed upload leaves the outfit as it was.
-// A replacement goes to the saved photo's path, so no file is left behind.
+// A new photo gets its own file, and a replaced or removed one is deleted
+// only once the outfit no longer points to it, so a failed write loses
+// nothing; a failed delete only leaves an unused file.
 export const saveOutfit = async (
   draft: Draft,
   io: {
-    upload: (file: File, path?: string) => Promise<string>;
+    upload: (file: File) => Promise<string>;
     write: (fields: ReturnType<typeof outfitFields>) => Promise<void>;
+    deletePhoto: (url: string) => Promise<void>;
   }
 ) => {
   const photoUrl = draft.photo
-    ? await io.upload(await draft.photo, draft.photoUrl)
+    ? await io.upload(await draft.photo)
     : draft.isPhotoRemoved
       ? undefined
       : draft.photoUrl;
   await io.write(
     outfitFields({ picks: draft.picks, photoUrl, name: draft.name })
   );
+  if (draft.photoUrl && photoUrl !== draft.photoUrl) {
+    io.deletePhoto(draft.photoUrl).catch(() => undefined);
+  }
   return photoUrl;
 };
 

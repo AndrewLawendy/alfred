@@ -226,8 +226,8 @@ const OutfitEditor = ({
           isPhotoRemoved,
         },
         {
-          upload: async (file, path) => {
-            const response = await uploadImage(file, path);
+          upload: async (file) => {
+            const response = await uploadImage(file);
             if (!response) throw new Error("Photo upload failed");
             return geFileURL(response.metadata.name);
           },
@@ -254,12 +254,9 @@ const OutfitEditor = ({
               } as Outfit);
             }
           },
+          deletePhoto: deleteImage,
         }
       );
-      // A removed photo's file goes once the outfit no longer points to it
-      if (isPhotoRemoved && !photo && outfit?.photoUrl) {
-        deleteImage(outfit.photoUrl).catch(() => undefined);
-      }
       setPhoto(undefined);
       setPreview(undefined);
       setIsPhotoRemoved(false);
