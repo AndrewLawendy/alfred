@@ -39,7 +39,13 @@ import { db } from "utils/firebase";
 import geFileURL from "utils/geFileURL";
 import resizeImage from "utils/resizeImage";
 import { deleteOutfit, saveOutfit, watchPhoto } from "utils/outfitSave";
-import { activeIndex, byId, undoOf, wearToday } from "utils/laundry";
+import {
+  activeIndex,
+  byId,
+  countsOnLeave,
+  undoOf,
+  wearToday,
+} from "utils/laundry";
 import { afterDelete, nextOrder } from "utils/rotation";
 import {
   categoryOf,
@@ -290,10 +296,10 @@ const OutfitEditor = ({
   // Counting waits for the person's own limits
   const { limits, isLoading: isLimitsLoading } = useLimitsState();
   // The outfit on Today, and whether it came up on an earlier day: then
-  // Wear today counts it first
+  // Wear today counts it first (never on first use, as on Home)
   const onToday = outfits[activeIndex(outfits)];
   const today = useToday();
-  const isUnpickedToday = !!onToday && onToday.pickedOn !== today;
+  const isUnpickedToday = countsOnLeave(onToday, today);
 
   const onWearTodayError = () =>
     toast({

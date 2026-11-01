@@ -346,6 +346,13 @@ export const wearBadge = (piece: Counted | undefined, limits: Limits) => {
 export const isOnScreen = (outfits: Queued[], id: string) =>
   outfits[activeIndex(outfits)]?.id === id;
 
+// Whether moving on from today's outfit counts it: it came up on an earlier
+// day. Never on first use (it was never worn) or once picked today.
+export const countsOnLeave = (
+  current: { pickedOn?: string | null } | undefined,
+  date: string
+) => !!current?.pickedOn && current.pickedOn !== date;
+
 // Wear today (or Choose on Home): bring `to` up. With `countCurrent`, the
 // outfit on screen is counted first, exactly as Wear then Wear today
 // would; when `to` is that same outfit, it's counted and stays today's.

@@ -3,6 +3,7 @@ import {
   activeIndex,
   byId,
   cleanCount,
+  countsOnLeave,
   hamperPieces,
   inHamper,
   hamperGroups,
@@ -659,4 +660,14 @@ test("no strip with fewer than two outfits", () => {
   expect(
     stripOf({ outfits: one, items: wardrobe(), limits, isPicked: false })
   ).toEqual({ upcoming: [] });
+});
+
+describe("countsOnLeave", () => {
+  it("counts today's outfit only when it came up on an earlier day", () => {
+    expect(countsOnLeave({ pickedOn: "2026-10-31" }, "2026-11-01")).toBe(true);
+    expect(countsOnLeave({ pickedOn: "2026-11-01" }, "2026-11-01")).toBe(false);
+    // First use: never worn, so nothing is counted
+    expect(countsOnLeave({}, "2026-11-01")).toBe(false);
+    expect(countsOnLeave(undefined, "2026-11-01")).toBe(false);
+  });
 });

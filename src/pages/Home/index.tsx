@@ -51,6 +51,7 @@ import { jacketState } from "utils/jacket";
 import { openItemFromPhoto } from "utils/photoTransition";
 import {
   byId,
+  countsOnLeave,
   cleanCount,
   hamperPieces,
   inHamper,
@@ -306,7 +307,7 @@ const Home = () => {
       );
       return;
     }
-    const countCurrent = !isFirstUse && !isPickedToday;
+    const countCurrent = countsOnLeave(activeOutfit, date);
     const result = wearToday({
       outfits,
       items: itemsById,
